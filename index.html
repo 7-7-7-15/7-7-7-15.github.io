@@ -1754,8 +1754,8 @@ if (changelogToggleBtn && fullChangelogDiv) {
                 playerStatus.textContent = 'Loading database...';
                 loadingIndicator.style.display = 'block';
                 const [moviesResponse, tvResponse] = await Promise.all([
-                    fetch('https://7-7-7-10.github.io/MoviePlayer/Movies.json'),
-                    fetch('https://7-7-7-10.github.io/MoviePlayer/TV.json')
+                    fetch('https://7-7-7-15.github.io/Movies.json'),
+                    fetch('https://7-7-7-15.github.io/Tv.json')
                 ]);
                 let movies = [];
                 let tvShows = [];
