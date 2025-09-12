@@ -1192,23 +1192,22 @@
             margin: 0;
             padding: 20px;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
         
-        #update-popup {
-            display: block; /* Changed to block for demonstration */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            background: rgba(0,0,0,0.7);
-        }
+    #update-popup {
+    display: none;  /* Changed from flex to none - will be shown via JS if needed */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.7);
+}
+
+
         
         .popup-container {
             background: #18181a;
@@ -1374,7 +1373,15 @@
             <div class="provider-container">
                 <label for="providerSelect" class="provider-label"><i class="fas fa-server"></i> Provider:</label>
                 <select id="providerSelect" class="provider-select">
-                    <option value="vidsrc.xyz">.xyz</option>
+                    <option value="godriveplayer.com">GoDrivePlayer</option>
+                    <option value="watch.lonelil.org">LoneLil</option>
+                    <option value="vidfast.pro">VidFast {ADS} (pro)</option>
+                    <option value="vidfast.in">VidFast {ADS} (in)</option>
+                    <option value="vidfast.io">VidFast {ADS} (io)</option>
+                    <option value="vidfast.me">VidFast {ADS} (me)</option>
+                    <option value="vidfast.net">VidFast {ADS} (net)</option>
+                    <option value="vidfast.pm">VidFast {ADS} (pm)</option>
+                    <option value="vidfast.xyz">VidFast {ADS} (xyz)</option>
                 </select>
                 <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
             </div>
@@ -1432,7 +1439,7 @@
             </button>
         </footer>
     </div>
-        <!-- For demonstration purposes, the popup is shown by default -->
+      
     <div id="update-popup">
         <div class="popup-container">
             <div class="version-badge">NEW UPDATE</div>
@@ -1459,7 +1466,7 @@
                 </div>
             </div>
             
-            <button class="changelog-toggle" onclick="toggleChangelog()">View Full Changelog</button>
+            <button class="changelog-toggle" id="changelogToggle">View Full Changelog</button>
             
             <div class="full-changelog" id="fullChangelog">
                 <h3>Version 1.2.1 Changelog</h3>
@@ -1508,10 +1515,11 @@
             </div>
             
             <div class="buttons-container">
-                <button id="dismiss-update-popup" class="dissmiss-btn" onclick="dismissPopup()">Dismiss</button>
-                <button class="learn-more-btn" onclick="learnMore()">Learn More</button>
+             <button id="dismiss-update-popup" class="dismiss-btn">Dismiss</button>
+                <button class="learn-more-btn" id="learnMoreBtn">Learn More</button>
             </div>
         </div>
+    </div>
     
     <!-- Player Modal -->
     <div class="player-modal" id="playerModal">
@@ -1520,7 +1528,7 @@
                 <div class="player-title" id="playerTitle">Movie Title</div>
                 <button class="close-player" id="closePlayer">&times;</button>
             </div>
-            <iframe class="player-iframe" id="playerFrame" allowfullscreen></iframe>
+            <iframe class="player-iframe" id="playerFrame" sandbox="allow-scripts allow-forms" allowfullscreen></iframe>
         </div>
     </div>
     
@@ -1596,611 +1604,637 @@
         </div>
     </div>
    
-       
     <script>
-      const dismissBtn = document.getElementById('dismiss-update-popup');
-if (dismissBtn) {
-    dismissBtn.onclick = () => {
-        localStorage.setItem("lastSeenAppVersion", APP_VERSION);
-        document.getElementById("update-popup").style.display = "none";
-    };
+// --- Constants and Variables ---
+const APP_VERSION = "2.1.2";
+let moviesData = [];
+let filteredData = [];
+let displayedCount = 0;
+const MOVIES_PER_PAGE = 42;
+let currentProvider = localStorage.getItem('eclipse_provider') || 'godriveplayer.com';
+let autoScrollOnSearch = false;
+
+// List of providers that use the about:blank format
+const VIDFAST_PROVIDERS = [
+    'vidfast.pro', 'vidfast.in', 'vidfast.io', 'vidfast.me', 
+    'vidfast.net', 'vidfast.pm', 'vidfast.xyz'
+];
+
+// --- DOM Elements ---
+let searchInput, searchBtn, voiceSearchBtn, filters, resultsGrid, loadingIndicator;
+let errorContainer, playerModal, playerFrame, playerTitle, closePlayer, moviesCount;
+let tvCount, totalCount, playerStatus, loadMoreBtn, resultsInfo, downloadBtn;
+let providerSelect, providerInfo, settingsBtn, settingsModal, closeSettings, saveSettingsBtn;
+let themeOptions, incognitoToggle, workModeToggle, studyModeToggle, classroomToggle, stealthToggle;
+
+// --- Initialize the application ---
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDOMElements();
+    initializeProvider();
+    loadMoviesData();
+    setupEventListeners();
+    loadSettings();
+    maybeShowUpdatePopup();
+});
+
+// Initialize DOM elements
+function initializeDOMElements() {
+    searchInput = document.getElementById('searchQuery');
+    searchBtn = document.getElementById('searchBtn');
+    voiceSearchBtn = document.getElementById('voiceSearchBtn');
+    filters = document.querySelectorAll('.filter');
+    resultsGrid = document.getElementById('resultsGrid');
+    loadingIndicator = document.getElementById('loadingIndicator');
+    errorContainer = document.getElementById('errorContainer');
+    playerModal = document.getElementById('playerModal');
+    playerFrame = document.getElementById('playerFrame');
+    playerTitle = document.getElementById('playerTitle');
+    closePlayer = document.getElementById('closePlayer');
+    moviesCount = document.getElementById('moviesCount');
+    tvCount = document.getElementById('tvCount');
+    totalCount = document.getElementById('totalCount');
+    playerStatus = document.getElementById('playerStatus');
+    loadMoreBtn = document.getElementById('loadMoreBtn');
+    resultsInfo = document.getElementById('resultsInfo');
+    downloadBtn = document.getElementById('downloadBtn');
+    providerSelect = document.getElementById('providerSelect');
+    providerInfo = document.getElementById('providerInfo');
+    settingsBtn = document.getElementById('settingsBtn');
+    settingsModal = document.getElementById('settingsModal');
+    closeSettings = document.getElementById('closeSettings');
+    saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    themeOptions = document.querySelectorAll('.theme-option');
+    incognitoToggle = document.getElementById('incognitoToggle');
+    workModeToggle = document.getElementById('workModeToggle');
+    studyModeToggle = document.getElementById('studyModeToggle');
+    classroomToggle = document.getElementById('classroomToggle');
+    stealthToggle = document.getElementById('stealthToggle');
 }
 
-// Add event listener for learn more button
-const learnMoreBtn = document.querySelector('.learn-more-btn');
-if (learnMoreBtn) {
-    learnMoreBtn.onclick = () => {
-        // Change this URL to desired 'Learn More' page or release notes URL
-        window.open('https://7-7-7-10.github.io/MoviePlayer/updates.html', '_blank');
-    };
-}
-      const changelogToggleBtn = document.querySelector('.changelog-toggle');
-const fullChangelogDiv = document.getElementById('fullChangelog');
-if (changelogToggleBtn && fullChangelogDiv) {
-    changelogToggleBtn.onclick = () => {
-        fullChangelogDiv.classList.toggle('expanded');
-        changelogToggleBtn.textContent = fullChangelogDiv.classList.contains('expanded') ? 'Hide Full Changelog' : 'View Full Changelog';
-    };
-}
-        
-
-        // --- Provider selection logic ---
-        let currentProvider = localStorage.getItem('eclipse_provider') || 'https://godriveplayer.com/';
-        const providerSelect = document.getElementById('providerSelect');
-        const providerInfo = document.getElementById('providerInfo');
+// --- Provider initialization ---
+function initializeProvider() {
+    if (providerSelect) {
         providerSelect.value = currentProvider;
+        providerInfo.textContent = currentProvider;
         
         providerSelect.addEventListener('change', function() {
             currentProvider = providerSelect.value;
             providerInfo.textContent = currentProvider;
             localStorage.setItem('eclipse_provider', currentProvider);
         });
+    }
+}
 
-        // --- Bookmark logic ---
-        function getBookmarks() {
-            try {
-                return JSON.parse(localStorage.getItem('eclipse_bookmarks') || '[]');
-            } catch (e) {
-                return [];
-            }
-        }
-        function saveBookmarks(arr) {
-            localStorage.setItem('eclipse_bookmarks', JSON.stringify(arr));
-        }
-        function isBookmarked(imdbId) {
-            return getBookmarks().includes(imdbId);
-        }
-        function toggleBookmark(imdbId) {
-            let bookmarks = getBookmarks();
-            if (bookmarks.includes(imdbId)) {
-                bookmarks = bookmarks.filter(id => id !== imdbId);
-            } else {
-                bookmarks.push(imdbId);
-            }
-            saveBookmarks(bookmarks);
-        }
+// --- Bookmark logic ---
+function getBookmarks() {
+    try {
+        return JSON.parse(localStorage.getItem('eclipse_bookmarks') || '[]');
+    } catch (e) {
+        return [];
+    }
+}
 
-        // --- Rest of your existing variables ---
-        let moviesData = [];
-        let filteredData = [];
-        let displayedCount = 0;
-        const MOVIES_PER_PAGE = 42;
+function saveBookmarks(arr) {
+    localStorage.setItem('eclipse_bookmarks', JSON.stringify(arr));
+}
 
-        // DOM Elements
-        const searchInput = document.getElementById('searchQuery');
-        const searchBtn = document.getElementById('searchBtn');
-        const voiceSearchBtn = document.getElementById('voiceSearchBtn');
-        const filters = document.querySelectorAll('.filter');
-        const resultsGrid = document.getElementById('resultsGrid');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const errorContainer = document.getElementById('errorContainer');
-        const playerModal = document.getElementById('playerModal');
-        const playerFrame = document.getElementById('playerFrame');
-        const playerTitle = document.getElementById('playerTitle');
-        const closePlayer = document.getElementById('closePlayer');
-        const moviesCount = document.getElementById('moviesCount');
-        const tvCount = document.getElementById('tvCount');
-        const totalCount = document.getElementById('totalCount');
-        const playerStatus = document.getElementById('playerStatus');
-        const loadMoreBtn = document.getElementById('loadMoreBtn');
-        const resultsInfo = document.getElementById('resultsInfo');
-        const downloadBtn = document.getElementById('downloadBtn');
+function isBookmarked(imdbId) {
+    return getBookmarks().includes(imdbId);
+}
+
+function toggleBookmark(imdbId) {
+    let bookmarks = getBookmarks();
+    if (bookmarks.includes(imdbId)) {
+        bookmarks = bookmarks.filter(id => id !== imdbId);
+    } else {
+        bookmarks.push(imdbId);
+    }
+    saveBookmarks(bookmarks);
+}
+
+// --- Load movies data ---
+async function loadMoviesData() {
+    try {
+        playerStatus.textContent = 'Loading database...';
+        loadingIndicator.style.display = 'block';
         
-        // Settings elements
-        const settingsBtn = document.getElementById('settingsBtn');
-        const settingsModal = document.getElementById('settingsModal');
-        const closeSettings = document.getElementById('closeSettings');
-        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-        const themeOptions = document.querySelectorAll('.theme-option');
-        const incognitoToggle = document.getElementById('incognitoToggle');
-        const workModeToggle = document.getElementById('workModeToggle');
-        const studyModeToggle = document.getElementById('studyModeToggle');
-        const classroomToggle = document.getElementById('classroomToggle');
-        const stealthToggle = document.getElementById('stealthToggle');
-        
-        // Cloaking elements
-        const cloakContent = document.getElementById('cloakContent');
-        const cloakTitle = document.getElementById('cloakTitle');
-        const cloakMessage = document.getElementById('cloakMessage');
-        const cloakBackBtn = document.getElementById('cloakBackBtn');
-
-        // Sample movie data as fallback
-        const sampleMovies = [
-            { title: "The Matrix", imdb: "tt0133093", type: "movie", year: "1999" },
-            { title: "Inception", imdb: "tt1375666", type: "movie", year: "2010" },
-            { title: "Interstellar", imdb: "tt0816692", type: "movie", year: "2014" },
-            { title: "The Dark Knight", imdb: "tt0468569", type: "movie", year: "2008" },
-            { title: "Pulp Fiction", imdb: "tt0110912", type: "movie", year: "1994" },
-            { title: "The Shawshank Redemption", imdb: "tt0111161", type: "movie", year: "1994" },
-            { title: "Forrest Gump", imdb: "tt0109830", type: "movie", year: "1994" },
-            { title: "The Godfather", imdb: "tt0068646", type: "movie", year: "1972" },
-            { title: "The Lord of the Rings: The Fellowship of the Ring", imdb: "tt0120737", type: "movie", year: "2001" },
-            { title: "Fight Club", imdb: "tt0137523", type: "movie", year: "1999" },
-            { title: "Star Wars: Episode IV - A New Hope", imdb: "tt0076759", type: "movie", year: "1977" },
-            { title: "Star Wars: Episode V - The Empire Strikes Back", imdb: "tt0080684", type: "movie", year: "1980" },
-            { title: "Star Wars: Episode VI - Return of the Jedi", imdb: "tt0086190", type: "movie", year: "1983" },
-            { title: "The Avengers", imdb: "tt0848228", type: "movie", year: "2012" },
-            { title: "Jurassic Park", imdb: "tt0107290", type: "movie", year: "1993" },
-            { title: "The Silence of the Lambs", imdb: "tt0102926", type: "movie", year: "1991" },
-            { title: "The Lion King", imdb: "tt0110357", type: "movie", year: "1994" },
-            { title: "Breaking Bad", imdb: "tt0903747", type: "tv", year: "2008-2013" },
-            { title: "Game of Thrones", imdb: "tt0944947", type: "tv", year: "2011-2019" },
-            { title: "Stranger Things", imdb: "tt4574334", type: "tv", year: "2016-" },
-            { title: "The Mandalorian", imdb: "tt8111088", type: "tv", year: "2019-" },
-            { title: "The Witcher", imdb: "tt5180504", type: "tv", year: "2019-" },
-            { title: "Friends", imdb: "tt0108778", type: "tv", year: "1994-2004" },
-            { title: "The Office", imdb: "tt0386676", type: "tv", year: "2005-2013" },
-            { title: "The Sopranos", imdb: "tt0141842", type: "tv", year: "1999-2007" },
-            { title: "The Crown", imdb: "tt4786824", type: "tv", year: "2016-" },
-            { title: "Black Mirror", imdb: "tt2085059", type: "tv", year: "2011-" },
-            { title: "Westworld", imdb: "tt0475784", type: "tv", year: "2016-2022" },
-            { title: "The Boys", imdb: "tt1190634", type: "tv", year: "2019-" },
-            { title: "The Queen's Gambit", imdb: "tt10048342", type: "tv", year: "2020" },
-            { title: "Chernobyl", imdb: "tt7366338", type: "tv", year: "2019" },
-            { title: "Narcos", imdb: "tt2707408", type: "tv", year: "2015-2017" }
-        ];
-
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-             maybeShowUpdatePopup(); // <-- ADD THIS LINE
-            loadMoviesData();
-            setupEventListeners();
-            loadSettings();
-        });
-
-        // Load movies data from the external JSON files with fallback
-        async function loadMoviesData() {
-            try {
-                playerStatus.textContent = 'Loading database...';
-                loadingIndicator.style.display = 'block';
-                const [moviesResponse, tvResponse] = await Promise.all([
+        // Use sample data instead of external APIs to avoid CORS issues
+    const [moviesResponse, tvResponse] = await Promise.all([
                     fetch('https://7-7-7-15.github.io/Movies.json'),
                     fetch('https://7-7-7-15.github.io/Tv.json')
                 ]);
+                
                 let movies = [];
                 let tvShows = [];
+                
                 if (moviesResponse.ok) {
                     movies = await moviesResponse.json();
-                } else {
-                    throw new Error(`Movies HTTP error! status: ${moviesResponse.status}`);
                 }
                 if (tvResponse.ok) {
                     tvShows = await tvResponse.json();
-                } else {
-                    throw new Error(`TV HTTP error! status: ${tvResponse.status}`);
                 }
+                
                 moviesData = [
                     ...movies.map(item => ({ ...item, type: "movie" })),
                     ...tvShows.map(item => ({ ...item, type: "tv" }))
                 ];
-                playerStatus.textContent = 'Database loaded successfully';
-            } catch (error) {
-                console.error('Error loading movies from external source:', error);
-                showError('Could not load external database. Using sample data instead.', false);
-                moviesData = sampleMovies;
-                playerStatus.textContent = 'Using sample data';
-            }
-            filteredData = [...moviesData];
-            displayedCount = 0;
-            updateStats();
-            autoScrollOnSearch = false; // Prevent scroll on initial load
+        
+        playerStatus.textContent = 'Database loaded successfully';
+    } catch (error) {
+        console.error('Error loading movies:', error);
+        showError('Could not load external database. Using sample data instead.', false);
+        moviesData = getSampleMovies();
+        playerStatus.textContent = 'Using sample data';
+    }
+    
+    filteredData = [...moviesData];
+    displayedCount = 0;
+    updateStats();
+    autoScrollOnSearch = false;
+    performSearch();
+    loadingIndicator.style.display = 'none';
+}
+
+// --- Sample movies data ---
+function getSampleMovies() {
+    return [
+        { title: "The Matrix", imdb: "tt0133093", type: "movie", year: "1999", tmdb: "603" },
+        { title: "Inception", imdb: "tt1375666", type: "movie", year: "2010", tmdb: "27205" },
+        { title: "Interstellar", imdb: "tt0816692", type: "movie", year: "2014", tmdb: "157336" },
+        { title: "The Dark Knight", imdb: "tt0468569", type: "movie", year: "2008", tmdb: "155" },
+        { title: "Breaking Bad", imdb: "tt0903747", type: "tv", year: "2008-2013", tmdb: "1396" },
+        { title: "Stranger Things", imdb: "tt4574334", type: "tv", year: "2016-", tmdb: "66732" },
+        { title: "Pulp Fiction", imdb: "tt0110912", type: "movie", year: "1994", tmdb: "680" },
+        { title: "The Shawshank Redemption", imdb: "tt0111161", type: "movie", year: "1994", tmdb: "278" },
+        { title: "Game of Thrones", imdb: "tt0944947", type: "tv", year: "2011-2019", tmdb: "1399" },
+        { title: "The Godfather", imdb: "tt0068646", type: "movie", year: "1972", tmdb: "238" }
+    ];
+}
+
+// --- Show error message ---
+function showError(message, isFatal = false) {
+    errorContainer.innerHTML = `
+        <div class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>${isFatal ? 'Fatal Error' : 'Notice'}</h3>
+            <p>${message}</p>
+            ${isFatal ? '<button onclick="location.reload()" class="search-btn">Retry</button>' : ''}
+        </div>
+    `;
+}
+
+// --- Set up event listeners ---
+function setupEventListeners() {
+    // Search functionality
+    if (searchBtn) {
+        searchBtn.addEventListener('click', function() {
+            autoScrollOnSearch = true;
             performSearch();
-            loadingIndicator.style.display = 'none';
-        }
-
-        // Show error message
-        function showError(message, isFatal = false) {
-            errorContainer.innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>${isFatal ? 'Fatal Error' : 'Notice'}</h3>
-                    <p>${message}</p>
-                    ${isFatal ? '<button onclick="location.reload()" class="search-btn">Retry</button>' : ''}
-                </div>
-            `;
-        }
-
-        // Set up event listeners
-        function setupEventListeners() {
-            searchBtn.addEventListener('click', function() {
+        });
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                autoScrollOnSearch = true;
+                performSearch();
+            }
+        });
+    }
+    
+    // Voice search
+    if (voiceSearchBtn) {
+        voiceSearchBtn.addEventListener('click', function() {
+            autoScrollOnSearch = true;
+            startVoiceSearch();
+        });
+    }
+    
+    // Filters
+    if (filters && filters.length > 0) {
+        filters.forEach(filter => {
+            filter.addEventListener('click', function() {
+                this.classList.toggle('active');
                 autoScrollOnSearch = true;
                 performSearch();
             });
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    autoScrollOnSearch = true;
-                    performSearch();
-                }
+        });
+    }
+    
+    // Player
+    if (closePlayer) {
+        closePlayer.addEventListener('click', function() {
+            playerModal.classList.remove('active');
+            playerFrame.src = '';
+            playerStatus.textContent = 'Player closed';
+        });
+    }
+    
+    // Load more
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMoreMovies);
+    }
+    
+    // Download
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', downloadAsChronosFile);
+    }
+    
+    // Settings button
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', openSettings);
+    }
+    
+    // Close settings button
+    if (closeSettings) {
+        closeSettings.addEventListener('click', closeSettingsModal);
+    }
+    
+    // Save settings button
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', saveSettings);
+    }
+    
+    // Theme selection
+    if (themeOptions && themeOptions.length > 0) {
+        themeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
             });
-            voiceSearchBtn.addEventListener('click', function() {
-                autoScrollOnSearch = true;
-                startVoiceSearch();
-            });
-            filters.forEach(filter => {
-                filter.addEventListener('click', function() {
-                    this.classList.toggle('active');
-                    autoScrollOnSearch = true;
-                    performSearch();
-                });
-            });
-            closePlayer.addEventListener('click', function() {
-                playerModal.classList.remove('active');
-                playerFrame.src = '';
-                playerStatus.textContent = 'Player closed';
-            });
-            loadMoreBtn.addEventListener('click', loadMoreMovies);
-            downloadBtn.addEventListener('click', downloadAsChronosFile);
+        });
+    }
+    
+    // Event delegation for dynamically created elements
+    document.addEventListener('click', function(e) {
+        // Play buttons
+        if (e.target.closest('.play-btn')) {
+            const playBtn = e.target.closest('.play-btn');
+            const movieCard = playBtn.closest('.movie-card');
+            const movieId = movieCard.getAttribute('data-id');
+            const movie = moviesData.find(m => m.imdb === movieId);
             
-            // Settings event listeners
-            settingsBtn.addEventListener('click', openSettings);
-            closeSettings.addEventListener('click', closeSettingsModal);
-            saveSettingsBtn.addEventListener('click', saveSettings);
-            
-            // Theme selection
-            themeOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    themeOptions.forEach(opt => opt.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-            
-            // Cloaking back button
-            cloakBackBtn.addEventListener('click', function() {
-                document.body.classList.remove('cloak-work', 'cloak-study', 'cloak-classroom');
-                cloakContent.style.display = 'none';
-                document.querySelector('.container').style.display = 'block';
-                
-                // Reset toggles
-                workModeToggle.checked = false;
-                studyModeToggle.checked = false;
-                classroomToggle.checked = false;
-                
-                // Update status
-                playerStatus.textContent = 'Cloaking disabled';
-            });
-        }
-        
-        // Perform search
-        function performSearch() {
-            const query = searchInput.value.trim().toLowerCase();
-            displayedCount = 0;
-            if (query === '') {
-                filteredData = [...moviesData];
-            } else {
-                filteredData = moviesData.filter(movie => 
-                    movie.title.toLowerCase().includes(query)
-                );
-            }
-            applyFilters();
-            displayMovies();
-            playerStatus.textContent = `Found ${filteredData.length} results`;
-          
-            // --- Autoscroll to the search results ---
-            if (autoScrollOnSearch) {
-                slowScrollTo(resultsGrid, 1200);
-            }
-        }
-
-        // Apply filters to current results
-        function applyFilters() {
-            const activeTypeFilters = [];
-            const activeGenreFilters = [];
-            document.querySelectorAll('.filter.active').forEach(filter => {
-                if (filter.dataset.type) {
-                    activeTypeFilters.push(filter.dataset.type);
-                } else if (filter.dataset.genre) {
-                    activeGenreFilters.push(filter.dataset.genre);
-                }
-            });
-            if (activeTypeFilters.length === 0) {
-                activeTypeFilters.push('movie', 'tv');
-            }
-            filteredData = filteredData.filter(movie => 
-                activeTypeFilters.includes(movie.type)
-            );
-            if (activeGenreFilters.length > 0) {
-                filteredData = filteredData.filter(movie => 
-                    activeGenreFilters.some(genre => 
-                        movie.title.toLowerCase().includes(genre) || 
-                        (movie.genre && movie.genre.toLowerCase().includes(genre))
-                    )
-                );
-            }
-        }
-
-        // Display movies in the results grid
-        function displayMovies() {
-            if (filteredData.length === 0) {
-                resultsGrid.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #888;">
-                        <i class="fas fa-film" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                        <h3>No movies found</h3>
-                        <p>Try a different search or filter</p>
-                    </div>
-                `;
-                loadMoreBtn.style.display = 'none';
-                resultsInfo.textContent = '';
-                return;
-            }
-            const moviesToShow = Math.min(displayedCount + MOVIES_PER_PAGE, filteredData.length);
-            const moviesToDisplay = filteredData.slice(0, moviesToShow);
-            resultsGrid.innerHTML = moviesToDisplay.map(movie => `
-                <div class="movie-card" data-id="${movie.imdb}">
-                    <div class="movie-poster">
-                        <i class="fas fa-film"></i>
-                    </div>
-                    <div class="movie-info">
-                        <h3 class="movie-title">${movie.title}</h3>
-                        <div class="movie-type">${movie.type === 'movie' ? 'Movie' : 'TV Show'} ${movie.year ? `(${movie.year})` : ''}</div>
-                        <div class="movie-actions">
-                            <button class="play-btn" onclick="playMovie('${movie.imdb}', '${movie.type}')">
-                                <i class="fas fa-play"></i> Play
-                            </button>
-                            <button class="bookmark-btn${isBookmarked(movie.imdb) ? ' bookmarked' : ''}" data-imdb="${movie.imdb}">
-                                <i class="fas fa-bookmark"></i> Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            displayedCount = moviesToShow;
-            resultsInfo.textContent = `Showing ${displayedCount} of ${filteredData.length} results`;
-            if (displayedCount < filteredData.length) {
-                loadMoreBtn.style.display = 'block';
-                loadMoreBtn.disabled = false;
-            } else {
-                loadMoreBtn.style.display = 'none';
-            }
-            // Attach event listeners for bookmark buttons
-            resultsGrid.querySelectorAll('.bookmark-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    const imdbId = this.getAttribute('data-imdb');
-                    toggleBookmark(imdbId);
-                    this.classList.toggle('bookmarked', isBookmarked(imdbId));
-                });
-            });
-        }
-
-        // Load more movies
-        function loadMoreMovies() {
-            displayMovies();
-        }
-
-        // Play a movie
-        function playMovie(imdbId, type) {
-            playerStatus.textContent = 'Loading player...';
-            const baseUrl = `https://${currentProvider}/embed`;
-            const url = type === 'movie' 
-                ? `${baseUrl}/player.php?imdb=${imdbId}`
-                : `${baseUrl}/player.php?imdb=${imdbId}`;
-            playerFrame.src = url;
-            playerModal.classList.add('active');
-            const movie = moviesData.find(m => m.imdb === imdbId);
             if (movie) {
-                playerTitle.textContent = movie.title;
+                playMovie(movie.imdb, movie.type, 1, 1, movie.tmdb || '');
             }
-            playerStatus.textContent = 'Playing';
         }
+        
+        // Bookmark buttons
+        if (e.target.closest('.bookmark-btn')) {
+            const bookmarkBtn = e.target.closest('.bookmark-btn');
+            const imdbId = bookmarkBtn.getAttribute('data-imdb');
+            toggleBookmark(imdbId);
+            bookmarkBtn.classList.toggle('bookmarked', isBookmarked(imdbId));
+        }
+    });
+    
+    // Update popup
+    const dismissBtn = document.getElementById('dismiss-update-popup');
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', dismissUpdatePopup);
+    }
+    
+    const learnMoreBtn = document.getElementById('learnMoreBtn');
+    if (learnMoreBtn) {
+        learnMoreBtn.addEventListener('click', learnMore);
+    }
+    
+    const changelogToggleBtn = document.getElementById('changelogToggle');
+    const fullChangelogDiv = document.getElementById('fullChangelog');
+    if (changelogToggleBtn && fullChangelogDiv) {
+        changelogToggleBtn.addEventListener('click', function() {
+            fullChangelogDiv.classList.toggle('expanded');
+            changelogToggleBtn.textContent = fullChangelogDiv.classList.contains('expanded') ? 
+                'Hide Full Changelog' : 'View Full Changelog';
+        });
+    }
+}
 
-        // Start voice search
-        function startVoiceSearch() {
-            if (!('webkitSpeechRecognition' in window)) {
-                alert('Voice search is not supported in your browser');
+// --- Search functionality ---
+function performSearch() {
+    const query = searchInput.value.trim().toLowerCase();
+    displayedCount = 0;
+    
+    if (query === '') {
+        filteredData = [...moviesData];
+    } else {
+        filteredData = moviesData.filter(movie => 
+            movie.title.toLowerCase().includes(query)
+        );
+    }
+    
+    applyFilters();
+    displayMovies();
+    playerStatus.textContent = `Found ${filteredData.length} results`;
+    
+    if (autoScrollOnSearch && filteredData.length > 0) {
+        slowScrollTo(resultsGrid, 800);
+    }
+}
+
+function applyFilters() {
+    const activeTypeFilters = [];
+    const activeGenreFilters = [];
+    
+    document.querySelectorAll('.filter.active').forEach(filter => {
+        if (filter.dataset.type) {
+            activeTypeFilters.push(filter.dataset.type);
+        } else if (filter.dataset.genre) {
+            activeGenreFilters.push(filter.dataset.genre);
+        }
+    });
+    
+    if (activeTypeFilters.length === 0) {
+        activeTypeFilters.push('movie', 'tv');
+    }
+    
+    filteredData = filteredData.filter(movie => 
+        activeTypeFilters.includes(movie.type)
+    );
+    
+    if (activeGenreFilters.length > 0) {
+        filteredData = filteredData.filter(movie => 
+            activeGenreFilters.some(genre => 
+                movie.title.toLowerCase().includes(genre) || 
+                (movie.genre && movie.genre.toLowerCase().includes(genre))
+            )
+        );
+    }
+}
+
+// --- Display movies ---
+function displayMovies() {
+    if (filteredData.length === 0) {
+        resultsGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #888;">
+                <i class="fas fa-film" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                <h3>No movies found</h3>
+                <p>Try a different search or filter</p>
+            </div>
+        `;
+        loadMoreBtn.style.display = 'none';
+        resultsInfo.textContent = '';
+        return;
+    }
+    
+    const moviesToShow = Math.min(displayedCount + MOVIES_PER_PAGE, filteredData.length);
+    const moviesToDisplay = filteredData.slice(0, moviesToShow);
+    
+    resultsGrid.innerHTML = moviesToDisplay.map(movie => `
+        <div class="movie-card" data-id="${movie.imdb}">
+            <div class="movie-poster">
+                <i class="fas fa-film"></i>
+            </div>
+            <div class="movie-info">
+                <h3 class="movie-title">${movie.title}</h3>
+                <div class="movie-type">${movie.type === 'movie' ? 'Movie' : 'TV Show'} ${movie.year ? `(${movie.year})` : ''}</div>
+                <div class="movie-actions">
+                    <button class="play-btn" data-imdb="${movie.imdb}">
+                        <i class="fas fa-play"></i> Play
+                    </button>
+                    <button class="bookmark-btn${isBookmarked(movie.imdb) ? ' bookmarked' : ''}" data-imdb="${movie.imdb}">
+                        <i class="fas fa-bookmark"></i> Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    displayedCount = moviesToShow;
+    resultsInfo.textContent = `Showing ${displayedCount} of ${filteredData.length} results`;
+    
+    if (displayedCount < filteredData.length) {
+        loadMoreBtn.style.display = 'block';
+        loadMoreBtn.disabled = false;
+    } else {
+        loadMoreBtn.style.display = 'none';
+    }
+}
+
+function loadMoreMovies() {
+    displayMovies();
+}
+
+// --- Play movie ---
+function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
+    playerStatus.textContent = 'Loading player...';
+    let url = '';
+
+    // Check if provider is a VidFast provider
+    const isVidFastProvider = VIDFAST_PROVIDERS.includes(currentProvider);
+    
+    if (isVidFastProvider) {
+        // Use the VidFast format: https://vidfast.pro/movie/{tmdb}
+        if (!tmdbId) {
+            showError('TMDB ID required for VidFast providers', false);
+            return;
+        }
+        url = `https://${currentProvider}/movie/${tmdbId}`;
+        
+        // Open in about:blank
+        const aboutBlank = window.open('about:blank', '_blank');
+        if (aboutBlank) {
+            aboutBlank.location.href = url;
+            playerStatus.textContent = 'Opened in new tab';
+        } else {
+            showError('Popup blocked. Please allow popups for this site.', false);
+            playerStatus.textContent = 'Popup blocked';
+        }
+        return;
+    } 
+    else if (currentProvider.includes('godriveplayer.com')) {
+        if (type === 'movie') {
+            url = `https://godriveplayer.com/player.php?imdb=${id}`;
+        } else {
+            if (!tmdbId) {
+                showError('TMDB ID required for TV shows with this provider', false);
                 return;
             }
-            voiceSearchBtn.classList.add('listening');
-            voiceSearchBtn.innerHTML = '<i class="fas fa-microphone-slash"></i> Listening...';
-            const recognition = new webkitSpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
-            recognition.start();
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript;
-                searchInput.value = transcript;
-                voiceSearchBtn.classList.remove('listening');
-                voiceSearchBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice';
-                performSearch();
-            };
-            recognition.onerror = function() {
-                voiceSearchBtn.classList.remove('listening');
-                voiceSearchBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice';
-            };
-            recognition.onend = function() {
-                voiceSearchBtn.classList.remove('listening');
-                voiceSearchBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice';
-            };
+            url = `https://godriveplayer.com/player.php?type=series&tmdb=${tmdbId}&season=${season}&episode=${episode}`;
         }
+    } 
+    else if (currentProvider.includes('watch.lonelil.org')) {
+        if (!tmdbId) {
+            showError('TMDB ID required for this provider', false);
+            return;
+        }
+        if (type === 'movie') {
+            url = `https://watch.lonelil.org/watch/movie/${tmdbId}`;
+        } else {
+            url = `https://watch.lonelil.org/watch/show/${tmdbId}.${season}.${episode}`;
+        }
+    } 
+    else {
+        url = `https://${currentProvider}/player.php?imdb=${id}`;
+    }
 
-        // Update statistics
-        function updateStats() {
-            const movieCount = moviesData.filter(m => m.type === 'movie').length;
-            const tvCountVal = moviesData.filter(m => m.type === 'tv').length;
-            moviesCount.textContent = movieCount;
-            tvCount.textContent = tvCountVal;
-            totalCount.textContent = moviesData.length;
-        }
-        
-        // Download as Chronos file
-        function downloadAsChronosFile() {
-            // Get the current HTML content
-            const htmlContent = document.documentElement.outerHTML;
-            
-            // Create a Blob with the content
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            
-            // Create a download link
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'EclipseTV.chronos.html';
-            
-            // Trigger the download
-            document.body.appendChild(a);
-            a.click();
-            
-            // Clean up
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(a.href);
-            }, 100);
-            
-            // Update status
-            playerStatus.textContent = 'Downloaded as Chronos file';
-        }
-        
-        // Settings functions
-        function openSettings() {
-            settingsModal.classList.add('active');
-        }
-        
-        function closeSettingsModal() {
-            settingsModal.classList.remove('active');
-        }
-        
-        function loadSettings() {
-            // Load theme
-            const savedTheme = localStorage.getItem('eclipse_theme') || 'dark';
-            themeOptions.forEach(option => {
-                if (option.dataset.theme === savedTheme) {
-                    option.classList.add('active');
-                }
-            });
-            applyTheme(savedTheme);
-            
-            // Load cloaking settings
-            incognitoToggle.checked = localStorage.getItem('eclipse_incognito') === 'true';
-            workModeToggle.checked = localStorage.getItem('eclipse_workmode') === 'true';
-            studyModeToggle.checked = localStorage.getItem('eclipse_studymode') === 'true';
-            classroomToggle.checked = localStorage.getItem('eclipse_classroom') === 'true';
-            stealthToggle.checked = localStorage.getItem('eclipse_stealth') === 'true';
-            
-            // Apply cloaking settings
-            applyCloakingSettings();
-        }
-        
-        function saveSettings() {
-            // Save theme
-            const selectedTheme = document.querySelector('.theme-option.active').dataset.theme;
-            localStorage.setItem('eclipse_theme', selectedTheme);
-            
-            // Save cloaking settings
-            localStorage.setItem('eclipse_incognito', incognitoToggle.checked);
-            localStorage.setItem('eclipse_workmode', workModeToggle.checked);
-            localStorage.setItem('eclipse_studymode', studyModeToggle.checked);
-            localStorage.setItem('eclipse_classroom', classroomToggle.checked);
-            localStorage.setItem('eclipse_stealth', stealthToggle.checked);
-            
-            // Apply settings
-            applyTheme(selectedTheme);
-            applyCloakingSettings();
-            
-            // Close modal
-            closeSettingsModal();
-            
-            // Update status
-            playerStatus.textContent = 'Settings saved';
-        }
-        
-        function applyTheme(theme) {
-            // Remove existing theme classes
-            document.body.className = '';
-            // Add the selected theme class
-            document.body.classList.add(`theme-${theme}`);
-        }
-        
-        function applyCloakingSettings() {
-            // Apply incognito mode
-            if (incognitoToggle.checked) {
-                document.title = "New Tab";
-            } else {
-                document.title = "Eclipse V2";
-            }
-            
-            // Apply work mode (disguise as Google Docs)
-            if (workModeToggle.checked) {
-                document.body.classList.add('cloak-work');
-                document.querySelector('.container').style.display = 'none';
-                cloakContent.style.display = 'block';
-                cloakTitle.textContent = 'Google Docs';
-                cloakMessage.textContent = 'Loading your documents...';
-            } 
-            // Apply study mode (disguise as Wikipedia)
-            else if (studyModeToggle.checked) {
-                document.body.classList.add('cloak-study');
-                document.querySelector('.container').style.display = 'none';
-                cloakContent.style.display = 'block';
-                cloakTitle.textContent = 'Wikipedia';
-                cloakMessage.textContent = 'The Free Encyclopedia';
-            }
-            // Apply classroom mode (disguise as Google Classroom)
-            else if (classroomToggle.checked) {
-                document.body.classList.add('cloak-classroom');
-                document.querySelector('.container').style.display = 'none';
-                cloakContent.style.display = 'block';
-                cloakTitle.textContent = 'Google Classroom';
-                cloakMessage.textContent = 'Loading your classes...';
-            }
-            else {5
-                document.body.classList.remove('cloak-work', 'cloak-study', 'cloak-classroom');
-                cloakContent.style.display = 'none';
-                document.querySelector('.container').style.display = 'block';
-            }
-            
-            // Reset favicon
-            const link = document.querySelector("link[rel*='icon']") || document.createElement('link');
-            link.type = 'image/x-icon';
-            link.rel = 'icon';
-            link.href = 'https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fas2.ftcdn.net%2Fv2%2Fjpg%2F02%2F78%2F71%2F73%2F1000_F_278717315_KtaKn0mC0lQ16j20iheyMMrPBOWOQKCa.jpg&f=1&nofb=1&ipt=d58cc732db7d8237eac62dc1c8f4d4fdd6d0fc40d2e5ca2bce4997e2adeec6ab';
-            document.head.appendChild(link);
-            
-            // Apply stealth mode (minimal UI)
-            if (stealthToggle.checked) {
-                document.body.classList.add('stealth-mode');
-                // You could add additional CSS to minimize UI elements
-            } else {
-                document.body.classList.remove('stealth-mode');
-            }
-        }
-        
-        // Expose playMovie globally for inline event handler
-        window.playMovie = playMovie;
-        
-        function slowScrollTo(element, duration = 1200) {
-            const rect = element.getBoundingClientRect();
-            const targetY = rect.top + window.pageYOffset;
-            const startY = window.pageYOffset;
-            const distance = targetY - startY;
-            let startTime = null;
+    playerFrame.src = url;
+    playerModal.classList.add('active');
 
-            function step(currentTime) {
-                if (!startTime) startTime = currentTime;
-                const timeElapsed = currentTime - startTime;
-                // Ease function (easeInOutCubic)
-                const ease = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
-                const progress = Math.min(timeElapsed / duration, 1);
-                window.scrollTo(0, startY + distance * ease(progress));
-                if (progress < 1) {
-                    requestAnimationFrame(step);
-                }
-            }
+    const movie = moviesData.find(m => m.imdb === id || m.tmdb === tmdbId);
+    if (movie) {
+        playerTitle.textContent = movie.title;
+    }
+
+    playerStatus.textContent = 'Playing';
+}
+
+// --- Voice search ---
+function startVoiceSearch() {
+    if (!('webkitSpeechRecognition' in window)) {
+        alert('Voice search is not supported in your browser');
+        return;
+    }
+    
+    voiceSearchBtn.classList.add('listening');
+    voiceSearchBtn.innerHTML = '<i class="fas fa-microphone-slash"></i> Listening...';
+    
+    const recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+    recognition.start();
+    
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        searchInput.value = transcript;
+        voiceSearchBtn.classList.remove('listening');
+        voiceSearchBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice';
+        performSearch();
+    };
+    
+    recognition.onerror = function() {
+        voiceSearchBtn.classList.remove('listening');
+        voiceSearchBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice';
+    };
+    
+    recognition.onend = function() {
+        voiceSearchBtn.classList.remove('listening');
+        voiceSearchBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice';
+    };
+}
+
+// --- Update statistics ---
+function updateStats() {
+    const movieCount = moviesData.filter(m => m.type === 'movie').length;
+    const tvCountVal = moviesData.filter(m => m.type === 'tv').length;
+    moviesCount.textContent = movieCount;
+    tvCount.textContent = tvCountVal;
+    totalCount.textContent = moviesData.length;
+}
+
+// --- Download as Chronos file ---
+function downloadAsChronosFile() {
+    const htmlContent = document.documentElement.outerHTML;
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'EclipseTV.chronos.html';
+    document.body.appendChild(a);
+    a.click();
+    
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+    }, 100);
+    
+    playerStatus.textContent = 'Downloaded as Chronos file';
+}
+
+// --- Settings functions ---
+function openSettings() {
+    settingsModal.classList.add('active');
+}
+
+function closeSettingsModal() {
+    settingsModal.classList.remove('active');
+}
+
+function loadSettings() {
+    // Load theme
+    const savedTheme = localStorage.getItem('eclipse_theme') || 'dark';
+    themeOptions.forEach(option => {
+        if (option.dataset.theme === savedTheme) {
+            option.classList.add('active');
+        }
+    });
+    applyTheme(savedTheme);
+    
+    // Load cloaking settings
+    incognitoToggle.checked = localStorage.getItem('eclipse_incognito') === 'true';
+    workModeToggle.checked = localStorage.getItem('eclipse_workmode') === 'true';
+    studyModeToggle.checked = localStorage.getItem('eclipse_studymode') === 'true';
+    classroomToggle.checked = localStorage.getItem('eclipse_classroom') === 'true';
+    stealthToggle.checked = localStorage.getItem('eclipse_stealth') === 'true';
+}
+
+function saveSettings() {
+    // Save theme
+    const selectedTheme = document.querySelector('.theme-option.active').dataset.theme;
+    localStorage.setItem('eclipse_theme', selectedTheme);
+    
+    // Save cloaking settings
+    localStorage.setItem('eclipse_incognito', incognitoToggle.checked);
+    localStorage.setItem('eclipse_workmode', workModeToggle.checked);
+    localStorage.setItem('eclipse_studymode', studyModeToggle.checked);
+    localStorage.setItem('eclipse_classroom', classroomToggle.checked);
+    localStorage.setItem('eclipse_stealth', stealthToggle.checked);
+    
+    // Apply settings
+    applyTheme(selectedTheme);
+    
+    // Close modal
+    closeSettingsModal();
+    
+    // Update status
+    playerStatus.textContent = 'Settings saved';
+}
+
+function applyTheme(theme) {
+    document.body.className = '';
+    document.body.classList.add(`theme-${theme}`);
+}
+
+// --- Update popup functions ---
+function maybeShowUpdatePopup() {
+    const lastSeen = localStorage.getItem("lastSeenAppVersion");
+    if (lastSeen !== APP_VERSION) {
+        document.getElementById("update-popup").style.display = "flex";
+    }
+}
+
+function dismissUpdatePopup() {
+    localStorage.setItem("lastSeenAppVersion", APP_VERSION);
+    document.getElementById("update-popup").style.display = "none";
+}
+
+function learnMore() {
+    window.open('https://7-7-7-10.github.io/MoviePlayer/updates.html', '_blank');
+}
+
+// --- Utility functions ---
+function slowScrollTo(element, duration = 1200) {
+    const rect = element.getBoundingClientRect();
+    const targetY = rect.top + window.pageYOffset;
+    const startY = window.pageYOffset;
+    const distance = targetY - startY;
+    let startTime = null;
+
+    function step(currentTime) {
+        if (!startTime) startTime = currentTime;
+        const timeElapsed = currentTime - startTime;
+        const ease = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+        const progress = Math.min(timeElapsed / duration, 1);
+        window.scrollTo(0, startY + distance * ease(progress));
+        if (progress < 1) {
             requestAnimationFrame(step);
         }
-          const APP_VERSION = "2.1.2";
-        let autoScrollOnSearch = false;
-         function maybeShowUpdatePopup() {
-        const lastSeen = localStorage.getItem("lastSeenAppVersion");
-        if (lastSeen !== APP_VERSION) {
-            document.getElementById("update-popup").style.display = "flex";
-            document.getElementById("dismiss-update-popup").onclick = () => {
-                localStorage.setItem("lastSeenAppVersion", APP_VERSION);
-                document.getElementById("update-popup").style.display = "none";
-            };
-        }
     }
+    requestAnimationFrame(step);
+}
+
+// Expose playMovie globally for inline event handler
+window.playMovie = playMovie;
     </script>
 </body>
 </html>
-
-
-
-
