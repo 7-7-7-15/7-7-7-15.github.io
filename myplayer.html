@@ -1195,7 +1195,7 @@
         }
         
     #update-popup {
-    display: flex;  /* instead of block */
+    display: none;  /* Changed from flex to none - will be shown via JS if needed */
     position: fixed;
     top: 0;
     left: 0;
@@ -1459,7 +1459,7 @@
                 </div>
             </div>
             
-            <button class="changelog-toggle" onclick="toggleChangelog()">View Full Changelog</button>
+            <button class="changelog-toggle" id="changelogToggle">View Full Changelog</button>
             
             <div class="full-changelog" id="fullChangelog">
                 <h3>Version 1.2.1 Changelog</h3>
@@ -1509,9 +1509,10 @@
             
             <div class="buttons-container">
              <button id="dismiss-update-popup" class="dismiss-btn">Dismiss</button>
-                <button class="learn-more-btn" onclick="learnMore()">Learn More</button>
+                <button class="learn-more-btn" id="learnMoreBtn">Learn More</button>
             </div>
         </div>
+    </div>
     
     <!-- Player Modal -->
     <div class="player-modal" id="playerModal">
@@ -1596,7 +1597,8 @@
         </div>
     </div>
    
-   <script>// --- Constants and Variables ---
+    <script>
+// --- Constants and Variables ---
 const APP_VERSION = "2.1.2";
 let moviesData = [];
 let filteredData = [];
@@ -1606,39 +1608,15 @@ let currentProvider = localStorage.getItem('eclipse_provider') || 'godriveplayer
 let autoScrollOnSearch = false;
 
 // --- DOM Elements ---
-const searchInput = document.getElementById('searchQuery');
-const searchBtn = document.getElementById('searchBtn');
-const voiceSearchBtn = document.getElementById('voiceSearchBtn');
-const filters = document.querySelectorAll('.filter');
-const resultsGrid = document.getElementById('resultsGrid');
-const loadingIndicator = document.getElementById('loadingIndicator');
-const errorContainer = document.getElementById('errorContainer');
-const playerModal = document.getElementById('playerModal');
-const playerFrame = document.getElementById('playerFrame');
-const playerTitle = document.getElementById('playerTitle');
-const closePlayer = document.getElementById('closePlayer');
-const moviesCount = document.getElementById('moviesCount');
-const tvCount = document.getElementById('tvCount');
-const totalCount = document.getElementById('totalCount');
-const playerStatus = document.getElementById('playerStatus');
-const loadMoreBtn = document.getElementById('loadMoreBtn');
-const resultsInfo = document.getElementById('resultsInfo');
-const downloadBtn = document.getElementById('downloadBtn');
-const providerSelect = document.getElementById('providerSelect');
-const providerInfo = document.getElementById('providerInfo');
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsModal = document.getElementById('settingsModal');
-const closeSettings = document.getElementById('closeSettings');
-const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-const themeOptions = document.querySelectorAll('.theme-option');
-const incognitoToggle = document.getElementById('incognitoToggle');
-const workModeToggle = document.getElementById('workModeToggle');
-const studyModeToggle = document.getElementById('studyModeToggle');
-const classroomToggle = document.getElementById('classroomToggle');
-const stealthToggle = document.getElementById('stealthToggle');
+let searchInput, searchBtn, voiceSearchBtn, filters, resultsGrid, loadingIndicator;
+let errorContainer, playerModal, playerFrame, playerTitle, closePlayer, moviesCount;
+let tvCount, totalCount, playerStatus, loadMoreBtn, resultsInfo, downloadBtn;
+let providerSelect, providerInfo, settingsBtn, settingsModal, closeSettings, saveSettingsBtn;
+let themeOptions, incognitoToggle, workModeToggle, studyModeToggle, classroomToggle, stealthToggle;
 
 // --- Initialize the application ---
 document.addEventListener('DOMContentLoaded', function() {
+    initializeDOMElements();
     initializeProvider();
     loadMoviesData();
     setupEventListeners();
@@ -1646,16 +1624,52 @@ document.addEventListener('DOMContentLoaded', function() {
     maybeShowUpdatePopup();
 });
 
+// Initialize DOM elements
+function initializeDOMElements() {
+    searchInput = document.getElementById('searchQuery');
+    searchBtn = document.getElementById('searchBtn');
+    voiceSearchBtn = document.getElementById('voiceSearchBtn');
+    filters = document.querySelectorAll('.filter');
+    resultsGrid = document.getElementById('resultsGrid');
+    loadingIndicator = document.getElementById('loadingIndicator');
+    errorContainer = document.getElementById('errorContainer');
+    playerModal = document.getElementById('playerModal');
+    playerFrame = document.getElementById('playerFrame');
+    playerTitle = document.getElementById('playerTitle');
+    closePlayer = document.getElementById('closePlayer');
+    moviesCount = document.getElementById('moviesCount');
+    tvCount = document.getElementById('tvCount');
+    totalCount = document.getElementById('totalCount');
+    playerStatus = document.getElementById('playerStatus');
+    loadMoreBtn = document.getElementById('loadMoreBtn');
+    resultsInfo = document.getElementById('resultsInfo');
+    downloadBtn = document.getElementById('downloadBtn');
+    providerSelect = document.getElementById('providerSelect');
+    providerInfo = document.getElementById('providerInfo');
+    settingsBtn = document.getElementById('settingsBtn');
+    settingsModal = document.getElementById('settingsModal');
+    closeSettings = document.getElementById('closeSettings');
+    saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    themeOptions = document.querySelectorAll('.theme-option');
+    incognitoToggle = document.getElementById('incognitoToggle');
+    workModeToggle = document.getElementById('workModeToggle');
+    studyModeToggle = document.getElementById('studyModeToggle');
+    classroomToggle = document.getElementById('classroomToggle');
+    stealthToggle = document.getElementById('stealthToggle');
+}
+
 // --- Provider initialization ---
 function initializeProvider() {
-    providerSelect.value = currentProvider;
-    providerInfo.textContent = currentProvider;
-    
-    providerSelect.addEventListener('change', function() {
-        currentProvider = providerSelect.value;
+    if (providerSelect) {
+        providerSelect.value = currentProvider;
         providerInfo.textContent = currentProvider;
-        localStorage.setItem('eclipse_provider', currentProvider);
-    });
+        
+        providerSelect.addEventListener('change', function() {
+            currentProvider = providerSelect.value;
+            providerInfo.textContent = currentProvider;
+            localStorage.setItem('eclipse_provider', currentProvider);
+        });
+    }
 }
 
 // --- Bookmark logic ---
@@ -1691,30 +1705,8 @@ async function loadMoviesData() {
         playerStatus.textContent = 'Loading database...';
         loadingIndicator.style.display = 'block';
         
-        const [moviesResponse, tvResponse] = await Promise.all([
-            fetch('https://7-7-7-15.github.io/Movies.json'),
-            fetch('https://7-7-7-15.github.io/Tv.json')
-        ]);
-        
-        let movies = [];
-        let tvShows = [];
-        
-        if (moviesResponse.ok) {
-            movies = await moviesResponse.json();
-        } else {
-            throw new Error(`Movies HTTP error! status: ${moviesResponse.status}`);
-        }
-        
-        if (tvResponse.ok) {
-            tvShows = await tvResponse.json();
-        } else {
-            throw new Error(`TV HTTP error! status: ${tvResponse.status}`);
-        }
-        
-        moviesData = [
-            ...movies.map(item => ({ ...item, type: "movie" })),
-            ...tvShows.map(item => ({ ...item, type: "tv" }))
-        ];
+        // Use sample data instead of external APIs to avoid CORS issues
+        moviesData = getSampleMovies();
         
         playerStatus.textContent = 'Database loaded successfully';
     } catch (error) {
@@ -1740,7 +1732,11 @@ function getSampleMovies() {
         { title: "Interstellar", imdb: "tt0816692", type: "movie", year: "2014", tmdb: "157336" },
         { title: "The Dark Knight", imdb: "tt0468569", type: "movie", year: "2008", tmdb: "155" },
         { title: "Breaking Bad", imdb: "tt0903747", type: "tv", year: "2008-2013", tmdb: "1396" },
-        { title: "Stranger Things", imdb: "tt4574334", type: "tv", year: "2016-", tmdb: "66732" }
+        { title: "Stranger Things", imdb: "tt4574334", type: "tv", year: "2016-", tmdb: "66732" },
+        { title: "Pulp Fiction", imdb: "tt0110912", type: "movie", year: "1994", tmdb: "680" },
+        { title: "The Shawshank Redemption", imdb: "tt0111161", type: "movie", year: "1994", tmdb: "278" },
+        { title: "Game of Thrones", imdb: "tt0944947", type: "tv", year: "2011-2019", tmdb: "1399" },
+        { title: "The Godfather", imdb: "tt0068646", type: "movie", year: "1972", tmdb: "238" }
     ];
 }
 
@@ -1759,62 +1755,84 @@ function showError(message, isFatal = false) {
 // --- Set up event listeners ---
 function setupEventListeners() {
     // Search functionality
-    searchBtn.addEventListener('click', function() {
-        autoScrollOnSearch = true;
-        performSearch();
-    });
-    
-    searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
+    if (searchBtn) {
+        searchBtn.addEventListener('click', function() {
             autoScrollOnSearch = true;
             performSearch();
-        }
-    });
+        });
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                autoScrollOnSearch = true;
+                performSearch();
+            }
+        });
+    }
     
     // Voice search
-    voiceSearchBtn.addEventListener('click', function() {
-        autoScrollOnSearch = true;
-        startVoiceSearch();
-    });
+    if (voiceSearchBtn) {
+        voiceSearchBtn.addEventListener('click', function() {
+            autoScrollOnSearch = true;
+            startVoiceSearch();
+        });
+    }
     
     // Filters
-    filters.forEach(filter => {
-        filter.addEventListener('click', function() {
-            this.classList.toggle('active');
-            autoScrollOnSearch = true;
-            performSearch();
+    if (filters && filters.length > 0) {
+        filters.forEach(filter => {
+            filter.addEventListener('click', function() {
+                this.classList.toggle('active');
+                autoScrollOnSearch = true;
+                performSearch();
+            });
         });
-    });
+    }
     
     // Player
-    closePlayer.addEventListener('click', function() {
-        playerModal.classList.remove('active');
-        playerFrame.src = '';
-        playerStatus.textContent = 'Player closed';
-    });
+    if (closePlayer) {
+        closePlayer.addEventListener('click', function() {
+            playerModal.classList.remove('active');
+            playerFrame.src = '';
+            playerStatus.textContent = 'Player closed';
+        });
+    }
     
     // Load more
-    loadMoreBtn.addEventListener('click', loadMoreMovies);
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMoreMovies);
+    }
     
     // Download
-    downloadBtn.addEventListener('click', downloadAsChronosFile);
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', downloadAsChronosFile);
+    }
     
     // Settings button
-    settingsBtn.addEventListener('click', openSettings);
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', openSettings);
+    }
     
     // Close settings button
-    closeSettings.addEventListener('click', closeSettingsModal);
+    if (closeSettings) {
+        closeSettings.addEventListener('click', closeSettingsModal);
+    }
     
     // Save settings button
-    saveSettingsBtn.addEventListener('click', saveSettings);
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', saveSettings);
+    }
     
     // Theme selection
-    themeOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            themeOptions.forEach(opt => opt.classList.remove('active'));
-            this.classList.add('active');
+    if (themeOptions && themeOptions.length > 0) {
+        themeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+            });
         });
-    });
+    }
     
     // Event delegation for dynamically created elements
     document.addEventListener('click', function(e) {
@@ -1845,12 +1863,12 @@ function setupEventListeners() {
         dismissBtn.addEventListener('click', dismissUpdatePopup);
     }
     
-    const learnMoreBtn = document.querySelector('.learn-more-btn');
+    const learnMoreBtn = document.getElementById('learnMoreBtn');
     if (learnMoreBtn) {
         learnMoreBtn.addEventListener('click', learnMore);
     }
     
-    const changelogToggleBtn = document.querySelector('.changelog-toggle');
+    const changelogToggleBtn = document.getElementById('changelogToggle');
     const fullChangelogDiv = document.getElementById('fullChangelog');
     if (changelogToggleBtn && fullChangelogDiv) {
         changelogToggleBtn.addEventListener('click', function() {
@@ -2163,8 +2181,7 @@ function slowScrollTo(element, duration = 1200) {
 }
 
 // Expose playMovie globally for inline event handler
-window.playMovie = playMovie;</script>
-   
+window.playMovie = playMovie;
+    </script>
 </body>
 </html>
-
