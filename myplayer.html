@@ -1682,7 +1682,7 @@ function getBookmarks() {
 }
 
 function saveBookmarks(arr) {
-    localStorage.setItem('eclipse_bookmarks', JSON.stringify(arr));
+    localStorage.setItem('eclipse_bookmarks', JSON.stringify(aratr));
 }
 
 function isBookmarked(imdbId) {
@@ -1706,7 +1706,25 @@ async function loadMoviesData() {
         loadingIndicator.style.display = 'block';
         
         // Use sample data instead of external APIs to avoid CORS issues
-        moviesData = getSampleMovies();
+    const [moviesResponse, tvResponse] = await Promise.all([
+                    fetch('https://7-7-7-15.github.io/Movies.json'),
+                    fetch('https://7-7-7-15.github.io/Tv.json')
+                ]);
+                
+                let movies = [];
+                let tvShows = [];
+                
+                if (moviesResponse.ok) {
+                    movies = await moviesResponse.json();
+                }
+                if (tvResponse.ok) {
+                    tvShows = await tvResponse.json();
+                }
+                
+                moviesData = [
+                    ...movies.map(item => ({ ...item, type: "movie" })),
+                    ...tvShows.map(item => ({ ...item, type: "tv" }))
+                ];
         
         playerStatus.textContent = 'Database loaded successfully';
     } catch (error) {
