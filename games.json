@@ -4,15 +4,39 @@
     "title": "1",
     "genre": "Puzzle",
     "year": "2023",
-    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpaperaccess.com%2Ffull%2F798915.jpg&f=1&nofb=1&ipt=4983e2a567b710143ca5d0120fa27aa843e5e157b7f6687503f57843f4786cde",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fplay2048.co%2FogImage.jpg&f=1&nofb=1&ipt=aaed59c29d0838973bd26f07906cd796373eeafa8bd70a172570640afd21b634",
     "link": "https://whocaresleonel.github.io/1/"
   },
   {
     "id": "2",
-    "title": "Another Game",
-    "genre": "Adventure",
+    "title": "2048 Fusion",
+    "genre": "Puzzle",
     "year": "2022",
-    "image": "https://example.com/another-image.jpg",
-    "link": "https://example.com/play-another-game"
-  }
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fk4.games%2Fgames%2F2048-fusion%2Fthumb_1.png&f=1&nofb=1&ipt=d480a8ad9cfb77c71171d6fcf2c711874be4c7dff92ab4251fdd3de7e2cd6087",
+    "link": "https://ucbg.github.io/2048-fusion/"
+  },
+   {
+    "id": "3",
+    "title": "Archery World Tour",
+    "genre": "Strategy",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimages.crazygames.com%2Farchery-world-tour%2F20230727042624%2Farchery-world-tour-cover%3Fauto%3Dformat%2Ccompress%26q%3D45%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop&f=1&nofb=1&ipt=05f7ad1820ca810a06dc3cee041e1e6e0fb74715755d58f5ba932a2c99693a60",
+    "link": "https://ucbg.github.io/archery-world-tour/"
+  },
+    {
+    "id": "4",
+    "title": "Awesome Tanks 1",
+    "genre": "Strategy",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.coolmathgames.com%2Fsites%2Fdefault%2Ffiles%2FAwesomeTanks_OG-logo.jpg&f=1&nofb=1&ipt=e01b98c724b35fe9fecc198fd0046f63a9b25a5d9b6a783dce96a5b1311d9851",
+    "link": "https://laparda14.github.io/Awesometanks1/"
+  },
+   {
+    "id": "5",
+    "title": "Big Tower Tiny Square",
+    "genre": "Adventure",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimages.crazygames.com%2Fbig-tower-tiny-square%2F20210326104458%2Fbig-tower-tiny-square-cover%3Fauto%3Dformat%2Ccompress%26q%3D75%26cs%3Dstrip%26ch%3DDPR%26w%3D1200%26h%3D630%26fit%3Dcrop&f=1&nofb=1&ipt=5f15981638d440bd680ef270a00ff84b029f9957fccc98d6eae7482da3b7b0c0",
+    "link": "https://chsydev.github.io/tbgg/projects/btts/"
+  },
 ]
