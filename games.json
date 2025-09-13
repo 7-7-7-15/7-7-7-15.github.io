@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1",
+    "title": "1",
+    "genre": "Puzzle",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpaperaccess.com%2Ffull%2F798915.jpg&f=1&nofb=1&ipt=4983e2a567b710143ca5d0120fa27aa843e5e157b7f6687503f57843f4786cde",
+    "link": "https://whocaresleonel.github.io/1/"
+  },
+  {
+    "id": "2",
+    "title": "Another Game",
+    "genre": "Adventure",
+    "year": "2022",
+    "image": "https://example.com/another-image.jpg",
+    "link": "https://example.com/play-another-game"
+  }
+]
