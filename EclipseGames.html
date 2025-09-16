@@ -483,6 +483,671 @@
             background: #1a1a1a;
         }
         
+        /* Settings button styles */
+        .settings-btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #252525;
+            background: #151515;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .settings-btn:hover {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            transform: rotate(30deg);
+        }
+        
+        /* Settings modal styles */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .settings-modal.active {
+            display: flex;
+        }
+        
+        .settings-container {
+            width: 90%;
+            max-width: 600px;
+            background: rgba(17, 17, 17, 0.95);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #333;
+            max-height: 80vh;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #151515;
+            border-bottom: 1px solid #252525;
+        }
+        
+        .settings-title {
+            color: #e0e0e0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .close-settings {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        .close-settings:hover {
+            color: #e0e0e0;
+            transform: scale(1.1);
+        }
+        
+        .settings-content {
+            padding: 20px;
+        }
+        
+        .settings-section {
+            margin-bottom: 25px;
+        }
+        
+        .settings-section h3 {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #252525;
+            font-weight: 500;
+        }
+        
+        .theme-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        
+        .theme-option {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #252525;
+            background: #151515;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        
+        .theme-option:hover {
+            background: #1a1a1a;
+            transform: translateY(-2px);
+        }
+        
+        .theme-option.active {
+            background: #252525;
+            color: #e0e0e0;
+            border-color: #666;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .cloaking-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .cloaking-option {
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #252525;
+            background: #151515;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .cloaking-option:hover {
+            background: #1a1a1a;
+        }
+        
+        .cloaking-option.active {
+            background: #252525;
+            color: #e0e0e0;
+            border-color: #666;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+        
+        .save-settings-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, #444 0%, #555 100%);
+            color: #e0e0e0;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .save-settings-btn:hover {
+            background: linear-gradient(135deg, #555 0%, #666 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Theme-specific styles */
+        body.theme-dark {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+        }
+        
+        body.theme-sunset {
+            background: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fhdqwalls.com%2Fwallpapers%2Fforest-dark-evening-sunset-last-light-minimalistic-5c.jpg&f=1&nofb=1&ipt=77ce7257b158ba1e987bcc45c86f58ac5f5fe466a9950fa6317f81020364ec9f') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff8e1;
+        }
+        body.theme-sunset header,
+        body.theme-sunset .stat-box,
+        body.theme-sunset .game-card {
+            background: rgba(79, 50, 37, 0.85);
+            border-color: #e2725b;
+            color: #fff8e1;
+        }
+        body.theme-sunset .game-title,
+        body.theme-sunset .stat-box h2 {
+            color: #fff8e1;
+        }
+        body.theme-sunset .search-btn,
+        body.theme-sunset .play-btn,
+        body.theme-sunset .load-more-btn {
+            background: linear-gradient(135deg, #e2725b 0%, #ff8a65 100%);
+            color: #3e2723;
+        }
+        body.theme-sunset .search-btn:hover,
+        body.theme-sunset .play-btn:hover,
+        body.theme-sunset .load-more-btn:hover {
+            background: linear-gradient(135deg, #ff8a65 0%, #ffab91 100%);
+        }
+        body.theme-sunset .filter {
+            background: rgba(79, 50, 37, 0.7);
+            border-color: #e2725b;
+            color: #ffccbc;
+        }
+        body.theme-sunset .filter.active {
+            background: rgba(179, 101, 75, 0.8);
+            color: #fff8e1;
+        }
+        
+        body.theme-blue-sunset {
+            background: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimages.hdqwalls.com%2Fdownload%2Fafter-sunset-minimal-4k-zm-1440x900.jpg&f=1&nofb=1&ipt=3abba2293d4a1cdff9124fcefe27859c11c9fd5d4f9b803b52a4ed53cb44674b') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0f0ff;
+        }
+        body.theme-blue-sunset header,
+        body.theme-blue-sunset .stat-box,
+        body.theme-blue-sunset .game-card {
+            background: rgba(30, 50, 80, 0.85);
+            border-color: #5b8de2;
+            color: #e0f0ff;
+        }
+        body.theme-blue-sunset .game-title,
+        body.theme-blue-sunset .stat-box h2 {
+            color: #e0f0ff;
+        }
+        body.theme-blue-sunset .search-btn,
+        body.theme-blue-sunset .play-btn,
+        body.theme-blue-sunset .load-more-btn {
+            background: linear-gradient(135deg, #5b8de2 0%, #65a0ff 100%);
+            color: #1a2337;
+        }
+        body.theme-blue-sunset .search-btn:hover,
+        body.theme-blue-sunset .play-btn:hover,
+        body.theme-blue-sunset .load-more-btn:hover {
+            background: linear-gradient(135deg, #65a0ff 0%, #91b9ff 100%);
+        }
+        body.theme-blue-sunset .filter {
+            background: rgba(30, 50, 80, 0.7);
+            border-color: #5b8de2;
+            color: #bcd4ff;
+        }
+        body.theme-blue-sunset .filter.active {
+            background: rgba(75, 101, 179, 0.8);
+            color: #e0f0ff;
+        }
+        
+        body.theme-gray {
+            background: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpapercave.com%2Fwp%2Fwp6956033.jpg&f=1&nofb=1&ipt=57c103fe5097fe707209fc56445b33737a192805d685faa097054c85bf7e4307') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0e0e0;
+        }
+        body.theme-gray header,
+        body.theme-gray .stat-box,
+        body.theme-gray .game-card {
+            background: rgba(20, 20, 30, 0.85);
+            border-color: #8a7fff;
+            color: #e0e0e0;
+        }
+        body.theme-gray .game-title,
+        body.theme-gray .stat-box h2 {
+            color: #e0e0e0;
+        }
+        body.theme-gray .search-btn,
+        body.theme-gray .play-btn,
+        body.theme-gray .load-more-btn {
+            background: linear-gradient(135deg, #4a3de0 0%, #6a5af3 100%);
+            color: #ffffff;
+        }
+        body.theme-gray .search-btn:hover,
+        body.theme-gray .play-btn:hover,
+        body.theme-gray .load-more-btn:hover {
+            background: linear-gradient(135deg, #6a5af3 0%, #8a7eff 100%);
+        }
+        body.theme-gray .filter {
+            background: rgba(20, 20, 30, 0.7);
+            border-color: #8a7fff;
+            color: #c0b8ff;
+        }
+        body.theme-gray .filter.active {
+            background: rgba(60, 50, 100, 0.8);
+            color: #e0e0e0;
+        }
+        
+        body.theme-midnight {
+            background: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpaperaccess.com%2Ffull%2F149365.jpg&f=1&nofb=1&ipt=f7630e7abda74d60470ee53a96618d587145c1f336cfc963bf5c319414d04bed') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0e0ff;
+        }
+        body.theme-midnight header,
+        body.theme-midnight .stat-box,
+        body.theme-midnight .game-card {
+            background: rgba(10, 10, 42, 0.9);
+            border-color: #4a4a8a;
+            color: #e0e0ff;
+        }
+        body.theme-midnight .game-title,
+        body.theme-midnight .stat-box h2 {
+            color: #e0e0ff;
+        }
+        body.theme-midnight .search-btn,
+        body.theme-midnight .play-btn,
+        body.theme-midnight .load-more-btn {
+            background: linear-gradient(135deg, #2a2a6a 0%, #3a3a9a 100%);
+            color: #ffffff;
+        }
+        body.theme-midnight .search-btn:hover,
+        body.theme-midnight .play-btn:hover,
+        body.theme-midnight .load-more-btn:hover {
+            background: linear-gradient(135deg, #3a3a9a 0%, #4a4aba 100%);
+        }
+        body.theme-midnight .filter {
+            background: rgba(10, 10, 42, 0.7);
+            border-color: #4a4a8a;
+            color: #a0a0ff;
+        }
+        body.theme-midnight .filter.active {
+            background: rgba(40, 40, 120, 0.8);
+            color: #e0e0ff;
+        }
+        
+        body.theme-neon {
+            background: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.itl.cat%2Fpngfile%2Fbig%2F16-163336_blue-hacker-wallpaper.jpg&f=1&nofb=1&ipt=0f6e0850e73ade59a78c33f85198dc3550a3d895723c3ed67a1396560cf77f72') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0f7fa;
+        }
+        body.theme-neon header,
+        body.theme-neon .stat-box,
+        body.theme-neon .game-card {
+            background: rgba(15, 12, 41, 0.85);
+            border-color: #4a3de0;
+            color: #e0f7fa;
+        }
+        body.theme-neon .game-title,
+        body.theme-neon .stat-box h2 {
+            color: #e0f7fa;
+        }
+        body.theme-neon .search-btn,
+        body.theme-neon .play-btn,
+        body.theme-neon .load-more-btn {
+            background: linear-gradient(135deg, #4a3de0 0%, #6a5af3 100%);
+            color: #ffffff;
+        }
+        body.theme-neon .search-btn:hover,
+        body.theme-neon .play-btn:hover,
+        body.theme-neon .load-more-btn:hover {
+            background: linear-gradient(135deg, #6a5af3 0%, #8a7eff 100%);
+        }
+        body.theme-neon .filter {
+            background: rgba(15, 12, 41, 0.7);
+            border-color: #4a3de0;
+            color: #b0a8ff;
+        }
+        body.theme-neon .filter.active {
+            background: rgba(60, 50, 150, 0.8);
+            color: #e0f7fa;
+        }
+        
+        body.theme-forest {
+            background: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimages.wallpapersden.com%2Fimage%2Fdownload%2Fforest-minimal_57638_2560x1440.jpg&f=1&nofb=1&ipt=aeada1a885d6f3e5fd6131a745a295e6dafe2e846f6225af4837ac1dd4ca57c8') no-repeat center center fixed;
+            background-size: cover;
+            color: #003314;
+        }
+        body.theme-forest header,
+        body.theme-forest .stat-box,
+        body.theme-forest .game-card {
+            background: rgba(29, 151, 108, 0.85);
+            border-color: #93f9b9;
+            color: #003314;
+        }
+        body.theme-forest .game-title,
+        body.theme-forest .stat-box h2 {
+            color: #003314;
+        }
+        body.theme-forest .search-btn,
+        body.theme-forest .play-btn,
+        body.theme-forest .load-more-btn {
+            background: linear-gradient(135deg, #1d976c 0%, #2bc48d 100%);
+            color: white;
+        }
+        body.theme-forest .search-btn:hover,
+        body.theme-forest .play-btn:hover,
+        body.theme-forest .load-more-btn:hover {
+            background: linear-gradient(135deg, #2bc48d 0%, #3be8a8 100%);
+        }
+        body.theme-forest .filter {
+            background: rgba(29, 151, 108, 0.7);
+            border-color: #93f9b9;
+            color: #00220e;
+        }
+        body.theme-forest .filter.active {
+            background: rgba(43, 196, 141, 0.8);
+            color: #003314;
+        }
+        
+        body.theme-cyber {
+            background: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstatic.vecteezy.com%2Fsystem%2Fresources%2Fpreviews%2F002%2F158%2F137%2Flarge_2x%2Fgreen-cyber-circuit-future-technology-concept-background-vector.jpg&f=1&nofb=1&ipt=cb23a2d5cb683fe388077416c97a42c94db33ab66f3d8fe606e2a371f15f18d8') no-repeat center center fixed;
+            background-size: cover;
+            color: #00ff9d;
+        }
+        body.theme-cyber header,
+        body.theme-cyber .stat-box,
+        body.theme-cyber .game-card {
+            background: rgba(0, 0, 0, 0.85);
+            border-color: #00ff9d;
+            color: #00ff9d;
+        }
+        body.theme-cyber .game-title,
+        body.theme-cyber .stat-box h2 {
+            color: #00ff9d;
+        }
+        body.theme-cyber .search-btn,
+        body.theme-cyber .play-btn,
+        body.theme-cyber .load-more-btn {
+            background: linear-gradient(135deg, #000000 0%, #222222 100%);
+            color: #00ff9d;
+            border: 1px solid #00ff9d;
+        }
+        body.theme-cyber .search-btn:hover,
+        body.theme-cyber .play-btn:hover,
+        body.theme-cyber .load-more-btn:hover {
+            background: linear-gradient(135deg, #222222 0%, #444444 100%);
+        }
+        body.theme-cyber .filter {
+            background: rgba(0, 0, 0, 0.7);
+            border-color: #00ff9d;
+            color: #00cc7d;
+        }
+        body.theme-cyber .filter.active {
+            background: rgba(0, 80, 50, 0.8);
+            color: #00ff9d;
+        }
+        
+        body.theme-lavender {
+            background: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fthvnext.bing.com%2Fth%2Fid%2FOIP.4foMpjg00OOWD149FwaBxQHaEK%3Fr%3D0%26cb%3Ducfimgc2%26pid%3DApi&f=1&ipt=2781f8508b4e051985ef10ab3e0d5c89abd640cb5146d7c5461ca3bccc186e5d&ipo=images') no-repeat center center fixed;
+            background-size: cover;
+            color: #4c1d95;
+        }
+        body.theme-lavender header,
+        body.theme-lavender .stat-box,
+        body.theme-lavender .game-card {
+            background: rgba(167, 139, 250, 0.85);
+            border-color: #c4b5fd;
+            color: #4c1d95;
+        }
+        body.theme-lavender .game-title,
+        body.theme-lavender .stat-box h2 {
+            color: #4c1d95;
+        }
+        body.theme-lavender .search-btn,
+        body.theme-lavender .play-btn,
+        body.theme-lavender .load-more-btn {
+            background: linear-gradient(135deg, #a78bfa 0%, #b99bfc 100%);
+            color: white;
+        }
+        body.theme-lavender .search-btn:hover,
+        body.theme-lavender .play-btn:hover,
+        body.theme-lavender .load-more-btn:hover {
+            background: linear-gradient(135deg, #b99bfc 0%, #cbabfe 100%);
+        }
+        body.theme-lavender .filter {
+            background: rgba(167, 139, 250, 0.7);
+            border-color: #c4b5fd;
+            color: #3a1670;
+        }
+        body.theme-lavender .filter.active {
+            background: rgba(185, 155, 252, 0.8);
+            color: #4c1d95;
+        }
+        
+        body.theme-crimson {
+            background: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwallpaperaccess.com%2Ffull%2F2899051.jpg&f=1&nofb=1&ipt=c129a12331532c7c9283fefd17637b67f255c31ff97ebb4fedad188ea749b20a') no-repeat center center fixed;
+            background-size: cover;
+            color: #ffcccb;
+        }
+        body.theme-crimson header,
+        body.theme-crimson .stat-box,
+        body.theme-crimson .game-card {
+            background: rgba(142, 14, 0, 0.85);
+            border-color: #ff6b6b;
+            color: #ffcccb;
+        }
+        body.theme-crimson .game-title,
+        body.theme-crimson .stat-box h2 {
+            color: #ffcccb;
+        }
+        body.theme-crimson .search-btn,
+        body.theme-crimson .play-btn,
+        body.theme-crimson .load-more-btn {
+            background: linear-gradient(135deg, #8E0E00 0%, #B22222 100%);
+            color: white;
+        }
+        body.theme-crimson .search-btn:hover,
+        body.theme-crimson .play-btn:hover,
+        body.theme-crimson .load-more-btn:hover {
+            background: linear-gradient(135deg, #B22222 0%, #DC143C 100%);
+        }
+        body.theme-crimson .filter {
+            background: rgba(142, 14, 0, 0.7);
+            border-color: #ff6b6b;
+            color: #ff9d9d;
+        }
+        body.theme-crimson .filter.active {
+            background: rgba(178, 34, 34, 0.8);
+            color: #ffcccb;
+        }
+        
+        body.theme-ocean {
+            background: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimages.hdqwalls.com%2Fwallpapers%2Fbird-flying-over-ocean-minimal-4k-ma.jpg&f=1&ipt=a36dd7aa1f22b8715936e856c0797ed446518ecb3c411a64d4cb5b6abec8eeb1') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0f7ff;
+        }
+        body.theme-ocean header,
+        body.theme-ocean .stat-box,
+        body.theme-ocean .game-card {
+            background: rgba(0, 50, 100, 0.85);
+            border-color: #0088ff;
+            color: #e0f7ff;
+        }
+        body.theme-ocean .game-title,
+        body.theme-ocean .stat-box h2 {
+            color: #e0f7ff;
+        }
+        body.theme-ocean .search-btn,
+        body.theme-ocean .play-btn,
+        body.theme-ocean .load-more-btn {
+            background: linear-gradient(135deg, #0088ff 0%, #00aaff 100%);
+            color: white;
+        }
+        body.theme-ocean .search-btn:hover,
+        body.theme-ocean .play-btn:hover,
+        body.theme-ocean .load-more-btn:hover {
+            background: linear-gradient(135deg, #00aaff 0%, #00ccff 100%);
+        }
+        body.theme-ocean .filter {
+            background: rgba(0, 50, 100, 0.7);
+            border-color: #0088ff;
+            color: #a0dfff;
+        }
+        body.theme-ocean .filter.active {
+            background: rgba(0, 100, 200, 0.8);
+            color: #e0f7ff;
+        }
+        
+        body.theme-purple-rain {
+            background: url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimages5.alphacoders.com%2F714%2Fthumb-1920-714858.png&f=1&ipt=f90e75fde56b0cfd8a5d5190b78317c02ed04a5db4f98f96fd9e41f5dac7b69f') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0d0ff;
+        }
+        body.theme-purple-rain header,
+        body.theme-purple-rain .stat-box,
+        body.theme-purple-rain .game-card {
+            background: rgba(50, 0, 100, 0.85);
+            border-color: #aa00ff;
+            color: #e0d0ff;
+        }
+        body.theme-purple-rain .game-title,
+        body.theme-purple-rain .stat-box h2 {
+            color: #e0d0ff;
+        }
+        body.theme-purple-rain .search-btn,
+        body.theme-purple-rain .play-btn,
+        body.theme-purple-rain .load-more-btn {
+            background: linear-gradient(135deg, #aa00ff 0%, #cc00ff 100%);
+            color: white;
+        }
+        body.theme-purple-rain .search-btn:hover,
+        body.theme-purple-rain .play-btn:hover,
+        body.theme-purple-rain .load-more-btn:hover {
+            background: linear-gradient(135deg, #cc00ff 0%, #ee00ff 100%);
+        }
+        body.theme-purple-rain .filter {
+            background: rgba(50, 0, 100, 0.7);
+            border-color: #aa00ff;
+            color: #d0a0ff;
+        }
+        body.theme-purple-rain .filter.active {
+            background: rgba(100, 0, 200, 0.8);
+            color: #e0d0ff;
+        }
+        
+        /* Theme option styles */
+        .theme-option[data-theme="sunset"] {
+            background: linear-gradient(135deg, #e2725b 0%, #ff8a65 100%);
+            color: #3e2723;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="blue-sunset"] {
+            background: linear-gradient(135deg, #5b8de2 0%, #65a0ff 100%);
+            color: #1a2337;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="gray"] {
+            background: linear-gradient(135deg, #4a3de0 0%, #6a5af3 100%);
+            color: #ffffff;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="ocean"] {
+            background: linear-gradient(135deg, #0088ff 0%, #00aaff 100%);
+            color: #ffffff;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="purple-rain"] {
+            background: linear-gradient(135deg, #aa00ff 0%, #cc00ff 100%);
+            color: #ffffff;
+            font-weight: 500;
+        }
+        
         @media (max-width: 768px) {
             .search-container {
                 flex-direction: column;
@@ -506,7 +1171,7 @@
         }
     </style>
 </head>
-<body>
+<body class="theme-dark">
     <div class="container">
         <header>
             <h1>Game Hub</h1>
@@ -525,6 +1190,11 @@
                 <div class="filter" data-genre="puzzle">Puzzle</div>
                 <div class="filter" data-genre="strategy">Strategy</div>
                 <div class="filter" data-genre="rpg">RPG</div>
+            </div>
+            
+            <!-- Settings button -->
+            <div style="margin-top: 15px;">
+                <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i> Settings</button>
             </div>
         </header>
         
@@ -593,6 +1263,78 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-container">
+            <div class="settings-header">
+                <div class="settings-title">Settings</div>
+                <button class="close-settings" id="closeSettings">&times;</button>
+            </div>
+            <div class="settings-content">
+                <div class="settings-section">
+                    <h3>Themes</h3>
+                    <div class="theme-options">
+                        <div class="theme-option active" data-theme="dark">Dark (Original)</div>
+                        <div class="theme-option" data-theme="sunset">Sunset</div>
+                        <div class="theme-option" data-theme="blue-sunset">Blue Sunset</div>
+                        <div class="theme-option" data-theme="gray">Gray</div>
+                        <div class="theme-option" data-theme="midnight">Midnight</div>
+                        <div class="theme-option" data-theme="neon">Neon</div>
+                        <div class="theme-option" data-theme="forest">Forest</div>
+                        <div class="theme-option" data-theme="cyber">Cyber</div>
+                        <div class="theme-option" data-theme="lavender">Lavender</div>
+                        <div class="theme-option" data-theme="crimson">Crimson</div>
+                        <div class="theme-option" data-theme="ocean">Ocean</div>
+                        <div class="theme-option" data-theme="purple-rain">Purple Rain</div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Cloaking Features</h3>
+                    <div class="cloaking-options">
+                        <div class="cloaking-option">
+                            <span>Incognito Mode</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="incognitoToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="cloaking-option">
+                            <span>Work Mode (Google Docs)</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="workModeToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="cloaking-option">
+                            <span>Study Mode (Wikipedia)</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="studyModeToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="cloaking-option">
+                            <span>Google Classroom</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="classroomToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="cloaking-option">
+                            <span>Stealth Player (Minimal UI)</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="stealthToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="save-settings-btn" id="saveSettingsBtn">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- Constants and Variables ---
         let gamesData = [];
@@ -604,6 +1346,8 @@
         let searchInput, searchBtn, voiceSearchBtn, filters, resultsGrid, loadingIndicator;
         let errorContainer, gamesCount, actionCount, adventureCount, platformStatus, loadMoreBtn;
         let resultsInfo, downloadBtn, playerModal, playerFrame, playerTitle, closePlayer;
+        let settingsBtn, settingsModal, closeSettings, saveSettingsBtn, themeOptions;
+        let incognitoToggle, workModeToggle, studyModeToggle, classroomToggle, stealthToggle;
 
         // --- Initialize the application ---
         document.addEventListener('DOMContentLoaded', function() {
@@ -635,6 +1379,18 @@
             playerFrame = document.getElementById('playerFrame');
             playerTitle = document.getElementById('playerTitle');
             closePlayer = document.getElementById('closePlayer');
+            
+            // Settings elements
+            settingsBtn = document.getElementById('settingsBtn');
+            settingsModal = document.getElementById('settingsModal');
+            closeSettings = document.getElementById('closeSettings');
+            saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            themeOptions = document.querySelectorAll('.theme-option');
+            incognitoToggle = document.getElementById('incognitoToggle');
+            workModeToggle = document.getElementById('workModeToggle');
+            studyModeToggle = document.getElementById('studyModeToggle');
+            classroomToggle = document.getElementById('classroomToggle');
+            stealthToggle = document.getElementById('stealthToggle');
         }
 
         // --- Bookmark logic ---
@@ -773,6 +1529,31 @@
                 });
             }
             
+            // Settings button
+            if (settingsBtn) {
+                settingsBtn.addEventListener('click', openSettings);
+            }
+            
+            // Close settings button
+            if (closeSettings) {
+                closeSettings.addEventListener('click', closeSettingsModal);
+            }
+            
+            // Save settings button
+            if (saveSettingsBtn) {
+                saveSettingsBtn.addEventListener('click', saveSettings);
+            }
+            
+            // Theme selection
+            if (themeOptions && themeOptions.length > 0) {
+                themeOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        themeOptions.forEach(opt => opt.classList.remove('active'));
+                        this.classList.add('active');
+                    });
+                });
+            }
+            
             // Event delegation for dynamically created elements
             document.addEventListener('click', function(e) {
                 // Play buttons
@@ -795,6 +1576,85 @@
                     bookmarkBtn.classList.toggle('bookmarked', isBookmarked(gameId));
                 }
             });
+        }
+
+        // --- Settings functions ---
+        function openSettings() {
+            settingsModal.classList.add('active');
+        }
+
+        function closeSettingsModal() {
+            settingsModal.classList.remove('active');
+        }
+
+        function loadSettings() {
+            // Load theme
+            const savedTheme = localStorage.getItem('gamehub_theme') || 'dark';
+            themeOptions.forEach(option => {
+                if (option.dataset.theme === savedTheme) {
+                    option.classList.add('active');
+                }
+            });
+            applyTheme(savedTheme);
+            
+            // Load cloaking settings
+            incognitoToggle.checked = localStorage.getItem('gamehub_incognito') === 'true';
+            workModeToggle.checked = localStorage.getItem('gamehub_workmode') === 'true';
+            studyModeToggle.checked = localStorage.getItem('gamehub_studymode') === 'true';
+            classroomToggle.checked = localStorage.getItem('gamehub_classroom') === 'true';
+            stealthToggle.checked = localStorage.getItem('gamehub_stealth') === 'true';
+            
+            // Load search query
+            const lastSearchQuery = localStorage.getItem('lastSearchQuery');
+            if (lastSearchQuery) {
+                searchInput.value = lastSearchQuery;
+            }
+            
+            // Load active filters
+            const activeFilters = JSON.parse(localStorage.getItem('activeFilters') || '[]');
+            if (activeFilters.length > 0) {
+                filters.forEach(filter => {
+                    const filterType = filter.dataset.genre || filter.dataset.type;
+                    if (activeFilters.includes(filterType)) {
+                        filter.classList.add('active');
+                    } else {
+                        filter.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Load last played game
+            const lastPlayedGame = JSON.parse(localStorage.getItem('lastPlayedGame') || 'null');
+            if (lastPlayedGame) {
+                platformStatus.textContent = `Last played: ${lastPlayedGame.title}`;
+            }
+        }
+
+        function saveSettings() {
+            // Save theme
+            const selectedTheme = document.querySelector('.theme-option.active').dataset.theme;
+            localStorage.setItem('gamehub_theme', selectedTheme);
+            
+            // Save cloaking settings
+            localStorage.setItem('gamehub_incognito', incognitoToggle.checked);
+            localStorage.setItem('gamehub_workmode', workModeToggle.checked);
+            localStorage.setItem('gamehub_studymode', studyModeToggle.checked);
+            localStorage.setItem('gamehub_classroom', classroomToggle.checked);
+            localStorage.setItem('gamehub_stealth', stealthToggle.checked);
+            
+            // Apply settings
+            applyTheme(selectedTheme);
+            
+            // Close modal
+            closeSettingsModal();
+            
+            // Update status
+            platformStatus.textContent = 'Settings saved';
+        }
+
+        function applyTheme(theme) {
+            document.body.className = '';
+            document.body.classList.add(`theme-${theme}`);
         }
 
         // --- Play game in modal ---
