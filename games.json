@@ -166,5 +166,45 @@
     "year": "2023",
     "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Flh3.ggpht.com%2FL1buEmgS9cGJ4qxh4sIwOyRkGYCnDcbwRJNxyJkg0M_rcjU9cyDMssgvjZ46zYbKrWc%3Dh900&f=1&nofb=1&ipt=39a9ba7ceed33dde997488599da0406a8a4e3ebdc2a433d1bc7a89c8113572fa",
     "link": "https://chsydev.github.io/tbgg/projects/ducklife-2/"
+  },
+    {
+    "id": "22",
+    "title": "Fruit Ninja",
+    "genre": "Fun",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fpixeltabs.com%2Fw%2Fimg%2Ffull%2F4%2F8%2Fd%2F3404826-1920x1080-desktop-hd-fruit-ninja-background-photo.jpg&f=1&nofb=1&ipt=1a02a9226e17202c162fd5a6ee9c4353d68d574f5d65a56db0434a39a11b0c2b",
+    "link": "https://alrightyrdy.github.io/fruitninja/index.html"
+  },
+     {
+    "id": "23",
+    "title": "Geometry Dash",
+    "genre": "Skill",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fcdn.wallpapersafari.com%2F80%2F22%2FSszv6j.jpg&f=1&nofb=1&ipt=0bbd8479a0a2c5949d37b80ea012638f2b2e7da938e8fbc69acb3e534bdda6c3",
+    "link": "https://3kh0s.github.io/games/gdlite/index.html"
+  },
+    {
+    "id": "24",
+    "title": "GetAway Shootout",
+    "genre": "Adventure",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fapi.web.gamepix.com%2Fassets%2Fimg%2F600%2F340%2Fbanner%2Fgetaway.png&f=1&nofb=1&ipt=ba7b6e118d3ee0e39264d3b26542d080ac85d48e0237becc1746c900c1dfcc67",
+    "link": "https://alrightyrdy.github.io/getaway-shootout/index.html"
+  },
+   {
+    "id": "25",
+    "title": "Zombotron",
+    "genre": "Action",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstatic.gogy.com%2Fogimages%2Fzombotron.jpg&f=1&nofb=1&ipt=5bb083aa5d3130c47c3b410120c2c662c1088942e0e0fc0683bc1b3cd7072fd2",
+    "link": "https://oscarjeej4.github.io/seraph/games/zombotron/"
+  },
+   {
+    "id": "26",
+    "title": "Zombotron 2",
+    "genre": "Action",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.flipline.com%2Fothergamefiles%2Fzombotron2%2Fimages%2Finfobanner.jpg&f=1&nofb=1&ipt=941bad2f74cfec4b4cf4552cbb3052ba4a418e9517b0e93f942ae6a6ce519c0c",
+    "link": "https://oscarjeej4.github.io/seraph/games/zombotron2/"
   }
 ]
