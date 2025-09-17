@@ -78,5 +78,29 @@
     "year": "2023",
     "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fbeebom.com%2Fwp-content%2Fuploads%2F2020%2F02%2FChrome-dino-game-feat..jpg%3Fw%3D750%26quality%3D75&f=1&nofb=1&ipt=c73e5cad347d716901a749ae5b7017a3c72bec44e5e79b0b73e54033ac7c99ad",
     "link": "https://priler.github.io/dino3d/"
+  },
+    {
+    "id": "11",
+    "title": "CircloO",
+    "genre": "Skill",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.ytimg.com%2Fvi%2FupxSRIJ6L8c%2Fhqdefault.jpg&f=1&nofb=1&ipt=e6e0bbf839cdd472db383652428b455c0852b1596ab0c81950996c06ed27dff5",
+    "link": "https://alrightyrdy.github.io/circlo/index.html"
+  },
+   {
+    "id": "12",
+    "title": "Cluster Rush",
+    "genre": "Skill",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.fnfgo.com%2Fwp-content%2Fuploads%2F2024%2F08%2FCluster-Rush.jpg&f=1&nofb=1&ipt=7f471a00bd31a6f59c963198305ade14d85e0b3e593919f8cb8ec82b278d20c9",
+    "link": "https://3kh0s.github.io/games/clusterrush/index.html"
+  },
+    {
+    "id": "13",
+    "title": "Cookie Clicker",
+    "genre": "RPG",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.cloudflare.steamstatic.com%2Fsteam%2Fapps%2F1454400%2Fheader.jpg%3Ft%3D1630523196&f=1&nofb=1&ipt=98227057452214863c57ba29a04e9073359bdfe9f2d02c660793f8dbd154b7c9",
+    "link": "https://orcatech2711.github.io/nano/games/cookieclicker/index.html"
   }
 ]
