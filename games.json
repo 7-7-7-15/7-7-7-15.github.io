@@ -150,5 +150,21 @@
     "year": "2023",
     "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fimages.tenorshare.com%2Farticle%2Fiphone-tips%2Fdrive-mad.jpg%3Fw%3D687%26h%3D459&f=1&nofb=1&ipt=bd5f2c299244fd98e15569e75e7e099d2d602bb68dc36e26aa60aae0243aeafa",
     "link": "https://ducky443747.github.io/games/DriveMad/"
+  },
+   {
+    "id": "20",
+    "title": "Duck Life",
+    "genre": "Fun",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Flh3.ggpht.com%2FL1buEmgS9cGJ4qxh4sIwOyRkGYCnDcbwRJNxyJkg0M_rcjU9cyDMssgvjZ46zYbKrWc%3Dh900&f=1&nofb=1&ipt=39a9ba7ceed33dde997488599da0406a8a4e3ebdc2a433d1bc7a89c8113572fa",
+    "link": "https://chsydev.github.io/tbgg/projects/ducklife/"
+  },
+    {
+    "id": "21",
+    "title": "Duck Life 2",
+    "genre": "Fun",
+    "year": "2023",
+    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Flh3.ggpht.com%2FL1buEmgS9cGJ4qxh4sIwOyRkGYCnDcbwRJNxyJkg0M_rcjU9cyDMssgvjZ46zYbKrWc%3Dh900&f=1&nofb=1&ipt=39a9ba7ceed33dde997488599da0406a8a4e3ebdc2a433d1bc7a89c8113572fa",
+    "link": "https://chsydev.github.io/tbgg/projects/ducklife-2/"
   }
 ]
