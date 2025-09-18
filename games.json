@@ -52,7 +52,7 @@
     "title": "Bob the Robber 4",
     "genre": "Puzzle",
     "year": "2023",
-    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.topfree.de%2Fspielwiese%2Fwp-content%2Fuploads%2F2017%2F07%2Fbob-the-robber-4-logo.jpg&f=1&nofb=1&ipt=106502d75e80ac815a5124c7a75dbe9ffb6735589d179298db661099325cb155",
+    "image": "/assets/gamelogo/bobtherobber4.png",
     "link": "https://7-7-7-8.github.io/BobTheRobber4/"
   },
    {
@@ -60,7 +60,7 @@
     "title": "Bubble Tanks 2",
     "genre": "Action",
     "year": "2023",
-    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fstatic.wikia.nocookie.net%2Fherointeractive%2Fimages%2F9%2F99%2FBubble_Tanks_2.png%2Frevision%2Flatest%3Fcb%3D20110129223016&f=1&nofb=1&ipt=f12c66dd3981f8f17bfcc35adfec9f4fce9fef181240827ab8508fe5adfa9183",
+    "image": "/assets/gamelogo/bubbletanks2.png",
     "link": "https://deepakrummy.github.io/games/bubbletanks2/index.html"
   },
     {
@@ -68,7 +68,7 @@
     "title": "Chrome Dino",
     "genre": "Skill",
     "year": "2023",
-    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fs.gameglider.org%2Fthumbnails%2Fdino.png&f=1&nofb=1&ipt=256fcd2c0ff47807f8ede1c46e4bee00525890e747d68d3d87a9e09b79ac97b3",
+    "image": "/assets/gamelogo/chromedino.png",
     "link": "https://chairil13.github.io/Dino-Game/"
   },
     {
@@ -76,7 +76,7 @@
     "title": "Chrome Dino 3d",
     "genre": "Skill",
     "year": "2023",
-    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fbeebom.com%2Fwp-content%2Fuploads%2F2020%2F02%2FChrome-dino-game-feat..jpg%3Fw%3D750%26quality%3D75&f=1&nofb=1&ipt=c73e5cad347d716901a749ae5b7017a3c72bec44e5e79b0b73e54033ac7c99ad",
+    "image": "/assets/gamelogo/dinorun3d.png",
     "link": "https://priler.github.io/dino3d/"
   },
     {
@@ -84,7 +84,7 @@
     "title": "CircloO",
     "genre": "Skill",
     "year": "2023",
-    "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.ytimg.com%2Fvi%2FupxSRIJ6L8c%2Fhqdefault.jpg&f=1&nofb=1&ipt=e6e0bbf839cdd472db383652428b455c0852b1596ab0c81950996c06ed27dff5",
+    "image": "/assets/gamelogo/circleoO.png",
     "link": "https://alrightyrdy.github.io/circlo/index.html"
   },
    {
