@@ -1651,6 +1651,57 @@
             // Update status
             platformStatus.textContent = 'Settings saved';
         }
+        // Utility to set the favicon using the existing <link rel="icon"> tag
+function setFavicon(url) {
+    let iconTag = document.querySelector("link[rel~='icon']");
+    if (!iconTag) {
+        iconTag = document.createElement("link");
+        iconTag.rel = "icon";
+        document.head.appendChild(iconTag);
+    }
+    iconTag.href = url;
+}
+
+// Always call this after updating cloaking toggles
+function updateCloak() {
+    if (document.getElementById("classroomToggle").checked) {
+        document.title = "Classes";
+        setFavicon("https://ssl.gstatic.com/classroom/ic_product_clas_128.png");
+    } else if (document.getElementById("studyModeToggle").checked) {
+        document.title = "Wikipedia, the free encyclopedia";
+        setFavicon("https://en.wikipedia.org/static/favicon/wikipedia.ico");
+    } else if (document.getElementById("workModeToggle").checked) {
+        document.title = "Google Docs";
+        setFavicon("https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico");
+    } else {
+        document.title = "Eclipse | Game Hub";
+        setFavicon("https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fas2.ftcdn.net%2Fv2%2Fjpg%2F02%2F78%2F71%2F73%2F1000_F_278717315_KtaKn0mC0lQ16j20iheyMMrPBOWOQKCa.jpg&f=1&nofb=1&ipt=d58cc732db7d8237eac62dc1c8f4d4fdd6d0fc40d2e5ca2bce4997e2adeec6ab");
+    }
+}
+
+// Link cloak toggles to updateCloak
+["classroomToggle", "studyModeToggle", "workModeToggle"].forEach(id => {
+    const el = document.getElementById(id);
+    el && el.addEventListener("change", updateCloak);
+});
+
+// If you have a settings save button, call updateCloak in its logic after saving.
+function playGame(gameUrl) {
+    if (document.getElementById("incognitoToggle").checked) {
+        // Launch in about:blank and embed as an iframe
+        const win = window.open("about:blank", "_blank");
+        win.document.write(`
+            <title>about:blank</title>
+            <body style="margin:0;overflow:hidden;background:#fff;">
+                <iframe src="https://7-7-7-15.github.io/EclipseGames" style="width:100vw; height:100vh; border:none;"></iframe>
+            </body>
+        `);
+        win.document.close();
+        return;
+    }
+    // ...existing play code/modal...
+}
+
 
         function applyTheme(theme) {
             document.body.className = '';
@@ -1862,6 +1913,7 @@
                 platformStatus.textContent = `Last played: ${lastPlayedGame.title}`;
             }
         }
+        
     </script>
 </body>
 </html>
