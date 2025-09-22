@@ -849,11 +849,13 @@
             
             <div class="form-group">
                 <label for="actionSelect"><i class="fas fa-cog"></i> Select Action</label>
-                <select id="actionSelect" class="action-select">
-                    <option value="launch">Launch in about:blank</option>
-                    <option value="blob">Generate Blob URL</option>
-                    <option value="download">Download as Chronos file</option>
-                </select>
+              <select id="actionSelect" class="action-select">
+        <option value="launch">Launch in about:blank</option>
+        <option value="blob">Generate Blob URL</option>
+        <option value="download">Download as Chronos file</option>
+        <option value="self-iframe">Self-hosted iframe</option>
+        <option value="data-url">Data URL</option>
+    </select>
             </div>
             
             <button id="submitBtn" class="submit-btn">
@@ -874,6 +876,15 @@
                 <li><i class="fas fa-check-circle"></i> For the Chronos file, an HTML file will be downloaded that embeds the site in an iframe</li>
             </ul>
         </div>
+        <div id="iframeContainer" class="iframe-container" style="display: none; margin-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3><i class="fas fa-window-restore"></i> Embedded Site</h3>
+        <button id="fullscreenBtn" class="fullscreen-btn" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #333; background: #111; color: #e0e0e0; cursor: pointer;">
+            <i class="fas fa-expand"></i> Fullscreen
+        </button>
+    </div>
+    <iframe id="embeddedFrame" style="width: 100%; height: 500px; border: 1px solid #333; border-radius: 8px; background: #111;"></iframe>
+</div>
         
         <footer class="animate-in delay-2">
             <div class="eclipse-footer">
@@ -925,210 +936,295 @@
     </div>
    
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // DOM Elements
-            const urlInput = document.getElementById('urlInput');
-            const actionSelect = document.getElementById('actionSelect');
-            const submitBtn = document.getElementById('submitBtn');
-            const statusMessage = document.getElementById('statusMessage');
-            const settingsBtn = document.getElementById('settingsBtn');
-            const settingsModal = document.getElementById('settingsModal');
-            const closeSettings = document.getElementById('closeSettings');
-            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-            const themeOptions = document.querySelectorAll('.theme-option');
-            
-            // Load saved theme
-            loadSettings();
-            
-            // Submit button event
-            submitBtn.addEventListener('click', function() {
-                const url = urlInput.value.trim();
-                const action = actionSelect.value;
-                
-                if (!url) {
-                    showStatus('Please enter a URL', 'error');
-                    return;
-                }
-                
-                // Validate URL format
-                try {
-                    new URL(url);
-                } catch (e) {
-                    showStatus('Please enter a valid URL', 'error');
-                    return;
-                }
-                
-                if (action === 'launch') {
-                    launchInAboutBlank(url);
-                } else if (action === 'blob') {
-                    generateBlobUrl(url);
-                } else if (action === 'download') {
-                    downloadChronosFile(url);
-                }
-            });
-            
-            // Launch in about:blank
-            function launchInAboutBlank(url) {
-                try {
-                    const newWindow = window.open('about:blank', '_blank');
-                    if (!newWindow) {
-                        showStatus('Popup blocked. Please allow popups for this site.', 'error');
-                        return;
-                    }
-                    
-                    newWindow.document.write(`
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <title>Eclipse Launcher</title>
-                            <style>
-                                body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-                                iframe { width: 100%; height: 100%; border: none; }
-                            </style>
-                        </head>
-                        <body>
-                            <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
-                        </body>
-                        </html>
-                    `);
-                    newWindow.document.close();
-                    
-                    showStatus('Site launched in new tab', 'success');
-                } catch (error) {
-                    showStatus('Error launching site: ' + error.message, 'error');
-                }
+      document.addEventListener('DOMContentLoaded', function() {
+    // DOM Elements
+    const urlInput = document.getElementById('urlInput');
+    const actionSelect = document.getElementById('actionSelect');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusMessage = document.getElementById('statusMessage');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const themeOptions = document.querySelectorAll('.theme-option');
+    const iframeContainer = document.getElementById('iframeContainer');
+    const embeddedFrame = document.getElementById('embeddedFrame');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    
+    // Load saved theme
+    loadSettings();
+    
+    // Handle action selection changes
+    actionSelect.addEventListener('change', function() {
+        if (this.value === 'self-iframe') {
+            iframeContainer.style.display = 'block';
+        } else {
+            iframeContainer.style.display = 'none';
+        }
+    });
+    
+    // Submit button event
+    submitBtn.addEventListener('click', function() {
+        const url = urlInput.value.trim();
+        const action = actionSelect.value;
+        
+        if (!url) {
+            showStatus('Please enter a URL', 'error');
+            return;
+        }
+        
+        // Validate URL format
+        try {
+            new URL(url);
+        } catch (e) {
+            showStatus('Please enter a valid URL', 'error');
+            return;
+        }
+        
+        if (action === 'launch') {
+            launchInAboutBlank(url);
+        } else if (action === 'blob') {
+            generateBlobUrl(url);
+        } else if (action === 'download') {
+            downloadChronosFile(url);
+        } else if (action === 'self-iframe') {
+            loadSelfHostedIframe(url);
+        } else if (action === 'data-url') {
+            generateDataUrl(url);
+        }
+    });
+    
+    // Launch in about:blank
+    function launchInAboutBlank(url) {
+        try {
+            const newWindow = window.open('about:blank', '_blank');
+            if (!newWindow) {
+                showStatus('Popup blocked. Please allow popups for this site.', 'error');
+                return;
             }
             
-            // Generate Blob URL
-            function generateBlobUrl(url) {
-                try {
-                    const htmlContent = `
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <title>Eclipse Blob - ${url}</title>
-                            <style>
-                                body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-                                iframe { width: 100%; height: 100%; border: none; }
-                            </style>
-                        </head>
-                        <body>
-                            <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
-                        </body>
-                        </html>
-                    `;
-                    
-                    const blob = new Blob([htmlContent], { type: 'text/html' });
-                    const blobUrl = URL.createObjectURL(blob);
-                    
-                    // Open the blob URL in a new tab
-                    const newWindow = window.open(blobUrl, '_blank');
-                    if (!newWindow) {
-                        showStatus('Popup blocked. Please allow popups for this site.', 'error');
-                        return;
-                    }
-                    
-                    showStatus('Blob URL generated and opened in new tab', 'success');
-                } catch (error) {
-                    showStatus('Error generating Blob URL: ' + error.message, 'error');
-                }
+            newWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Eclipse Launcher</title>
+                    <style>
+                        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                        iframe { width: 100%; height: 100%; border: none; }
+                    </style>
+                </head>
+                <body>
+                    <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
+                </body>
+                </html>
+            `);
+            newWindow.document.close();
+            
+            showStatus('Site launched in new tab', 'success');
+        } catch (error) {
+            showStatus('Error launching site: ' + error.message, 'error');
+        }
+    }
+    
+    // Generate Blob URL
+    function generateBlobUrl(url) {
+        try {
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Eclipse Blob - ${url}</title>
+                    <style>
+                        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                        iframe { width: 100%; height: 100%; border: none; }
+                    </style>
+                </head>
+                <body>
+                    <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // Open the blob URL in a new tab
+            const newWindow = window.open(blobUrl, '_blank');
+            if (!newWindow) {
+                showStatus('Popup blocked. Please allow popups for this site.', 'error');
+                return;
             }
             
-            // Download as Chronos file
-            function downloadChronosFile(url) {
-                try {
-                    const htmlContent = `
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <title>Eclipse Chronos - ${url}</title>
-                            <style>
-                                body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-                                iframe { width: 100%; height: 100%; border: none; }
-                            </style>
-                        </head>
-                        <body>
-                            <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
-                        </body>
-                        </html>
-                    `;
-                    
-                    const blob = new Blob([htmlContent], { type: 'text/html' });
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'Eclipse-Chronos.html';
-                    document.body.appendChild(a);
-                    a.click();
-                    
-                    setTimeout(() => {
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(a.href);
-                    }, 100);
-                    
-                    showStatus('Chronos file downloaded successfully', 'success');
-                } catch (error) {
-                    showStatus('Error downloading file: ' + error.message, 'error');
-                }
-            }
+            showStatus('Blob URL generated and opened in new tab', 'success');
+        } catch (error) {
+            showStatus('Error generating Blob URL: ' + error.message, 'error');
+        }
+    }
+    
+    // Download as Chronos file
+    function downloadChronosFile(url) {
+        try {
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Eclipse Chronos - ${url}</title>
+                    <style>
+                        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                        iframe { width: 100%; height: 100%; border: none; }
+                    </style>
+                </head>
+                <body>
+                    <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
+                </body>
+                </html>
+            `;
             
-            // Show status message
-            function showStatus(message, type) {
-                statusMessage.textContent = message;
-                statusMessage.className = 'status-message';
-                statusMessage.classList.add(`status-${type}`);
-                statusMessage.style.display = 'block';
-                
-                setTimeout(() => {
-                    statusMessage.style.display = 'none';
-                }, 5000);
-            }
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'Eclipse-Chronos.html';
+            document.body.appendChild(a);
+            a.click();
             
-            // Settings functions
-            settingsBtn.addEventListener('click', function() {
-                settingsModal.classList.add('active');
-            });
-            
-            closeSettings.addEventListener('click', function() {
-                settingsModal.classList.remove('active');
-            });
-            
-            saveSettingsBtn.addEventListener('click', function() {
-                const selectedTheme = document.querySelector('.theme-option.active').dataset.theme;
-                localStorage.setItem('eclipse_theme', selectedTheme);
-                applyTheme(selectedTheme);
-                settingsModal.classList.remove('active');
-                showStatus('Settings saved successfully', 'success');
-            });
-            
-            themeOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    themeOptions.forEach(opt => opt.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-            
-            function loadSettings() {
-                const savedTheme = localStorage.getItem('eclipse_theme') || 'blue-sunset';
-                themeOptions.forEach(option => {
-                    if (option.dataset.theme === savedTheme) {
-                        option.classList.add('active');
-                    }
-                });
-                applyTheme(savedTheme);
-            }
-            
-            function applyTheme(theme) {
-                document.body.className = '';
-                document.body.classList.add(`theme-${theme}`);
-            }
-            
-            // Add animation classes
             setTimeout(() => {
-                document.querySelectorAll('.eclipse-header, .url-form, .instructions, footer').forEach((el, i) => {
-                    el.classList.add('animate-in', `delay-${i}`);
-                });
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
             }, 100);
+            
+            showStatus('Chronos file downloaded successfully', 'success');
+        } catch (error) {
+            showStatus('Error downloading file: ' + error.message, 'error');
+        }
+    }
+    
+    // Self-hosted iframe function
+    function loadSelfHostedIframe(url) {
+        try {
+            embeddedFrame.src = url;
+            iframeContainer.style.display = 'block';
+            showStatus('Site loaded in embedded iframe', 'success');
+            
+            // Scroll to iframe
+            iframeContainer.scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+            showStatus('Error loading iframe: ' + error.message, 'error');
+        }
+    }
+    
+    // Fullscreen button for iframe
+    fullscreenBtn.addEventListener('click', function() {
+        if (embeddedFrame.requestFullscreen) {
+            embeddedFrame.requestFullscreen();
+        } else if (embeddedFrame.mozRequestFullScreen) {
+            embeddedFrame.mozRequestFullScreen();
+        } else if (embeddedFrame.webkitRequestFullscreen) {
+            embeddedFrame.webkitRequestFullscreen();
+        } else if (embeddedFrame.msRequestFullscreen) {
+            embeddedFrame.msRequestFullscreen();
+        }
+    });
+    
+    // Generate Data URL
+    function generateDataUrl(url) {
+        try {
+            // Create HTML content for the data URL
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Eclipse Data URL - ${url}</title>
+                    <style>
+                        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                        iframe { width: 100%; height: 100%; border: none; }
+                    </style>
+                </head>
+                <body>
+                    <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
+                </body>
+                </html>
+            `;
+            
+            // Create data URL (encode the content)
+            const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
+            
+            // Check URL length limitation (approx 32KB for most browsers)
+            if (dataUrl.length > 32000) {
+                showStatus('Data URL too long. Try a different method.', 'error');
+                return;
+            }
+            
+            // Open the data URL in a new tab
+            const newWindow = window.open(dataUrl, '_blank');
+            if (!newWindow) {
+                showStatus('Popup blocked. Please allow popups for this site.', 'error');
+                return;
+            }
+            
+            showStatus('Data URL generated and opened in new tab', 'success');
+        } catch (error) {
+            showStatus('Error generating Data URL: ' + error.message, 'error');
+        }
+    }
+    
+    // Show status message
+    function showStatus(message, type) {
+        statusMessage.textContent = message;
+        statusMessage.className = 'status-message';
+        statusMessage.classList.add(`status-${type}`);
+        statusMessage.style.display = 'block';
+        
+        setTimeout(() => {
+            statusMessage.style.display = 'none';
+        }, 5000);
+    }
+    
+    // Settings functions
+    settingsBtn.addEventListener('click', function() {
+        settingsModal.classList.add('active');
+    });
+    
+    closeSettings.addEventListener('click', function() {
+        settingsModal.classList.remove('active');
+    });
+    
+    saveSettingsBtn.addEventListener('click', function() {
+        const selectedTheme = document.querySelector('.theme-option.active').dataset.theme;
+        localStorage.setItem('eclipse_theme', selectedTheme);
+        applyTheme(selectedTheme);
+        settingsModal.classList.remove('active');
+        showStatus('Settings saved successfully', 'success');
+    });
+    
+    themeOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            themeOptions.forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
         });
+    });
+    
+    function loadSettings() {
+        const savedTheme = localStorage.getItem('eclipse_theme') || 'blue-sunset';
+        themeOptions.forEach(option => {
+            if (option.dataset.theme === savedTheme) {
+                option.classList.add('active');
+            }
+        });
+        applyTheme(savedTheme);
+    }
+    
+    function applyTheme(theme) {
+        document.body.className = '';
+        document.body.classList.add(`theme-${theme}`);
+    }
+    
+    // Add animation classes
+    setTimeout(() => {
+        document.querySelectorAll('.eclipse-header, .url-form, .instructions, footer').forEach((el, i) => {
+            el.classList.add('animate-in', `delay-${i}`);
+        });
+    }, 100);
+});
     </script>
 </body>
 </html>
