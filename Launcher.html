@@ -1108,7 +1108,7 @@
             });
             
             function loadSettings() {
-                const savedTheme = localStorage.getItem('eclipse_theme') || 'dark';
+                const savedTheme = localStorage.getItem('eclipse_theme') || 'blue-sunset';
                 themeOptions.forEach(option => {
                     if (option.dataset.theme === savedTheme) {
                         option.classList.add('active');
