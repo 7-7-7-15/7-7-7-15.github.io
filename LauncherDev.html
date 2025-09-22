@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eclipse Launcher</title>
+    <link rel="icon" type="image/x-icon" href="/assets/logo/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        :root {
+            --eclipse-primary: #6b5ce7;
+            --eclipse-secondary: #8c7ae6;
+            --eclipse-accent: #00ff9d;
+            --transition-speed: 0.3s;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header Styles */
+        .eclipse-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(17, 17, 17, 0.8);
+            border-radius: 16px;
+            border: 1px solid #252525;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .eclipse-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, var(--eclipse-primary), transparent, var(--eclipse-secondary));
+            opacity: 0.1;
+            z-index: -1;
+        }
+        
+        .eclipse-logo {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            color: var(--eclipse-primary);
+            text-shadow: 0 0 15px rgba(107, 92, 231, 0.5);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            color: #e0e0e0;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .eclipse-tagline {
+            font-size: 1.1rem;
+            color: var(--eclipse-secondary);
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+        
+        /* Main Content Area */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* URL Form */
+        .url-form {
+            background: rgba(17, 17, 17, 0.8);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid #252525;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-weight: 500;
+        }
+        
+        .url-input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #111;
+            color: #e0e0e0;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+        }
+        
+        .url-input:focus {
+            outline: none;
+            border-color: var(--eclipse-primary);
+            background: #151515;
+            box-shadow: 0 0 0 3px rgba(107, 92, 231, 0.3);
+        }
+        
+        .action-select {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #111;
+            color: #e0e0e0;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+        }
+        
+        .action-select:focus {
+            outline: none;
+            border-color: var(--eclipse-primary);
+            background-color: #151515;
+            box-shadow: 0 0 0 3px rgba(107, 92, 231, 0.3);
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 14px 28px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, var(--eclipse-primary) 0%, var(--eclipse-secondary) 100%);
+            color: #e0e0e0;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+        
+        .submit-btn:hover {
+            background: linear-gradient(135deg, var(--eclipse-secondary) 0%, #9c8ce9 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .quick-btn {
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #151515;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .quick-btn:hover {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            border-color: var(--eclipse-primary);
+        }
+        
+        .quick-btn.active {
+            background: var(--eclipse-primary);
+            color: white;
+            border-color: var(--eclipse-primary);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .card {
+            background: rgba(17, 17, 17, 0.8);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #252525;
+            backdrop-filter: blur(10px);
+        }
+        
+        .card h3 {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .card h3 i {
+            color: var(--eclipse-primary);
+        }
+        
+        /* URL Lists */
+        .url-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .url-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #252525;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .url-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .url-item:last-child {
+            border-bottom: none;
+        }
+        
+        .url-info {
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .url-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.9rem;
+        }
+        
+        .url-link {
+            color: #aaa;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .url-actions {
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .url-item:hover .url-actions {
+            opacity: 1;
+        }
+        
+        .url-action-btn {
+            padding: 5px;
+            border-radius: 4px;
+            border: none;
+            background: transparent;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .url-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+        }
+        
+        /* Search Box */
+        .search-box {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 10px 35px 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #111;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+        
+        /* Batch Processing */
+        .batch-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #252525;
+        }
+        
+        .batch-input {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #111;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            resize: vertical;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            width: 90%;
+            max-width: 500px;
+            background: rgba(17, 17, 17, 0.95);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #333;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: #151515;
+            border-bottom: 1px solid #252525;
+        }
+        
+        .modal-title {
+            color: #e0e0e0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-title i {
+            color: var(--eclipse-primary);
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        .close-modal:hover {
+            color: #e0e0e0;
+            transform: scale(1.1);
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        /* QR Code Display */
+        .qrcode-container {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        #qrcode {
+            display: inline-block;
+            margin: 0 auto;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px 20px;
+            color: #666;
+            border-top: 1px solid #252525;
+            font-size: 0.9rem;
+        }
+        
+        .eclipse-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .social-links a {
+            color: #666;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            color: var(--eclipse-primary);
+            transform: translateY(-3px);
+        }
+        
+        /* Settings Button */
+        .settings-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px;
+            border-radius: 50%;
+            border: 1px solid #252525;
+            background: rgba(17, 17, 17, 0.9);
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .settings-btn:hover {
+            background: var(--eclipse-primary);
+            color: white;
+            transform: rotate(30deg) scale(1.1);
+        }
+        
+        /* Notification Banner */
+        .notification-banner {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            background: rgba(17, 17, 17, 0.95);
+            border: 1px solid #252525;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1002;
+            max-width: 350px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .notification-banner.show {
+            display: flex;
+        }
+        
+        .notification-banner.success {
+            border-left: 4px solid var(--eclipse-accent);
+        }
+        
+        .notification-banner.error {
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        .notification-icon {
+            font-size: 1.2rem;
+        }
+        
+        .notification-banner.success .notification-icon {
+            color: var(--eclipse-accent);
+        }
+        
+        .notification-banner.error .notification-icon {
+            color: #ff6b6b;
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .notification-message {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .close-notification {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 5px;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .animate-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+        
+        /* Iframe Container */
+        #iframeContainer {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        #embeddedFrame {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #111;
+        }
+        
+        /* Performance Results */
+        .performance-results {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .performance-metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .metric-good { color: var(--eclipse-accent); }
+        .metric-average { color: #ffa500; }
+        .metric-poor { color: #ff6b6b; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .eclipse-tagline {
+                font-size: 1rem;
+            }
+            
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* Light mode */
+        body.light-mode {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+        }
+        
+        body.light-mode .eclipse-header,
+        body.light-mode .url-form,
+        body.light-mode .card {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: #ddd;
+            color: #333;
+        }
+        
+        body.light-mode .url-input,
+        body.light-mode .action-select,
+        body.light-mode .search-input,
+        body.light-mode .batch-input {
+            background: #f5f5f5;
+            border-color: #ddd;
+            color: #333;
+        }
+        
+        body.light-mode .quick-btn {
+            background: #f0f0f0;
+            border-color: #ddd;
+            color: #666;
+        }
+        
+        body.light-mode .url-item {
+            border-bottom-color: #eee;
+        }
+        
+        body.light-mode .url-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="theme-dark">
+    <div class="container">
+        <header class="eclipse-header">
+            <div class="eclipse-logo">
+                <i class="fas fa-moon"></i>
+            </div>
+            <h1>Eclipse URL Launcher</h1>
+            <div class="eclipse-tagline">Shadowed — Revealed — Renewed</div>
+            <div id="personalizedGreeting"></div>
+        </header>
+        
+        <div class="main-content">
+            <div class="main-panel">
+                <!-- URL Form -->
+                <div class="url-form animate-in">
+                    <div class="form-group">
+                        <label for="urlInput"><i class="fas fa-link"></i> Enter URL</label>
+                        <input type="url" id="urlInput" class="url-input" placeholder="https://example.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="actionSelect"><i class="fas fa-cog"></i> Select Action</label>
+                        <select id="actionSelect" class="action-select">
+                            <option value="launch">Launch in about:blank</option>
+                            <option value="blob">Generate Blob URL</option>
+                            <option value="download">Download as Chronos file</option>
+                            <option value="self-iframe">Embed in page</option>
+                            <option value="performance">Test Performance</option>
+                        </select>
+                    </div>
+                    
+                    <button id="submitBtn" class="submit-btn">
+                        <i class="fas fa-rocket"></i> Execute
+                    </button>
+                    
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <button class="quick-btn" id="shortenUrlBtn">
+                            <i class="fas fa-link"></i> Shorten URL
+                        </button>
+                        <button class="quick-btn" id="generateQrBtn">
+                            <i class="fas fa-qrcode"></i> QR Code
+                        </button>
+                        <button class="quick-btn" id="bookmarkUrlBtn">
+                            <i class="fas fa-bookmark"></i> Bookmark
+                        </button>
+                        <button class="quick-btn" id="validateUrlBtn">
+                            <i class="fas fa-shield-alt"></i> Validate
+                        </button>
+                        <button class="quick-btn" id="scheduleUrlBtn">
+                            <i class="fas fa-clock"></i> Schedule
+                        </button>
+                    </div>
+                    
+                    <!-- Performance Results -->
+                    <div class="performance-results" id="performanceResults">
+                        <h4><i class="fas fa-tachometer-alt"></i> Performance Results</h4>
+                        <div id="performanceResultsContent"></div>
+                    </div>
+                    
+                    <!-- Embedded Iframe -->
+                    <div id="iframeContainer">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h4><i class="fas fa-window-restore"></i> Embedded Site</h4>
+                            <button id="fullscreenBtn" class="quick-btn">
+                                <i class="fas fa-expand"></i> Fullscreen
+                            </button>
+                        </div>
+                        <iframe id="embeddedFrame"></iframe>
+                    </div>
+                    
+                    <!-- Batch Processing -->
+                    <div class="batch-section">
+                        <h4><i class="fas fa-layer-group"></i> Batch URL Processing</h4>
+                        <textarea id="batchUrls" class="batch-input" placeholder="Enter multiple URLs (one per line)"></textarea>
+                        <div class="quick-actions">
+                            <button class="quick-btn" id="processBatchBtn">
+                                <i class="fas fa-play"></i> Process All
+                            </button>
+                            <button class="quick-btn" id="clearBatchBtn">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <!-- Bookmarks Card -->
+                <div class="card animate-in delay-1">
+                    <h3><i class="fas fa-bookmark"></i> Bookmarks</h3>
+                    <div class="search-box">
+                        <input type="text" id="bookmarkSearch" class="search-input" placeholder="Search bookmarks...">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    <div class="url-list" id="bookmarksList">
+                        <div class="url-item" style="justify-content: center; color: #666; font-style: italic;">
+                            No bookmarks yet
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- History Card -->
+                <div class="card animate-in delay-2">
+                    <h3><i class="fas fa-history"></i> Recent History</h3>
+                    <div class="search-box">
+                        <input type="text" id="historySearch" class="search-input" placeholder="Search history...">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    <div class="url-list" id="historyList">
+                        <div class="url-item" style="justify-content: center; color: #666; font-style: italic;">
+                            No history yet
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats Card -->
+                <div class="card animate-in delay-3">
+                    <h3><i class="fas fa-chart-line"></i> Quick Stats</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--eclipse-accent);" id="totalLaunches">0</div>
+                            <div style="font-size: 0.8rem; color: #aaa;">Total Launches</div>
+                        </div>
+                        <div style="text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--eclipse-primary);" id="todayLaunches">0</div>
+                            <div style="font-size: 0.8rem; color: #aaa;">Today</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="animate-in delay-3">
+            <div class="eclipse-footer">
+                <div>
+                    <p>Eclipse URL Launcher &copy; 2023 — Shadowed — Revealed — Renewed</p> 
+                </div>
+                <div class="social-links">
+                    <a href="#" title="GitHub"><i class="fab fa-github"></i></a>
+                    <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Settings Button -->
+    <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
+    
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-cog"></i> Settings</div>
+                <button class="close-modal" id="closeSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <h4><i class="fas fa-user"></i> Personalization</h4>
+                    <input type="text" id="userNameInput" class="url-input" placeholder="Enter your name" style="margin-bottom: 10px;">
+                    <button class="quick-btn" id="saveUserName" style="width: 100%;">
+                        <i class="fas fa-save"></i> Save Name
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <h4><i class="fas fa-adjust"></i> Theme</h4>
+                    <div class="quick-actions">
+                        <button class="quick-btn" id="lightModeBtn">
+                            <i class="fas fa-sun"></i> Light
+                        </button>
+                        <button class="quick-btn active" id="darkModeBtn">
+                            <i class="fas fa-moon"></i> Dark
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <h4><i class="fas fa-database"></i> Data Management</h4>
+                    <div class="quick-actions">
+                        <button class="quick-btn" id="exportDataBtn">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <button class="quick-btn" id="importDataBtn">
+                            <i class="fas fa-upload"></i> Import
+                        </button>
+                        <button class="quick-btn" id="clearDataBtn">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- QR Code Modal -->
+    <div class="modal" id="qrModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-qrcode"></i> QR Code</div>
+                <button class="close-modal" id="closeQrModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="qrcode-container">
+                    <div id="qrcode"></div>
+                    <p style="margin-top: 15px; font-size: 0.9rem;">Scan to open on mobile devices</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Short URL Modal -->
+    <div class="modal" id="shortUrlModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-link"></i> Short URL</div>
+                <button class="close-modal" id="closeShortUrlModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Your shortened URL:</label>
+                    <input type="text" id="shortUrlInput" class="url-input" readonly style="margin-bottom: 15px;">
+                </div>
+                <div class="quick-actions">
+                    <button class="quick-btn" id="copyShortUrlBtn">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button class="quick-btn" id="openShortUrlBtn">
+                        <i class="fas fa-external-link-alt"></i> Open
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bookmark Modal -->
+    <div class="modal" id="bookmarkModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-bookmark"></i> Add Bookmark</div>
+                <button class="close-modal" id="closeBookmarkModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="bookmarkTitle">Title</label>
+                    <input type="text" id="bookmarkTitle" class="url-input" placeholder="Enter bookmark title">
+                </div>
+                <div class="form-group">
+                    <label for="bookmarkUrl">URL</label>
+                    <input type="text" id="bookmarkUrl" class="url-input" placeholder="https://example.com">
+                </div>
+                <button class="submit-btn" id="saveBookmarkBtn">
+                    <i class="fas fa-save"></i> Save Bookmark
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Banner -->
+    <div id="notificationBanner" class="notification-banner">
+        <div class="notification-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">Success</div>
+            <div class="notification-message">Operation completed successfully</div>
+        </div>
+        <button class="close-notification" id="closeNotification">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    
+    <script>
+        // Simple and functional implementation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize app
+            initApp();
+        });
+
+        function initApp() {
+            // Elements
+            const elements = {
+                // Main form
+                urlInput: document.getElementById('urlInput'),
+                actionSelect: document.getElementById('actionSelect'),
+                submitBtn: document.getElementById('submitBtn'),
+                
+                // Quick actions
+                shortenUrlBtn: document.getElementById('shortenUrlBtn'),
+                generateQrBtn: document.getElementById('generateQrBtn'),
+                bookmarkUrlBtn: document.getElementById('bookmarkUrlBtn'),
+                validateUrlBtn: document.getElementById('validateUrlBtn'),
+                scheduleUrlBtn: document.getElementById('scheduleUrlBtn'),
+                
+                // Modals
+                settingsModal: document.getElementById('settingsModal'),
+                qrModal: document.getElementById('qrModal'),
+                shortUrlModal: document.getElementById('shortUrlModal'),
+                bookmarkModal: document.getElementById('bookmarkModal'),
+                
+                // Modal buttons
+                closeSettings: document.getElementById('closeSettings'),
+                closeQrModal: document.getElementById('closeQrModal'),
+                closeShortUrlModal: document.getElementById('closeShortUrlModal'),
+                closeBookmarkModal: document.getElementById('closeBookmarkModal'),
+                
+                // Settings
+                settingsBtn: document.getElementById('settingsBtn'),
+                userNameInput: document.getElementById('userNameInput'),
+                saveUserName: document.getElementById('saveUserName'),
+                lightModeBtn: document.getElementById('lightModeBtn'),
+                darkModeBtn: document.getElementById('darkModeBtn'),
+                
+                // Data management
+                exportDataBtn: document.getElementById('exportDataBtn'),
+                importDataBtn: document.getElementById('importDataBtn'),
+                clearDataBtn: document.getElementById('clearDataBtn'),
+                
+                // Bookmarks and history
+                bookmarksList: document.getElementById('bookmarksList'),
+                historyList: document.getElementById('historyList'),
+                bookmarkSearch: document.getElementById('bookmarkSearch'),
+                historySearch: document.getElementById('historySearch'),
+                
+                // Short URL
+                shortUrlInput: document.getElementById('shortUrlInput'),
+                copyShortUrlBtn: document.getElementById('copyShortUrlBtn'),
+                openShortUrlBtn: document.getElementById('openShortUrlBtn'),
+                
+                // Bookmark modal
+                bookmarkTitle: document.getElementById('bookmarkTitle'),
+                bookmarkUrl: document.getElementById('bookmarkUrl'),
+                saveBookmarkBtn: document.getElementById('saveBookmarkBtn'),
+                
+                // Batch processing
+                batchUrls: document.getElementById('batchUrls'),
+                processBatchBtn: document.getElementById('processBatchBtn'),
+                clearBatchBtn: document.getElementById('clearBatchBtn'),
+                
+                // Iframe
+                iframeContainer: document.getElementById('iframeContainer'),
+                embeddedFrame: document.getElementById('embeddedFrame'),
+                fullscreenBtn: document.getElementById('fullscreenBtn'),
+                
+                // Performance
+                performanceResults: document.getElementById('performanceResults'),
+                performanceResultsContent: document.getElementById('performanceResultsContent'),
+                
+                // Stats
+                totalLaunches: document.getElementById('totalLaunches'),
+                todayLaunches: document.getElementById('todayLaunches'),
+                
+                // Personalized greeting
+                personalizedGreeting: document.getElementById('personalizedGreeting')
+            };
+
+            // App state
+            const state = {
+                bookmarks: JSON.parse(localStorage.getItem('eclipse_bookmarks') || '[]'),
+                history: JSON.parse(localStorage.getItem('eclipse_history') || '[]'),
+                settings: JSON.parse(localStorage.getItem('eclipse_settings') || '{}'),
+                shortUrls: JSON.parse(localStorage.getItem('eclipse_shortUrls') || '{}')
+            };
+
+            // Set up event listeners
+            setupEventListeners(elements, state);
+            
+            // Load initial data
+            loadInitialData(elements, state);
+        }
+
+        function setupEventListeners(elements, state) {
+            // Main form submission
+            elements.submitBtn.addEventListener('click', function() {
+                const url = elements.urlInput.value.trim();
+                const action = elements.actionSelect.value;
+                
+                if (!url) {
+                    showNotification('Please enter a URL', 'error');
+                    return;
+                }
+                
+                // Validate URL
+                try {
+                    new URL(url);
+                } catch (e) {
+                    showNotification('Please enter a valid URL', 'error');
+                    return;
+                }
+                
+                // Add to history
+                addToHistory(url, action, state);
+                
+                // Perform action
+                if (action === 'launch') {
+                    launchInAboutBlank(url);
+                } else if (action === 'blob') {
+                    generateBlobUrl(url);
+                } else if (action === 'download') {
+                    downloadChronosFile(url);
+                } else if (action === 'self-iframe') {
+                    loadSelfHostedIframe(url, elements);
+                } else if (action === 'performance') {
+                    testPerformance(url, elements);
+                }
+                
+                updateStats(elements, state);
+            });
+            
+            // Quick actions
+            elements.shortenUrlBtn.addEventListener('click', function() {
+                const url = elements.urlInput.value.trim();
+                if (!url) {
+                    showNotification('Please enter a URL first', 'error');
+                    return;
+                }
+                shortenUrl(url, elements);
+            });
+            
+            elements.generateQrBtn.addEventListener('click', function() {
+                const url = elements.urlInput.value.trim();
+                if (!url) {
+                    showNotification('Please enter a URL first', 'error');
+                    return;
+                }
+                generateQrCode(url, elements);
+            });
+            
+            elements.bookmarkUrlBtn.addEventListener('click', function() {
+                const url = elements.urlInput.value.trim();
+                if (!url) {
+                    showNotification('Please enter a URL first', 'error');
+                    return;
+                }
+                openBookmarkModal(url, elements);
+            });
+            
+            elements.validateUrlBtn.addEventListener('click', function() {
+                const url = elements.urlInput.value.trim();
+                if (!url) {
+                    showNotification('Please enter a URL first', 'error');
+                    return;
+                }
+                validateUrl(url);
+            });
+            
+            // Settings
+            elements.settingsBtn.addEventListener('click', function() {
+                elements.settingsModal.classList.add('active');
+            });
+            
+            elements.closeSettings.addEventListener('click', function() {
+                elements.settingsModal.classList.remove('active');
+            });
+            
+            // Theme toggles
+            elements.lightModeBtn.addEventListener('click', function() {
+                document.body.classList.add('light-mode');
+                elements.lightModeBtn.classList.add('active');
+                elements.darkModeBtn.classList.remove('active');
+            });
+            
+            elements.darkModeBtn.addEventListener('click', function() {
+                document.body.classList.remove('light-mode');
+                elements.darkModeBtn.classList.add('active');
+                elements.lightModeBtn.classList.remove('active');
+            });
+            
+            // Personalization
+            elements.saveUserName.addEventListener('click', function() {
+                const name = elements.userNameInput.value.trim();
+                if (name) {
+                    state.settings.userName = name;
+                    localStorage.setItem('eclipse_settings', JSON.stringify(state.settings));
+                    elements.personalizedGreeting.innerHTML = `Welcome, ${name}!`;
+                    showNotification(`Welcome, ${name}!`, 'success');
+                    elements.settingsModal.classList.remove('active');
+                }
+            });
+            
+            // Modal close events
+            elements.closeQrModal.addEventListener('click', function() {
+                elements.qrModal.classList.remove('active');
+            });
+            
+            elements.closeShortUrlModal.addEventListener('click', function() {
+                elements.shortUrlModal.classList.remove('active');
+            });
+            
+            elements.closeBookmarkModal.addEventListener('click', function() {
+                elements.bookmarkModal.classList.remove('active');
+            });
+            
+            // Short URL actions
+            elements.copyShortUrlBtn.addEventListener('click', function() {
+                navigator.clipboard.writeText(elements.shortUrlInput.value);
+                showNotification('Short URL copied to clipboard', 'success');
+            });
+            
+            elements.openShortUrlBtn.addEventListener('click', function() {
+                window.open(elements.shortUrlInput.value, '_blank');
+            });
+            
+            // Bookmark saving
+            elements.saveBookmarkBtn.addEventListener('click', function() {
+                const title = elements.bookmarkTitle.value.trim();
+                const url = elements.bookmarkUrl.value.trim();
+                
+                if (!title || !url) {
+                    showNotification('Please enter both title and URL', 'error');
+                    return;
+                }
+                
+                state.bookmarks.push({ title, url, date: new Date().toISOString() });
+                localStorage.setItem('eclipse_bookmarks', JSON.stringify(state.bookmarks));
+                
+                updateBookmarksList(elements, state);
+                elements.bookmarkModal.classList.remove('active');
+                showNotification('Bookmark saved successfully', 'success');
+            });
+            
+            // Batch processing
+            elements.processBatchBtn.addEventListener('click', function() {
+                const urls = elements.batchUrls.value.split('\n').filter(url => url.trim());
+                if (urls.length === 0) {
+                    showNotification('Please enter URLs to process', 'error');
+                    return;
+                }
+                
+                urls.forEach(url => {
+                    // Open each URL in a new tab
+                    window.open(url.trim(), '_blank');
+                });
+                
+                showNotification(`Opened ${urls.length} URLs in new tabs`, 'success');
+            });
+            
+            elements.clearBatchBtn.addEventListener('click', function() {
+                elements.batchUrls.value = '';
+            });
+            
+            // Fullscreen iframe
+            elements.fullscreenBtn.addEventListener('click', function() {
+                if (elements.embeddedFrame.requestFullscreen) {
+                    elements.embeddedFrame.requestFullscreen();
+                }
+            });
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === elements.settingsModal) {
+                    elements.settingsModal.classList.remove('active');
+                }
+                if (event.target === elements.qrModal) {
+                    elements.qrModal.classList.remove('active');
+                }
+                if (event.target === elements.shortUrlModal) {
+                    elements.shortUrlModal.classList.remove('active');
+                }
+                if (event.target === elements.bookmarkModal) {
+                    elements.bookmarkModal.classList.remove('active');
+                }
+            });
+            
+            // Search functionality
+            elements.bookmarkSearch.addEventListener('input', function() {
+                filterBookmarks(elements, state);
+            });
+            
+            elements.historySearch.addEventListener('input', function() {
+                filterHistory(elements, state);
+            });
+        }
+
+        function loadInitialData(elements, state) {
+            // Load user name
+            if (state.settings.userName) {
+                elements.userNameInput.value = state.settings.userName;
+                elements.personalizedGreeting.innerHTML = `Welcome, ${state.settings.userName}!`;
+            }
+            
+            // Update lists
+            updateBookmarksList(elements, state);
+            updateHistoryList(elements, state);
+            updateStats(elements, state);
+        }
+
+        // Core functionality functions
+        function launchInAboutBlank(url) {
+            try {
+                const newWindow = window.open('about:blank', '_blank');
+                if (!newWindow) {
+                    showNotification('Popup blocked. Please allow popups for this site.', 'error');
+                    return;
+                }
+                
+                newWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Eclipse Launcher</title>
+                        <style>body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; } iframe { width: 100%; height: 100%; border: none; }</style>
+                    </head>
+                    <body>
+                        <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
+                    </body>
+                    </html>
+                `);
+                newWindow.document.close();
+                
+                showNotification('Site launched in new tab', 'success');
+            } catch (error) {
+                showNotification('Error launching site: ' + error.message, 'error');
+            }
+        }
+
+        function generateBlobUrl(url) {
+            try {
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Eclipse Blob - ${url}</title>
+                        <style>body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; } iframe { width: 100%; height: 100%; border: none; }</style>
+                    </head>
+                    <body>
+                        <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
+                    </body>
+                    </html>
+                `;
+                
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                const newWindow = window.open(blobUrl, '_blank');
+                if (!newWindow) {
+                    showNotification('Popup blocked. Please allow popups for this site.', 'error');
+                    return;
+                }
+                
+                showNotification('Blob URL generated and opened in new tab', 'success');
+            } catch (error) {
+                showNotification('Error generating Blob URL: ' + error.message, 'error');
+            }
+        }
+
+        function downloadChronosFile(url) {
+            try {
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Eclipse Chronos - ${url}</title>
+                        <style>body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; } iframe { width: 100%; height: 100%; border: none; }</style>
+                    </head>
+                    <body>
+                        <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
+                    </body>
+                    </html>
+                `;
+                
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'Eclipse-Chronos.html';
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(a.href);
+                }, 100);
+                
+                showNotification('Chronos file downloaded successfully', 'success');
+            } catch (error) {
+                showNotification('Error downloading file: ' + error.message, 'error');
+            }
+        }
+
+        function loadSelfHostedIframe(url, elements) {
+            try {
+                elements.embeddedFrame.src = url;
+                elements.iframeContainer.style.display = 'block';
+                showNotification('Site loaded in embedded iframe', 'success');
+            } catch (error) {
+                showNotification('Error loading iframe: ' + error.message, 'error');
+            }
+        }
+
+        function testPerformance(url, elements) {
+            showNotification('Testing page performance...', 'success');
+            elements.performanceResults.style.display = 'block';
+            
+            // Simulate performance testing
+            setTimeout(() => {
+                const loadTime = Math.random() * 3000 + 500;
+                const performanceScore = Math.min(100, Math.max(0, 100 - (loadTime / 50)));
+                
+                elements.performanceResultsContent.innerHTML = `
+                    <div class="performance-metric">
+                        <span>Load Time</span>
+                        <span class="${loadTime < 1000 ? 'metric-good' : loadTime < 2000 ? 'metric-average' : 'metric-poor'}">${Math.round(loadTime)}ms</span>
+                    </div>
+                    <div class="performance-metric">
+                        <span>Performance Score</span>
+                        <span class="${performanceScore > 80 ? 'metric-good' : performanceScore > 60 ? 'metric-average' : 'metric-poor'}">${Math.round(performanceScore)}/100</span>
+                    </div>
+                `;
+                
+                showNotification('Performance test completed', 'success');
+            }, 2000);
+        }
+
+        function shortenUrl(url, elements) {
+            // Simple shortening (in a real app, you'd use an API)
+            const shortCode = Math.random().toString(36).substring(2, 8);
+            const shortUrl = `https://eclipse.ly/${shortCode}`;
+            
+            elements.shortUrlInput.value = shortUrl;
+            elements.shortUrlModal.classList.add('active');
+            
+            // Store mapping
+            state.shortUrls[shortCode] = url;
+            localStorage.setItem('eclipse_shortUrls', JSON.stringify(state.shortUrls));
+        }
+
+        function generateQrCode(url, elements) {
+            // Clear previous QR code
+            document.getElementById('qrcode').innerHTML = '';
+            
+            // Generate new QR code
+            QRCode.toCanvas(document.getElementById('qrcode'), url, function(error) {
+                if (error) {
+                    showNotification('Error generating QR code', 'error');
+                } else {
+                    elements.qrModal.classList.add('active');
+                }
+            });
+        }
+
+        function openBookmarkModal(url, elements) {
+            elements.bookmarkUrl.value = url;
+            elements.bookmarkTitle.value = url.replace(/^https?:\/\//, '').split('/')[0];
+            elements.bookmarkModal.classList.add('active');
+        }
+
+        function validateUrl(url) {
+            // Simple validation
+            try {
+                new URL(url);
+                showNotification('URL is valid', 'success');
+            } catch (e) {
+                showNotification('URL is invalid', 'error');
+            }
+        }
+
+        function addToHistory(url, action, state) {
+            state.history.unshift({
+                url,
+                action,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Keep only last 50 items
+            state.history = state.history.slice(0, 50);
+            
+            localStorage.setItem('eclipse_history', JSON.stringify(state.history));
+            updateHistoryList(elements, state);
+        }
+
+        function updateBookmarksList(elements, state) {
+            if (state.bookmarks.length === 0) {
+                elements.bookmarksList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No bookmarks yet</div>';
+                return;
+            }
+            
+            elements.bookmarksList.innerHTML = state.bookmarks.map((bookmark, index) => `
+                <div class="url-item" onclick="elements.urlInput.value = '${bookmark.url}'; showNotification('URL loaded from bookmark', 'success')">
+                    <div class="url-info">
+                        <div class="url-title">${bookmark.title}</div>
+                        <div class="url-link">${bookmark.url}</div>
+                    </div>
+                    <div class="url-actions">
+                        <button class="url-action-btn" onclick="event.stopPropagation(); deleteBookmark(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateHistoryList(elements, state) {
+            if (state.history.length === 0) {
+                elements.historyList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No history yet</div>';
+                return;
+            }
+            
+            elements.historyList.innerHTML = state.history.slice(0, 10).map((item, index) => `
+                <div class="url-item" onclick="elements.urlInput.value = '${item.url}'; showNotification('URL loaded from history', 'success')">
+                    <div class="url-info">
+                        <div class="url-title">${item.url.replace(/^https?:\/\//, '').split('/')[0]}</div>
+                        <div class="url-link">${new Date(item.timestamp).toLocaleString()}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats(elements, state) {
+            elements.totalLaunches.textContent = state.history.length;
+            
+            const today = new Date().toDateString();
+            const todayLaunches = state.history.filter(item => 
+                new Date(item.timestamp).toDateString() === today
+            ).length;
+            
+            elements.todayLaunches.textContent = todayLaunches;
+        }
+
+        function filterBookmarks(elements, state) {
+            const searchTerm = elements.bookmarkSearch.value.toLowerCase();
+            const filtered = state.bookmarks.filter(bookmark => 
+                bookmark.title.toLowerCase().includes(searchTerm) || 
+                bookmark.url.toLowerCase().includes(searchTerm)
+            );
+            
+            if (filtered.length === 0) {
+                elements.bookmarksList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No matching bookmarks</div>';
+                return;
+            }
+            
+            elements.bookmarksList.innerHTML = filtered.map((bookmark, index) => `
+                <div class="url-item" onclick="elements.urlInput.value = '${bookmark.url}'; showNotification('URL loaded from bookmark', 'success')">
+                    <div class="url-info">
+                        <div class="url-title">${bookmark.title}</div>
+                        <div class="url-link">${bookmark.url}</div>
+                    </div>
+                    <div class="url-actions">
+                        <button class="url-action-btn" onclick="event.stopPropagation(); deleteBookmark(${state.bookmarks.indexOf(bookmark)})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterHistory(elements, state) {
+            const searchTerm = elements.historySearch.value.toLowerCase();
+            const filtered = state.history.filter(item => 
+                item.url.toLowerCase().includes(searchTerm)
+            );
+            
+            if (filtered.length === 0) {
+                elements.historyList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No matching history</div>';
+                return;
+            }
+            
+            elements.historyList.innerHTML = filtered.slice(0, 10).map((item, index) => `
+                <div class="url-item" onclick="elements.urlInput.value = '${item.url}'; showNotification('URL loaded from history', 'success')">
+                    <div class="url-info">
+                        <div class="url-title">${item.url.replace(/^https?:\/\//, '').split('/')[0]}</div>
+                        <div class="url-link">${new Date(item.timestamp).toLocaleString()}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteBookmark(index) {
+            state.bookmarks.splice(index, 1);
+            localStorage.setItem('eclipse_bookmarks', JSON.stringify(state.bookmarks));
+            updateBookmarksList(elements, state);
+            showNotification('Bookmark deleted', 'success');
+        }
+
+        function showNotification(message, type) {
+            const banner = document.getElementById('notificationBanner');
+            const icon = banner.querySelector('.notification-icon i');
+            const title = banner.querySelector('.notification-title');
+            const msg = banner.querySelector('.notification-message');
+            
+            banner.className = `notification-banner ${type}`;
+            title.textContent = type === 'success' ? 'Success' : 'Error';
+            msg.textContent = message;
+            icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            
+            banner.classList.add('show');
+            
+            setTimeout(() => {
+                banner.classList.remove('show');
+            }, 3000);
+        }
+
+        // Make functions globally available for onclick handlers
+        window.elements = elements;
+        window.deleteBookmark = deleteBookmark;
+        window.showNotification = showNotification;
+    </script>
+</body>
+</html>
