@@ -952,6 +952,98 @@
         opacity: 0;
     }
 }
+        /* Welcome Modal Styles */
+.welcome-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1003;
+    justify-content: center;
+    align-items: center;
+}
+
+.welcome-modal.active {
+    display: flex;
+}
+
+.welcome-container {
+    width: 90%;
+    max-width: 500px;
+    background: rgba(17, 17, 17, 0.95);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #333;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.welcome-header {
+    padding: 25px;
+    background: #151515;
+    border-bottom: 1px solid #252525;
+    text-align: center;
+}
+
+.welcome-title {
+    color: #e0e0e0;
+    font-size: 1.6rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.welcome-title i {
+    color: var(--eclipse-primary);
+}
+
+.welcome-content {
+    padding: 25px;
+}
+
+.welcome-input {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    background: #111;
+    color: #e0e0e0;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 20px;
+    transition: all 0.2s ease;
+}
+
+.welcome-input:focus {
+    outline: none;
+    border-color: var(--eclipse-primary);
+    background: #151515;
+    box-shadow: 0 0 0 3px rgba(107, 92, 231, 0.3);
+}
+
+.welcome-btn {
+    width: 100%;
+    padding: 14px 28px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, var(--eclipse-primary) 0%, var(--eclipse-secondary) 100%);
+    color: #e0e0e0;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+
+.welcome-btn:hover {
+    background: linear-gradient(135deg, var(--eclipse-secondary) 0%, #9c8ce9 100%);
+    transform: translateY(-2px);
+}
     </style>
 </head>
 <body class="theme-dark">
@@ -1028,35 +1120,48 @@
     <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
     
     <!-- Settings Modal -->
-    <div class="settings-modal" id="settingsModal">
-        <div class="settings-container">
-            <div class="settings-header">
-                <div class="settings-title"><i class="fas fa-cog"></i> Settings</div>
-                <button class="close-settings" id="closeSettings">&times;</button>
-            </div>
-            <div class="settings-content">
-                <div class="settings-section">
-                    <h3><i class="fas fa-paint-brush"></i> Themes</h3>
-                    <div class="theme-options">
-                        <div class="theme-option active" data-theme="dark">Dark</div>
-                        <div class="theme-option" data-theme="sunset">Sunset</div>
-                        <div class="theme-option" data-theme="blue-sunset">Blue Sunset</div>
-                        <div class="theme-option" data-theme="gray">Gray</div>
-                        <div class="theme-option" data-theme="midnight">Midnight</div>
-                        <div class="theme-option" data-theme="neon">Neon</div>
-                        <div class="theme-option" data-theme="forest">Forest</div>
-                        <div class="theme-option" data-theme="cyber">Cyber</div>
-                        <div class="theme-option" data-theme="lavender">Lavender</div>
-                        <div class="theme-option" data-theme="crimson">Crimson</div>
-                        <div class="theme-option" data-theme="ocean">Ocean</div>
-                        <div class="theme-option" data-theme="purple-rain">Purple Rain</div>
-                    </div>
+  <!-- Settings Modal -->
+<div class="settings-modal" id="settingsModal">
+    <div class="settings-container">
+        <div class="settings-header">
+            <div class="settings-title"><i class="fas fa-cog"></i> Settings</div>
+            <button class="close-settings" id="closeSettings">&times;</button>
+        </div>
+        <div class="settings-content">
+            <div class="settings-section">
+                <h3><i class="fas fa-paint-brush"></i> Themes</h3>
+                <div class="theme-options">
+                    <div class="theme-option active" data-theme="dark">Dark</div>
+                    <div class="theme-option" data-theme="sunset">Sunset</div>
+                    <div class="theme-option" data-theme="blue-sunset">Blue Sunset</div>
+                    <div class="theme-option" data-theme="gray">Gray</div>
+                    <div class="theme-option" data-theme="midnight">Midnight</div>
+                    <div class="theme-option" data-theme="neon">Neon</div>
+                    <div class="theme-option" data-theme="forest">Forest</div>
+                    <div class="theme-option" data-theme="cyber">Cyber</div>
+                    <div class="theme-option" data-theme="lavender">Lavender</div>
+                    <div class="theme-option" data-theme="crimson">Crimson</div>
+                    <div class="theme-option" data-theme="ocean">Ocean</div>
+                    <div class="theme-option" data-theme="purple-rain">Purple Rain</div>
                 </div>
-                
-                <button class="save-settings-btn" id="saveSettingsBtn">Save Settings</button>
             </div>
+            
+            <!-- Add Personalization Section Here -->
+            <div class="settings-section">
+                <h3><i class="fas fa-user"></i> Personalization</h3>
+                <div style="margin-bottom: 15px;">
+                    <label for="userNameSettings" style="display: block; margin-bottom: 8px; color: #aaa;">Your Name</label>
+                    <input type="text" id="userNameSettings" class="welcome-input" placeholder="Enter your name" style="margin-bottom: 0;">
+                </div>
+                <button id="updateUserName" class="welcome-btn" style="background: #333; margin-top: 10px;">
+                    <i class="fas fa-sync-alt"></i> Update Name
+                </button>
+            </div>
+            
+            <button class="save-settings-btn" id="saveSettingsBtn">Save Settings</button>
         </div>
     </div>
+</div>
     <!-- Notification Banner -->
 <!-- Notification Banner -->
 <div id="notificationBanner" class="notification-banner">
@@ -1074,9 +1179,26 @@
         <div class="notification-progress-bar" id="notificationProgress"></div>
     </div>
 </div>
+    <!-- Welcome Modal -->
+<div class="welcome-modal" id="welcomeModal">
+    <div class="welcome-container">
+        <div class="welcome-header">
+            <div class="welcome-title">
+                <i class="fas fa-user-astronaut"></i> Welcome to Eclipse Launcher
+            </div>
+        </div>
+        <div class="welcome-content">
+            <p style="margin-bottom: 20px; color: #aaa;">Personalize your experience by telling us your name:</p>
+            <input type="text" id="userNameInput" class="welcome-input" placeholder="Enter your name" maxlength="20">
+            <button id="saveUserName" class="welcome-btn">
+                <i class="fas fa-rocket"></i> Launch Eclipse
+            </button>
+        </div>
+    </div>
+</div>
    
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const urlInput = document.getElementById('urlInput');
     const actionSelect = document.getElementById('actionSelect');
@@ -1091,8 +1213,34 @@
     const embeddedFrame = document.getElementById('embeddedFrame');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     
-    // Load saved theme
+    // Initialize everything
+    initializePersonalization();
+    initializeSettingsPersonalization();
     loadSettings();
+    
+    // Settings functions
+    settingsBtn.addEventListener('click', function() {
+        settingsModal.classList.add('active');
+    });
+
+    closeSettings.addEventListener('click', function() {
+        settingsModal.classList.remove('active');
+    });
+
+    saveSettingsBtn.addEventListener('click', function() {
+        const selectedTheme = document.querySelector('.theme-option.active').dataset.theme;
+        localStorage.setItem('eclipse_theme', selectedTheme);
+        applyTheme(selectedTheme);
+        settingsModal.classList.remove('active');
+        showStatus('Settings saved successfully', 'success');
+    });
+
+    themeOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            themeOptions.forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
     
     // Handle action selection changes
     actionSelect.addEventListener('change', function() {
@@ -1266,126 +1414,209 @@
     });
     
     // Generate Data URL
-   // Fixed Generate Data URL function
-// Fixed Generate Data URL function
-function generateDataUrl(url) {
-    try {
-        // Create a simple HTML page that will redirect
-        const htmlContent = `<!DOCTYPE html><html><head><title>Redirecting...</title><meta http-equiv="refresh" content="0; url=${url}"></head><body><p>Redirecting to <a href="${url}">${url}</a></p></body></html>`;
-        
-        // Create the data URL properly
-        const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
-        
-        // Check URL length limitation
-        if (dataUrl.length > 32000) {
-            showStatus('Data URL too long. Try a shorter URL.', 'error');
-            return;
+    function generateDataUrl(url) {
+        try {
+            // Create a simple HTML page that will redirect
+            const htmlContent = `<!DOCTYPE html><html><head><title>Redirecting...</title><meta http-equiv="refresh" content="0; url=${url}"></head><body><p>Redirecting to <a href="${url}">${url}</a></p></body></html>`;
+            
+            // Create the data URL properly
+            const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
+            
+            // Check URL length limitation
+            if (dataUrl.length > 32000) {
+                showStatus('Data URL too long. Try a shorter URL.', 'error');
+                return;
+            }
+            
+            console.log('Data URL:', dataUrl.substring(0, 100) + '...'); // Debug log
+            
+            // Open the data URL in a new tab
+            const newWindow = window.open();
+            if (!newWindow) {
+                showStatus('Popup blocked. Please allow popups for this site.', 'error');
+                return;
+            }
+            
+            // Write the data URL content directly to the new window
+            newWindow.document.write(htmlContent);
+            newWindow.document.close();
+            
+            showStatus('Data URL created and opened', 'success');
+        } catch (error) {
+            showStatus('Error generating Data URL: ' + error.message, 'error');
+            console.error('Data URL error:', error);
         }
-        
-        console.log('Data URL:', dataUrl.substring(0, 100) + '...'); // Debug log
-        
-        // Open the data URL in a new tab
-        const newWindow = window.open();
-        if (!newWindow) {
-            showStatus('Popup blocked. Please allow popups for this site.', 'error');
-            return;
-        }
-        
-        // Write the data URL content directly to the new window
-        newWindow.document.write(htmlContent);
-        newWindow.document.close();
-        
-        showStatus('Data URL created and opened', 'success');
-    } catch (error) {
-        showStatus('Error generating Data URL: ' + error.message, 'error');
-        console.error('Data URL error:', error);
-    }
-}
-    // Show status message
-   // Updated showStatus function with banner support
-// Updated showStatus function with progress bar
-function showStatus(message, type) {
-    // Update the existing status message
-    statusMessage.textContent = message;
-    statusMessage.className = 'status-message';
-    statusMessage.classList.add(`status-${type}`);
-    statusMessage.style.display = 'block';
-    
-    // Also show the notification banner
-    const notificationBanner = document.getElementById('notificationBanner');
-    const notificationIcon = notificationBanner.querySelector('.notification-icon i');
-    const notificationTitle = notificationBanner.querySelector('.notification-title');
-    const notificationMessage = notificationBanner.querySelector('.notification-message');
-    const notificationProgress = document.getElementById('notificationProgress');
-    
-    // Set banner content based on type
-    if (type === 'success') {
-        notificationBanner.className = 'notification-banner success';
-        notificationIcon.className = 'fas fa-check-circle';
-        notificationTitle.textContent = 'Success';
-    } else {
-        notificationBanner.className = 'notification-banner error';
-        notificationIcon.className = 'fas fa-exclamation-circle';
-        notificationTitle.textContent = 'Error';
     }
     
-    notificationMessage.textContent = message;
-    
-    // Reset progress bar
-    notificationProgress.style.width = '100%';
-    notificationProgress.style.transition = 'none';
-    
-    // Show the banner
-    notificationBanner.classList.add('show');
-    
-    // Start progress bar animation after a brief delay
-    setTimeout(() => {
-        notificationProgress.style.transition = 'width 5s linear';
-        notificationProgress.style.width = '0%';
-    }, 100);
-    
-    // Auto-hide after 5 seconds
-    const timeoutId = setTimeout(() => {
+    // Show status message with notification banner
+    function showStatus(message, type) {
+        // Update the existing status message
+        statusMessage.textContent = message;
+        statusMessage.className = 'status-message';
+        statusMessage.classList.add(`status-${type}`);
+        statusMessage.style.display = 'block';
+        
+        // Also show the notification banner
+        const notificationBanner = document.getElementById('notificationBanner');
+        const notificationIcon = notificationBanner.querySelector('.notification-icon i');
+        const notificationTitle = notificationBanner.querySelector('.notification-title');
+        const notificationMessage = notificationBanner.querySelector('.notification-message');
+        const notificationProgress = document.getElementById('notificationProgress');
+        
+        // Set banner content based on type
+        if (type === 'success') {
+            notificationBanner.className = 'notification-banner success';
+            notificationIcon.className = 'fas fa-check-circle';
+            notificationTitle.textContent = 'Success';
+        } else {
+            notificationBanner.className = 'notification-banner error';
+            notificationIcon.className = 'fas fa-exclamation-circle';
+            notificationTitle.textContent = 'Error';
+        }
+        
+        notificationMessage.textContent = message;
+        
+        // Reset progress bar
+        notificationProgress.style.width = '100%';
+        notificationProgress.style.transition = 'none';
+        
+        // Show the banner
+        notificationBanner.classList.add('show');
+        
+        // Start progress bar animation after a brief delay
+        setTimeout(() => {
+            notificationProgress.style.transition = 'width 5s linear';
+            notificationProgress.style.width = '0%';
+        }, 100);
+        
+        // Auto-hide after 5 seconds
+        const timeoutId = setTimeout(() => {
+            hideNotification();
+        }, 5100); // Slightly longer than progress bar animation
+        
+        // Store timeout ID for clearing if manually closed
+        notificationBanner.dataset.timeoutId = timeoutId;
+        
+        // Hide the existing status message after 5 seconds
+        setTimeout(() => {
+            statusMessage.style.display = 'none';
+        }, 5000);
+    }
+
+    // Function to hide notification banner
+    function hideNotification() {
+        const notificationBanner = document.getElementById('notificationBanner');
+        
+        // Clear the auto-hide timeout if it exists
+        if (notificationBanner.dataset.timeoutId) {
+            clearTimeout(parseInt(notificationBanner.dataset.timeoutId));
+        }
+        
+        notificationBanner.classList.remove('show');
+        notificationBanner.classList.add('hide');
+        
+        // Remove hide class after animation completes
+        setTimeout(() => {
+            notificationBanner.classList.remove('hide');
+        }, 300);
+    }
+
+    // Add event listener for close button
+    document.getElementById('closeNotification').addEventListener('click', function() {
         hideNotification();
-    }, 5100); // Slightly longer than progress bar animation
+    });
     
-    // Store timeout ID for clearing if manually closed
-    notificationBanner.dataset.timeoutId = timeoutId;
-    
-    // Hide the existing status message after 5 seconds
-    setTimeout(() => {
-        statusMessage.style.display = 'none';
-    }, 5000);
-}
+    // Personalization functions
+    function initializePersonalization() {
+        const userName = localStorage.getItem('eclipse_userName');
+        const welcomeModal = document.getElementById('welcomeModal');
+        
+        if (!userName) {
+            // Show welcome modal if no name is set
+            welcomeModal.classList.add('active');
+        } else {
+            // Use existing name
+            personalizeUI(userName);
+        }
+        
+        // Save name event listener
+        document.getElementById('saveUserName').addEventListener('click', function() {
+            const userNameInput = document.getElementById('userNameInput').value.trim();
+            if (userNameInput) {
+                localStorage.setItem('eclipse_userName', userNameInput);
+                personalizeUI(userNameInput);
+                welcomeModal.classList.remove('active');
+                showStatus(`Welcome, ${userNameInput}!`, 'success');
+            } else {
+                showStatus('Please enter your name', 'error');
+            }
+        });
+        
+        // Allow Enter key to submit name
+        document.getElementById('userNameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('saveUserName').click();
+            }
+        });
+    }
 
-// Function to hide notification banner
-function hideNotification() {
-    const notificationBanner = document.getElementById('notificationBanner');
-    
-    // Clear the auto-hide timeout if it exists
-    if (notificationBanner.dataset.timeoutId) {
-        clearTimeout(parseInt(notificationBanner.dataset.timeoutId));
+    function personalizeUI(userName) {
+        // Update header with personalized greeting
+        const header = document.querySelector('.eclipse-header h1');
+        header.innerHTML = `Eclipse URL Launcher <span style="font-size: 1.2rem; display: block; margin-top: 10px; color: var(--eclipse-secondary);">Welcome, ${userName}!</span>`;
+        
+        // Update page title occasionally with personalized touch
+        updatePageTitle(userName);
+    }
+
+    function updatePageTitle(userName) {
+        const titles = [
+            `Eclipse Launcher - ${userName}'s Portal`,
+            `Eclipse - ${userName}'s URL Hub`,
+            `${userName}'s Eclipse Launcher`,
+            "Eclipse URL Launcher - Shadowed — Revealed — Renewed"
+        ];
+        
+        let currentIndex = 0;
+        
+        // Change title every 10 seconds
+        setInterval(() => {
+            document.title = titles[currentIndex];
+            currentIndex = (currentIndex + 1) % titles.length;
+        }, 10000);
     }
     
-    notificationBanner.classList.remove('show');
-    notificationBanner.classList.add('hide');
-    
-    // Remove hide class after animation completes
-    setTimeout(() => {
-        notificationBanner.classList.remove('hide');
-    }, 300);
-}
-
-// Add event listener for close button (add this to your DOMContentLoaded function)
-document.getElementById('closeNotification').addEventListener('click', function() {
-    hideNotification();
-});
+    // Settings personalization
+    function initializeSettingsPersonalization() {
+        const userNameSettings = document.getElementById('userNameSettings');
+        const updateUserNameBtn = document.getElementById('updateUserName');
+        
+        // Load current name into settings
+        const currentName = localStorage.getItem('eclipse_userName');
+        if (currentName) {
+            userNameSettings.value = currentName;
+        }
+        
+        // Update name from settings
+        updateUserNameBtn.addEventListener('click', function() {
+            const newName = userNameSettings.value.trim();
+            if (newName) {
+                localStorage.setItem('eclipse_userName', newName);
+                personalizeUI(newName);
+                showStatus(`Name updated to ${newName}`, 'success');
+            } else {
+                showStatus('Please enter a valid name', 'error');
+            }
+        });
+    }
     
     function loadSettings() {
-        const savedTheme = localStorage.getItem('eclipse_theme') || 'blue-sunset';
+        const savedTheme = localStorage.getItem('eclipse_theme') || 'dark';
         themeOptions.forEach(option => {
             if (option.dataset.theme === savedTheme) {
                 option.classList.add('active');
+            } else {
+                option.classList.remove('active');
             }
         });
         applyTheme(savedTheme);
