@@ -829,6 +829,102 @@
         body.theme-purple-rain .save-settings-btn:hover {
             background: linear-gradient(135deg, #cc00ff 0%, #ee00ff 100%);
         }
+        /* Notification Banner Styles */
+.notification-banner {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    background: rgba(17, 17, 17, 0.95);
+    border: 1px solid #252525;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 1002;
+    max-width: 350px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    animation: slideInRight 0.3s ease-out;
+}
+
+.notification-banner.show {
+    display: flex;
+}
+
+.notification-banner.hide {
+    animation: slideOutRight 0.3s ease-in forwards;
+}
+
+.notification-banner.success {
+    border-left: 4px solid var(--eclipse-accent);
+}
+
+.notification-banner.error {
+    border-left: 4px solid #ff6b6b;
+}
+
+.notification-icon {
+    font-size: 1.2rem;
+}
+
+.notification-banner.success .notification-icon {
+    color: var(--eclipse-accent);
+}
+
+.notification-banner.error .notification-icon {
+    color: #ff6b6b;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.notification-message {
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.close-notification {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 5px;
+    transition: all 0.2s ease;
+}
+
+.close-notification:hover {
+    color: #e0e0e0;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
     </style>
 </head>
 <body class="theme-dark">
@@ -934,6 +1030,19 @@
             </div>
         </div>
     </div>
+    <!-- Notification Banner -->
+<div id="notificationBanner" class="notification-banner">
+    <div class="notification-icon">
+        <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="notification-content">
+        <div class="notification-title">Success</div>
+        <div class="notification-message">Operation completed successfully</div>
+    </div>
+    <button class="close-notification" id="closeNotification">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
    
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -1126,82 +1235,97 @@
     });
     
     // Generate Data URL
-    function generateDataUrl(url) {
-        try {
-            // Create HTML content for the data URL
-            const htmlContent = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Eclipse Data URL - ${url}</title>
-                    <style>
-                        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-                        iframe { width: 100%; height: 100%; border: none; }
-                    </style>
-                </head>
-                <body>
-                    <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
-                </body>
-                </html>
-            `;
-            
-            // Create data URL (encode the content)
-            const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
-            
-            // Check URL length limitation (approx 32KB for most browsers)
-            if (dataUrl.length > 32000) {
-                showStatus('Data URL too long. Try a different method.', 'error');
-                return;
-            }
-            
-            // Open the data URL in a new tab
-            const newWindow = window.open(dataUrl, '_blank');
-            if (!newWindow) {
-                showStatus('Popup blocked. Please allow popups for this site.', 'error');
-                return;
-            }
-            
-            showStatus('Data URL generated and opened in new tab', 'success');
-        } catch (error) {
-            showStatus('Error generating Data URL: ' + error.message, 'error');
-        }
-    }
-    
-    // Show status message
-    function showStatus(message, type) {
-        statusMessage.textContent = message;
-        statusMessage.className = 'status-message';
-        statusMessage.classList.add(`status-${type}`);
-        statusMessage.style.display = 'block';
+   // Fixed Generate Data URL function
+// Fixed Generate Data URL function
+function generateDataUrl(url) {
+    try {
+        // Create a simple HTML page that will redirect
+        const htmlContent = `<!DOCTYPE html><html><head><title>Redirecting...</title><meta http-equiv="refresh" content="0; url=${url}"></head><body><p>Redirecting to <a href="${url}">${url}</a></p></body></html>`;
         
-        setTimeout(() => {
-            statusMessage.style.display = 'none';
-        }, 5000);
+        // Create the data URL properly
+        const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
+        
+        // Check URL length limitation
+        if (dataUrl.length > 32000) {
+            showStatus('Data URL too long. Try a shorter URL.', 'error');
+            return;
+        }
+        
+        console.log('Data URL:', dataUrl.substring(0, 100) + '...'); // Debug log
+        
+        // Open the data URL in a new tab
+        const newWindow = window.open();
+        if (!newWindow) {
+            showStatus('Popup blocked. Please allow popups for this site.', 'error');
+            return;
+        }
+        
+        // Write the data URL content directly to the new window
+        newWindow.document.write(htmlContent);
+        newWindow.document.close();
+        
+        showStatus('Data URL created and opened', 'success');
+    } catch (error) {
+        showStatus('Error generating Data URL: ' + error.message, 'error');
+        console.error('Data URL error:', error);
+    }
+}
+    // Show status message
+   // Updated showStatus function with banner support
+function showStatus(message, type) {
+    // Update the existing status message
+    statusMessage.textContent = message;
+    statusMessage.className = 'status-message';
+    statusMessage.classList.add(`status-${type}`);
+    statusMessage.style.display = 'block';
+    
+    // Also show the notification banner
+    const notificationBanner = document.getElementById('notificationBanner');
+    const notificationIcon = notificationBanner.querySelector('.notification-icon i');
+    const notificationTitle = notificationBanner.querySelector('.notification-title');
+    const notificationMessage = notificationBanner.querySelector('.notification-message');
+    
+    // Set banner content based on type
+    if (type === 'success') {
+        notificationBanner.className = 'notification-banner success';
+        notificationIcon.className = 'fas fa-check-circle';
+        notificationTitle.textContent = 'Success';
+    } else {
+        notificationBanner.className = 'notification-banner error';
+        notificationIcon.className = 'fas fa-exclamation-circle';
+        notificationTitle.textContent = 'Error';
     }
     
-    // Settings functions
-    settingsBtn.addEventListener('click', function() {
-        settingsModal.classList.add('active');
-    });
+    notificationMessage.textContent = message;
     
-    closeSettings.addEventListener('click', function() {
-        settingsModal.classList.remove('active');
-    });
+    // Show the banner
+    notificationBanner.classList.add('show');
     
-    saveSettingsBtn.addEventListener('click', function() {
-        const selectedTheme = document.querySelector('.theme-option.active').dataset.theme;
-        localStorage.setItem('eclipse_theme', selectedTheme);
-        applyTheme(selectedTheme);
-        settingsModal.classList.remove('active');
-        showStatus('Settings saved successfully', 'success');
-    });
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        hideNotification();
+    }, 5000);
     
-    themeOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            themeOptions.forEach(opt => opt.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
+    // Hide the existing status message after 5 seconds
+    setTimeout(() => {
+        statusMessage.style.display = 'none';
+    }, 5000);
+}
+
+// Function to hide notification banner
+function hideNotification() {
+    const notificationBanner = document.getElementById('notificationBanner');
+    notificationBanner.classList.remove('show');
+    notificationBanner.classList.add('hide');
+    
+    // Remove hide class after animation completes
+    setTimeout(() => {
+        notificationBanner.classList.remove('hide');
+    }, 300);
+}
+
+// Add event listener for close button (add this to your DOMContentLoaded function)
+document.getElementById('closeNotification').addEventListener('click', hideNotification);
     
     function loadSettings() {
         const savedTheme = localStorage.getItem('eclipse_theme') || 'blue-sunset';
@@ -1225,6 +1349,7 @@
         });
     }, 100);
 });
+        
     </script>
 </body>
 </html>
