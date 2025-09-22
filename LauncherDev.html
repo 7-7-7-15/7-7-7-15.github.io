@@ -29,7 +29,6 @@
             min-height: 100vh;
             padding: 20px;
             line-height: 1.6;
-            transition: all var(--transition-speed) ease;
         }
         
         .container {
@@ -629,6 +628,17 @@
         .metric-average { color: #ffa500; }
         .metric-poor { color: #ff6b6b; }
         
+        /* Schedule Modal Styles */
+        .schedule-input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background: #111;
+            color: #e0e0e0;
+            margin-bottom: 10px;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             h1 {
@@ -858,21 +868,6 @@
                         </button>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <h4><i class="fas fa-database"></i> Data Management</h4>
-                    <div class="quick-actions">
-                        <button class="quick-btn" id="exportDataBtn">
-                            <i class="fas fa-download"></i> Export
-                        </button>
-                        <button class="quick-btn" id="importDataBtn">
-                            <i class="fas fa-upload"></i> Import
-                        </button>
-                        <button class="quick-btn" id="clearDataBtn">
-                            <i class="fas fa-trash"></i> Clear
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -940,6 +935,37 @@
         </div>
     </div>
     
+    <!-- Schedule Modal -->
+    <div class="modal" id="scheduleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-clock"></i> Schedule URL Launch</div>
+                <button class="close-modal" id="closeScheduleModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="scheduleUrl">URL</label>
+                    <input type="text" id="scheduleUrl" class="url-input" placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="scheduleTime">Schedule Time (minutes from now)</label>
+                    <input type="number" id="scheduleTime" class="schedule-input" placeholder="5" min="1" max="1440" value="5">
+                </div>
+                <div class="form-group">
+                    <label for="scheduleAction">Action</label>
+                    <select id="scheduleAction" class="action-select">
+                        <option value="launch">Launch in about:blank</option>
+                        <option value="blob">Generate Blob URL</option>
+                        <option value="download">Download as Chronos file</option>
+                    </select>
+                </div>
+                <button class="submit-btn" id="saveScheduleBtn">
+                    <i class="fas fa-save"></i> Schedule Launch
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Notification Banner -->
     <div id="notificationBanner" class="notification-banner">
         <div class="notification-icon">
@@ -981,12 +1007,14 @@
                 qrModal: document.getElementById('qrModal'),
                 shortUrlModal: document.getElementById('shortUrlModal'),
                 bookmarkModal: document.getElementById('bookmarkModal'),
+                scheduleModal: document.getElementById('scheduleModal'),
                 
                 // Modal buttons
                 closeSettings: document.getElementById('closeSettings'),
                 closeQrModal: document.getElementById('closeQrModal'),
                 closeShortUrlModal: document.getElementById('closeShortUrlModal'),
                 closeBookmarkModal: document.getElementById('closeBookmarkModal'),
+                closeScheduleModal: document.getElementById('closeScheduleModal'),
                 
                 // Settings
                 settingsBtn: document.getElementById('settingsBtn'),
@@ -994,11 +1022,6 @@
                 saveUserName: document.getElementById('saveUserName'),
                 lightModeBtn: document.getElementById('lightModeBtn'),
                 darkModeBtn: document.getElementById('darkModeBtn'),
-                
-                // Data management
-                exportDataBtn: document.getElementById('exportDataBtn'),
-                importDataBtn: document.getElementById('importDataBtn'),
-                clearDataBtn: document.getElementById('clearDataBtn'),
                 
                 // Bookmarks and history
                 bookmarksList: document.getElementById('bookmarksList'),
@@ -1015,6 +1038,12 @@
                 bookmarkTitle: document.getElementById('bookmarkTitle'),
                 bookmarkUrl: document.getElementById('bookmarkUrl'),
                 saveBookmarkBtn: document.getElementById('saveBookmarkBtn'),
+                
+                // Schedule modal
+                scheduleUrl: document.getElementById('scheduleUrl'),
+                scheduleTime: document.getElementById('scheduleTime'),
+                scheduleAction: document.getElementById('scheduleAction'),
+                saveScheduleBtn: document.getElementById('saveScheduleBtn'),
                 
                 // Batch processing
                 batchUrls: document.getElementById('batchUrls'),
@@ -1043,7 +1072,8 @@
                 bookmarks: JSON.parse(localStorage.getItem('eclipse_bookmarks') || '[]'),
                 history: JSON.parse(localStorage.getItem('eclipse_history') || '[]'),
                 settings: JSON.parse(localStorage.getItem('eclipse_settings') || '{}'),
-                shortUrls: JSON.parse(localStorage.getItem('eclipse_shortUrls') || '{}')
+                shortUrls: JSON.parse(localStorage.getItem('eclipse_shortUrls') || '{}'),
+                scheduledTasks: JSON.parse(localStorage.getItem('eclipse_scheduledTasks') || '[]')
             };
 
             // Set up event listeners
@@ -1051,44 +1081,15 @@
             
             // Load initial data
             loadInitialData(elements, state);
+            
+            // Check for scheduled tasks
+            checkScheduledTasks(state);
         }
 
         function setupEventListeners(elements, state) {
             // Main form submission
             elements.submitBtn.addEventListener('click', function() {
-                const url = elements.urlInput.value.trim();
-                const action = elements.actionSelect.value;
-                
-                if (!url) {
-                    showNotification('Please enter a URL', 'error');
-                    return;
-                }
-                
-                // Validate URL
-                try {
-                    new URL(url);
-                } catch (e) {
-                    showNotification('Please enter a valid URL', 'error');
-                    return;
-                }
-                
-                // Add to history
-                addToHistory(url, action, state);
-                
-                // Perform action
-                if (action === 'launch') {
-                    launchInAboutBlank(url);
-                } else if (action === 'blob') {
-                    generateBlobUrl(url);
-                } else if (action === 'download') {
-                    downloadChronosFile(url);
-                } else if (action === 'self-iframe') {
-                    loadSelfHostedIframe(url, elements);
-                } else if (action === 'performance') {
-                    testPerformance(url, elements);
-                }
-                
-                updateStats(elements, state);
+                handleUrlSubmission(elements, state);
             });
             
             // Quick actions
@@ -1098,7 +1099,7 @@
                     showNotification('Please enter a URL first', 'error');
                     return;
                 }
-                shortenUrl(url, elements);
+                shortenUrl(url, elements, state);
             });
             
             elements.generateQrBtn.addEventListener('click', function() {
@@ -1128,6 +1129,15 @@
                 validateUrl(url);
             });
             
+            elements.scheduleUrlBtn.addEventListener('click', function() {
+                const url = elements.urlInput.value.trim();
+                if (!url) {
+                    showNotification('Please enter a URL first', 'error');
+                    return;
+                }
+                openScheduleModal(url, elements);
+            });
+            
             // Settings
             elements.settingsBtn.addEventListener('click', function() {
                 elements.settingsModal.classList.add('active');
@@ -1142,12 +1152,16 @@
                 document.body.classList.add('light-mode');
                 elements.lightModeBtn.classList.add('active');
                 elements.darkModeBtn.classList.remove('active');
+                state.settings.theme = 'light';
+                localStorage.setItem('eclipse_settings', JSON.stringify(state.settings));
             });
             
             elements.darkModeBtn.addEventListener('click', function() {
                 document.body.classList.remove('light-mode');
                 elements.darkModeBtn.classList.add('active');
                 elements.lightModeBtn.classList.remove('active');
+                state.settings.theme = 'dark';
+                localStorage.setItem('eclipse_settings', JSON.stringify(state.settings));
             });
             
             // Personalization
@@ -1175,6 +1189,10 @@
                 elements.bookmarkModal.classList.remove('active');
             });
             
+            elements.closeScheduleModal.addEventListener('click', function() {
+                elements.scheduleModal.classList.remove('active');
+            });
+            
             // Short URL actions
             elements.copyShortUrlBtn.addEventListener('click', function() {
                 navigator.clipboard.writeText(elements.shortUrlInput.value);
@@ -1195,7 +1213,19 @@
                     return;
                 }
                 
-                state.bookmarks.push({ title, url, date: new Date().toISOString() });
+                // Check if bookmark already exists
+                const exists = state.bookmarks.some(bookmark => bookmark.url === url);
+                if (exists) {
+                    showNotification('This URL is already bookmarked', 'error');
+                    return;
+                }
+                
+                state.bookmarks.push({ 
+                    title, 
+                    url, 
+                    date: new Date().toISOString(),
+                    id: Date.now().toString()
+                });
                 localStorage.setItem('eclipse_bookmarks', JSON.stringify(state.bookmarks));
                 
                 updateBookmarksList(elements, state);
@@ -1203,20 +1233,58 @@
                 showNotification('Bookmark saved successfully', 'success');
             });
             
+            // Schedule saving
+            elements.saveScheduleBtn.addEventListener('click', function() {
+                const url = elements.scheduleUrl.value.trim();
+                const time = parseInt(elements.scheduleTime.value);
+                const action = elements.scheduleAction.value;
+                
+                if (!url || isNaN(time) || time < 1) {
+                    showNotification('Please enter valid schedule details', 'error');
+                    return;
+                }
+                
+                const scheduleTime = new Date(Date.now() + time * 60000);
+                const task = {
+                    url,
+                    action,
+                    scheduleTime: scheduleTime.toISOString(),
+                    id: Date.now().toString()
+                };
+                
+                state.scheduledTasks.push(task);
+                localStorage.setItem('eclipse_scheduledTasks', JSON.stringify(state.scheduledTasks));
+                
+                elements.scheduleModal.classList.remove('active');
+                showNotification(`URL scheduled to launch in ${time} minutes`, 'success');
+                
+                // Set timeout for this task
+                setTimeout(() => {
+                    executeScheduledTask(task, state);
+                }, time * 60000);
+            });
+            
             // Batch processing
             elements.processBatchBtn.addEventListener('click', function() {
-                const urls = elements.batchUrls.value.split('\n').filter(url => url.trim());
+                const urls = elements.batchUrls.value.split('\n')
+                    .filter(url => url.trim())
+                    .map(url => url.trim());
+                    
                 if (urls.length === 0) {
                     showNotification('Please enter URLs to process', 'error');
                     return;
                 }
                 
                 urls.forEach(url => {
+                    // Add to history
+                    addToHistory(url, 'batch', state);
+                    
                     // Open each URL in a new tab
-                    window.open(url.trim(), '_blank');
+                    window.open(url, '_blank');
                 });
                 
                 showNotification(`Opened ${urls.length} URLs in new tabs`, 'success');
+                updateStats(elements, state);
             });
             
             elements.clearBatchBtn.addEventListener('click', function() {
@@ -1244,6 +1312,9 @@
                 if (event.target === elements.bookmarkModal) {
                     elements.bookmarkModal.classList.remove('active');
                 }
+                if (event.target === elements.scheduleModal) {
+                    elements.scheduleModal.classList.remove('active');
+                }
             });
             
             // Search functionality
@@ -1254,6 +1325,13 @@
             elements.historySearch.addEventListener('input', function() {
                 filterHistory(elements, state);
             });
+            
+            // Allow Enter key to submit URL
+            elements.urlInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleUrlSubmission(elements, state);
+                }
+            });
         }
 
         function loadInitialData(elements, state) {
@@ -1263,13 +1341,55 @@
                 elements.personalizedGreeting.innerHTML = `Welcome, ${state.settings.userName}!`;
             }
             
-            // Update lists
+            // Load theme
+            if (state.settings.theme === 'light') {
+                document.body.classList.add('light-mode');
+                elements.lightModeBtn.classList.add('active');
+                elements.darkModeBtn.classList.remove('active');
+            }
+            
+            // Update lists and stats
             updateBookmarksList(elements, state);
             updateHistoryList(elements, state);
             updateStats(elements, state);
         }
 
-        // Core functionality functions
+        function handleUrlSubmission(elements, state) {
+            const url = elements.urlInput.value.trim();
+            const action = elements.actionSelect.value;
+            
+            if (!url) {
+                showNotification('Please enter a URL', 'error');
+                return;
+            }
+            
+            // Validate URL format
+            try {
+                new URL(url);
+            } catch (e) {
+                showNotification('Please enter a valid URL', 'error');
+                return;
+            }
+            
+            // Add to history
+            addToHistory(url, action, state);
+            
+            // Perform action
+            if (action === 'launch') {
+                launchInAboutBlank(url);
+            } else if (action === 'blob') {
+                generateBlobUrl(url);
+            } else if (action === 'download') {
+                downloadChronosFile(url);
+            } else if (action === 'self-iframe') {
+                loadSelfHostedIframe(url, elements);
+            } else if (action === 'performance') {
+                testPerformance(url, elements);
+            }
+            
+            updateStats(elements, state);
+        }
+
         function launchInAboutBlank(url) {
             try {
                 const newWindow = window.open('about:blank', '_blank');
@@ -1395,7 +1515,7 @@
             }, 2000);
         }
 
-        function shortenUrl(url, elements) {
+        function shortenUrl(url, elements, state) {
             // Simple shortening (in a real app, you'd use an API)
             const shortCode = Math.random().toString(36).substring(2, 8);
             const shortUrl = `https://eclipse.ly/${shortCode}`;
@@ -1410,14 +1530,23 @@
 
         function generateQrCode(url, elements) {
             // Clear previous QR code
-            document.getElementById('qrcode').innerHTML = '';
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
             
             // Generate new QR code
-            QRCode.toCanvas(document.getElementById('qrcode'), url, function(error) {
+            QRCode.toCanvas(qrContainer, url, {
+                width: 200,
+                margin: 1,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            }, function(error) {
                 if (error) {
-                    showNotification('Error generating QR code', 'error');
+                    showNotification('Error generating QR code: ' + error.message, 'error');
                 } else {
                     elements.qrModal.classList.add('active');
+                    showNotification('QR code generated successfully', 'success');
                 }
             });
         }
@@ -1426,6 +1555,11 @@
             elements.bookmarkUrl.value = url;
             elements.bookmarkTitle.value = url.replace(/^https?:\/\//, '').split('/')[0];
             elements.bookmarkModal.classList.add('active');
+        }
+
+        function openScheduleModal(url, elements) {
+            elements.scheduleUrl.value = url;
+            elements.scheduleModal.classList.add('active');
         }
 
         function validateUrl(url) {
@@ -1442,30 +1576,32 @@
             state.history.unshift({
                 url,
                 action,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                id: Date.now().toString()
             });
             
             // Keep only last 50 items
             state.history = state.history.slice(0, 50);
             
             localStorage.setItem('eclipse_history', JSON.stringify(state.history));
-            updateHistoryList(elements, state);
         }
 
         function updateBookmarksList(elements, state) {
+            const bookmarksList = elements.bookmarksList;
+            
             if (state.bookmarks.length === 0) {
-                elements.bookmarksList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No bookmarks yet</div>';
+                bookmarksList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No bookmarks yet</div>';
                 return;
             }
             
-            elements.bookmarksList.innerHTML = state.bookmarks.map((bookmark, index) => `
-                <div class="url-item" onclick="elements.urlInput.value = '${bookmark.url}'; showNotification('URL loaded from bookmark', 'success')">
+            bookmarksList.innerHTML = state.bookmarks.map((bookmark) => `
+                <div class="url-item" onclick="document.getElementById('urlInput').value = '${bookmark.url}'; showNotification('URL loaded from bookmark', 'success')">
                     <div class="url-info">
                         <div class="url-title">${bookmark.title}</div>
                         <div class="url-link">${bookmark.url}</div>
                     </div>
                     <div class="url-actions">
-                        <button class="url-action-btn" onclick="event.stopPropagation(); deleteBookmark(${index})">
+                        <button class="url-action-btn" onclick="event.stopPropagation(); deleteBookmark('${bookmark.id}')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -1474,13 +1610,15 @@
         }
 
         function updateHistoryList(elements, state) {
+            const historyList = elements.historyList;
+            
             if (state.history.length === 0) {
-                elements.historyList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No history yet</div>';
+                historyList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No history yet</div>';
                 return;
             }
             
-            elements.historyList.innerHTML = state.history.slice(0, 10).map((item, index) => `
-                <div class="url-item" onclick="elements.urlInput.value = '${item.url}'; showNotification('URL loaded from history', 'success')">
+            historyList.innerHTML = state.history.slice(0, 10).map((item) => `
+                <div class="url-item" onclick="document.getElementById('urlInput').value = '${item.url}'; showNotification('URL loaded from history', 'success')">
                     <div class="url-info">
                         <div class="url-title">${item.url.replace(/^https?:\/\//, '').split('/')[0]}</div>
                         <div class="url-link">${new Date(item.timestamp).toLocaleString()}</div>
@@ -1507,19 +1645,21 @@
                 bookmark.url.toLowerCase().includes(searchTerm)
             );
             
+            const bookmarksList = elements.bookmarksList;
+            
             if (filtered.length === 0) {
-                elements.bookmarksList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No matching bookmarks</div>';
+                bookmarksList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No matching bookmarks</div>';
                 return;
             }
             
-            elements.bookmarksList.innerHTML = filtered.map((bookmark, index) => `
-                <div class="url-item" onclick="elements.urlInput.value = '${bookmark.url}'; showNotification('URL loaded from bookmark', 'success')">
+            bookmarksList.innerHTML = filtered.map((bookmark) => `
+                <div class="url-item" onclick="document.getElementById('urlInput').value = '${bookmark.url}'; showNotification('URL loaded from bookmark', 'success')">
                     <div class="url-info">
                         <div class="url-title">${bookmark.title}</div>
                         <div class="url-link">${bookmark.url}</div>
                     </div>
                     <div class="url-actions">
-                        <button class="url-action-btn" onclick="event.stopPropagation(); deleteBookmark(${state.bookmarks.indexOf(bookmark)})">
+                        <button class="url-action-btn" onclick="event.stopPropagation(); deleteBookmark('${bookmark.id}')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -1533,13 +1673,15 @@
                 item.url.toLowerCase().includes(searchTerm)
             );
             
+            const historyList = elements.historyList;
+            
             if (filtered.length === 0) {
-                elements.historyList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No matching history</div>';
+                historyList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No matching history</div>';
                 return;
             }
             
-            elements.historyList.innerHTML = filtered.slice(0, 10).map((item, index) => `
-                <div class="url-item" onclick="elements.urlInput.value = '${item.url}'; showNotification('URL loaded from history', 'success')">
+            historyList.innerHTML = filtered.slice(0, 10).map((item) => `
+                <div class="url-item" onclick="document.getElementById('urlInput').value = '${item.url}'; showNotification('URL loaded from history', 'success')">
                     <div class="url-info">
                         <div class="url-title">${item.url.replace(/^https?:\/\//, '').split('/')[0]}</div>
                         <div class="url-link">${new Date(item.timestamp).toLocaleString()}</div>
@@ -1548,11 +1690,66 @@
             `).join('');
         }
 
-        function deleteBookmark(index) {
-            state.bookmarks.splice(index, 1);
+        function deleteBookmark(bookmarkId) {
+            const state = {
+                bookmarks: JSON.parse(localStorage.getItem('eclipse_bookmarks') || '[]')
+            };
+            
+            state.bookmarks = state.bookmarks.filter(bookmark => bookmark.id !== bookmarkId);
             localStorage.setItem('eclipse_bookmarks', JSON.stringify(state.bookmarks));
-            updateBookmarksList(elements, state);
+            
+            // Re-render bookmarks list
+            const bookmarksList = document.getElementById('bookmarksList');
+            if (state.bookmarks.length === 0) {
+                bookmarksList.innerHTML = '<div class="url-item" style="justify-content: center; color: #666; font-style: italic;">No bookmarks yet</div>';
+            } else {
+                bookmarksList.innerHTML = state.bookmarks.map((bookmark) => `
+                    <div class="url-item" onclick="document.getElementById('urlInput').value = '${bookmark.url}'; showNotification('URL loaded from bookmark', 'success')">
+                        <div class="url-info">
+                            <div class="url-title">${bookmark.title}</div>
+                            <div class="url-link">${bookmark.url}</div>
+                        </div>
+                        <div class="url-actions">
+                            <button class="url-action-btn" onclick="event.stopPropagation(); deleteBookmark('${bookmark.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
             showNotification('Bookmark deleted', 'success');
+        }
+
+        function checkScheduledTasks(state) {
+            const now = new Date();
+            state.scheduledTasks = state.scheduledTasks.filter(task => {
+                const taskTime = new Date(task.scheduleTime);
+                if (taskTime <= now) {
+                    // Execute task immediately
+                    executeScheduledTask(task, state);
+                    return false; // Remove from list
+                }
+                return true; // Keep in list
+            });
+            
+            localStorage.setItem('eclipse_scheduledTasks', JSON.stringify(state.scheduledTasks));
+        }
+
+        function executeScheduledTask(task, state) {
+            showNotification(`Executing scheduled task: ${task.url}`, 'success');
+            
+            // Perform the scheduled action
+            if (task.action === 'launch') {
+                launchInAboutBlank(task.url);
+            } else if (task.action === 'blob') {
+                generateBlobUrl(task.url);
+            } else if (task.action === 'download') {
+                downloadChronosFile(task.url);
+            }
+            
+            // Add to history
+            addToHistory(task.url, `scheduled-${task.action}`, state);
         }
 
         function showNotification(message, type) {
@@ -1574,7 +1771,6 @@
         }
 
         // Make functions globally available for onclick handlers
-        window.elements = elements;
         window.deleteBookmark = deleteBookmark;
         window.showNotification = showNotification;
     </script>
