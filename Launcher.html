@@ -830,6 +830,7 @@
             background: linear-gradient(135deg, #cc00ff 0%, #ee00ff 100%);
         }
         /* Notification Banner Styles */
+/* Notification Banner Styles with Progress Bar */
 .notification-banner {
     position: fixed;
     top: 20px;
@@ -846,6 +847,7 @@
     align-items: center;
     gap: 12px;
     animation: slideInRight 0.3s ease-out;
+    overflow: hidden;
 }
 
 .notification-banner.show {
@@ -902,6 +904,31 @@
 
 .close-notification:hover {
     color: #e0e0e0;
+}
+
+/* Progress Bar Styles */
+.notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.notification-progress-bar {
+    height: 100%;
+    width: 100%;
+    transition: width 0.1s linear;
+}
+
+.notification-banner.success .notification-progress-bar {
+    background: var(--eclipse-accent);
+}
+
+.notification-banner.error .notification-progress-bar {
+    background: #ff6b6b;
 }
 
 @keyframes slideInRight {
@@ -1031,6 +1058,7 @@
         </div>
     </div>
     <!-- Notification Banner -->
+<!-- Notification Banner -->
 <div id="notificationBanner" class="notification-banner">
     <div class="notification-icon">
         <i class="fas fa-check-circle"></i>
@@ -1042,6 +1070,9 @@
     <button class="close-notification" id="closeNotification">
         <i class="fas fa-times"></i>
     </button>
+    <div class="notification-progress">
+        <div class="notification-progress-bar" id="notificationProgress"></div>
+    </div>
 </div>
    
     <script>
@@ -1272,6 +1303,7 @@ function generateDataUrl(url) {
 }
     // Show status message
    // Updated showStatus function with banner support
+// Updated showStatus function with progress bar
 function showStatus(message, type) {
     // Update the existing status message
     statusMessage.textContent = message;
@@ -1284,6 +1316,7 @@ function showStatus(message, type) {
     const notificationIcon = notificationBanner.querySelector('.notification-icon i');
     const notificationTitle = notificationBanner.querySelector('.notification-title');
     const notificationMessage = notificationBanner.querySelector('.notification-message');
+    const notificationProgress = document.getElementById('notificationProgress');
     
     // Set banner content based on type
     if (type === 'success') {
@@ -1298,13 +1331,26 @@ function showStatus(message, type) {
     
     notificationMessage.textContent = message;
     
+    // Reset progress bar
+    notificationProgress.style.width = '100%';
+    notificationProgress.style.transition = 'none';
+    
     // Show the banner
     notificationBanner.classList.add('show');
     
-    // Auto-hide after 5 seconds
+    // Start progress bar animation after a brief delay
     setTimeout(() => {
+        notificationProgress.style.transition = 'width 5s linear';
+        notificationProgress.style.width = '0%';
+    }, 100);
+    
+    // Auto-hide after 5 seconds
+    const timeoutId = setTimeout(() => {
         hideNotification();
-    }, 5000);
+    }, 5100); // Slightly longer than progress bar animation
+    
+    // Store timeout ID for clearing if manually closed
+    notificationBanner.dataset.timeoutId = timeoutId;
     
     // Hide the existing status message after 5 seconds
     setTimeout(() => {
@@ -1315,6 +1361,12 @@ function showStatus(message, type) {
 // Function to hide notification banner
 function hideNotification() {
     const notificationBanner = document.getElementById('notificationBanner');
+    
+    // Clear the auto-hide timeout if it exists
+    if (notificationBanner.dataset.timeoutId) {
+        clearTimeout(parseInt(notificationBanner.dataset.timeoutId));
+    }
+    
     notificationBanner.classList.remove('show');
     notificationBanner.classList.add('hide');
     
@@ -1325,7 +1377,9 @@ function hideNotification() {
 }
 
 // Add event listener for close button (add this to your DOMContentLoaded function)
-document.getElementById('closeNotification').addEventListener('click', hideNotification);
+document.getElementById('closeNotification').addEventListener('click', function() {
+    hideNotification();
+});
     
     function loadSettings() {
         const savedTheme = localStorage.getItem('eclipse_theme') || 'blue-sunset';
