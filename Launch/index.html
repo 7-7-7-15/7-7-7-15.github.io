@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eclipse Launcher</title>
+    <link rel="icon" type="image/x-icon" href="/assets/logo/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        :root {
+            --eclipse-primary: #6b5ce7;
+            --eclipse-secondary: #8c7ae6;
+            --eclipse-accent: #00ff9d;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .eclipse-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 30px;
+            background: rgba(17, 17, 17, 0.8);
+            border-radius: 16px;
+            border: 1px solid #252525;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .eclipse-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, var(--eclipse-primary), transparent, var(--eclipse-secondary));
+            opacity: 0.1;
+            z-index: -1;
+        }
+        
+        .eclipse-logo {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            color: var(--eclipse-primary);
+            text-shadow: 0 0 15px rgba(107, 92, 231, 0.5);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            color: #e0e0e0;
+            margin-bottom: 8px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .eclipse-tagline {
+            font-size: 1.2rem;
+            color: var(--eclipse-secondary);
+            margin-bottom: 30px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        
+        .url-form {
+            background: rgba(17, 17, 17, 0.8);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #252525;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-weight: 500;
+        }
+        
+        .url-input {
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #111;
+            color: #e0e0e0;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+        }
+        
+        .url-input:focus {
+            outline: none;
+            border-color: var(--eclipse-primary);
+            background: #151515;
+            box-shadow: 0 0 0 3px rgba(107, 92, 231, 0.3);
+        }
+        
+        .action-select {
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #111;
+            color: #e0e0e0;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+        }
+        
+        .action-select:focus {
+            outline: none;
+            border-color: var(--eclipse-primary);
+            background-color: #151515;
+            box-shadow: 0 0 0 3px rgba(107, 92, 231, 0.3);
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 16px 28px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, var(--eclipse-primary) 0%, var(--eclipse-secondary) 100%);
+            color: #e0e0e0;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .submit-btn:hover {
+            background: linear-gradient(135deg, var(--eclipse-secondary) 0%, #9c8ce9 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .instructions {
+            background: rgba(17, 17, 17, 0.8);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid #252525;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+        
+        .instructions h2 {
+            color: #e0e0e0;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions h2 i {
+            color: var(--eclipse-primary);
+        }
+        
+        .instructions ul {
+            list-style: none;
+            padding-left: 10px;
+        }
+        
+        .instructions li {
+            margin-bottom: 15px;
+            padding-left: 30px;
+            position: relative;
+            color: #aaa;
+        }
+        
+        .instructions li i {
+            position: absolute;
+            left: 0;
+            top: 2px;
+            color: var(--eclipse-secondary);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px 20px;
+            color: #666;
+            border-top: 1px solid #252525;
+            font-size: 0.9rem;
+        }
+        
+        .eclipse-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .social-links a {
+            color: #666;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            color: var(--eclipse-primary);
+            transform: translateY(-3px);
+        }
+        
+        .settings-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px;
+            border-radius: 50%;
+            border: 1px solid #252525;
+            background: rgba(17, 17, 17, 0.9);
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .settings-btn:hover {
+            background: var(--eclipse-primary);
+            color: white;
+            transform: rotate(30deg) scale(1.1);
+        }
+        
+        /* Settings Modal */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .settings-modal.active {
+            display: flex;
+        }
+        
+        .settings-container {
+            width: 90%;
+            max-width: 600px;
+            background: rgba(17, 17, 17, 0.95);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #333;
+            max-height: 80vh;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: #151515;
+            border-bottom: 1px solid #252525;
+        }
+        
+        .settings-title {
+            color: #e0e0e0;
+            font-size: 1.4rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .settings-title i {
+            color: var(--eclipse-primary);
+        }
+        
+        .close-settings {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        .close-settings:hover {
+            color: #e0e0e0;
+            transform: scale(1.1);
+        }
+        
+        .settings-content {
+            padding: 20px;
+        }
+        
+        .settings-section {
+            margin-bottom: 25px;
+        }
+        
+        .settings-section h3 {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #252525;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .settings-section h3 i {
+            color: var(--eclipse-primary);
+        }
+        
+        .theme-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        
+        .theme-option {
+            padding: 15px 10px;
+            border-radius: 8px;
+            border: 1px solid #252525;
+            background: #151515;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        
+        .theme-option:hover {
+            background: #1a1a1a;
+            transform: translateY(-2px);
+        }
+        
+        .theme-option.active {
+            background: #252525;
+            color: #e0e0e0;
+            border-color: var(--eclipse-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .theme-option[data-theme="dark"] {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="sunset"] {
+            background: linear-gradient(135deg, #e2725b 0%, #ff8a65 100%);
+            color: #3e2723;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="blue-sunset"] {
+            background: linear-gradient(135deg, #5b8de2 0%, #65a0ff 100%);
+            color: #1a2337;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="gray"] {
+            background: linear-gradient(135deg, #4a3de0 0%, #6a5af3 100%);
+            color: #ffffff;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="midnight"] {
+            background: linear-gradient(135deg, #2a2a6a 0%, #3a3a9a 100%);
+            color: #ffffff;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="neon"] {
+            background: linear-gradient(135deg, #4a3de0 0%, #6a5af3 100%);
+            color: #ffffff;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="forest"] {
+            background: linear-gradient(135deg, #1d976c 0%, #2bc48d 100%);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="cyber"] {
+            background: linear-gradient(135deg, #000000 0%, #222222 100%);
+            color: #00ff9d;
+            font-weight: 500;
+            border: 1px solid #00ff9d;
+        }
+        
+        .theme-option[data-theme="lavender"] {
+            background: linear-gradient(135deg, #a78bfa 0%, #b99bfc 100%);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="crimson"] {
+            background: linear-gradient(135deg, #8E0E00 0%, #B22222 100%);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="ocean"] {
+            background: linear-gradient(135deg, #0088ff 0%, #00aaff 100%);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .theme-option[data-theme="purple-rain"] {
+            background: linear-gradient(135deg, #aa00ff 0%, #cc00ff 100%);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .save-settings-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, var(--eclipse-primary) 0%, var(--eclipse-secondary) 100%);
+            color: #e0e0e0;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .save-settings-btn:hover {
+            background: linear-gradient(135deg, var(--eclipse-secondary) 0%, #9c8ce9 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .eclipse-tagline {
+                font-size: 1.1rem;
+            }
+            
+            .eclipse-footer {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+        
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        
+        /* Status message */
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .status-success {
+            background: rgba(0, 255, 157, 0.1);
+            border: 1px solid var(--eclipse-accent);
+            color: var(--eclipse-accent);
+        }
+        
+        .status-error {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff6b6b;
+            color: #ff6b6b;
+        }
+        
+        /* Theme-specific styles */
+        body.theme-dark {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+        }
+        
+        body.theme-sunset {
+            background: url('/assets/backgrounds/sunset.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff8e1;
+        }
+        body.theme-sunset .eclipse-header,
+        body.theme-sunset .url-form,
+        body.theme-sunset .instructions {
+            background: rgba(79, 50, 37, 0.85);
+            border-color: #e2725b;
+            color: #fff8e1;
+        }
+        body.theme-sunset .eclipse-header h1,
+        body.theme-sunset .instructions h2 {
+            color: #fff8e1;
+        }
+        body.theme-sunset .submit-btn,
+        body.theme-sunset .save-settings-btn {
+            background: linear-gradient(135deg, #e2725b 0%, #ff8a65 100%);
+            color: #3e2723;
+        }
+        body.theme-sunset .submit-btn:hover,
+        body.theme-sunset .save-settings-btn:hover {
+            background: linear-gradient(135deg, #ff8a65 0%, #ffab91 100%);
+        }
+        
+        body.theme-blue-sunset {
+            background: url('/assets/backgrounds/sunsetblue.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0f0ff;
+        }
+        body.theme-blue-sunset .eclipse-header,
+        body.theme-blue-sunset .url-form,
+        body.theme-blue-sunset .instructions {
+            background: rgba(30, 50, 80, 0.85);
+            border-color: #5b8de2;
+            color: #e0f0ff;
+        }
+        body.theme-blue-sunset .eclipse-header h1,
+        body.theme-blue-sunset .instructions h2 {
+            color: #e0f0ff;
+        }
+        body.theme-blue-sunset .submit-btn,
+        body.theme-blue-sunset .save-settings-btn {
+            background: linear-gradient(135deg, #5b8de2 0%, #65a0ff 100%);
+            color: #1a2337;
+        }
+        body.theme-blue-sunset .submit-btn:hover,
+        body.theme-blue-sunset .save-settings-btn:hover {
+            background: linear-gradient(135deg, #65a0ff 0%, #91b9ff 100%);
+        }
+        
+        body.theme-gray {
+            background: url('/assets/backgrounds/gray.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0e0e0;
+        }
+        body.theme-gray .eclipse-header,
+        body.theme-gray .url-form,
+        body.theme-gray .instructions {
+            background: rgba(20, 20, 30, 0.85);
+            border-color: #8a7fff;
+            color: #e0e0e0;
+        }
+        body.theme-gray .eclipse-header h1,
+        body.theme-gray .instructions h2 {
+            color: #e0e0e0;
+        }
+        body.theme-gray .submit-btn,
+        body.theme-gray .save-settings-btn {
+            background: linear-gradient(135deg, #4a3de0 0%, #6a5af3 100%);
+            color: #ffffff;
+        }
+        body.theme-gray .submit-btn:hover,
+        body.theme-gray .save-settings-btn:hover {
+            background: linear-gradient(135deg, #6a5af3 0%, #8a7eff 100%);
+        }
+        
+        body.theme-midnight {
+            background: url('/assets/backgrounds/midnight.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0e0ff;
+        }
+        body.theme-midnight .eclipse-header,
+        body.theme-midnight .url-form,
+        body.theme-midnight .instructions {
+            background: rgba(10, 10, 42, 0.9);
+            border-color: #4a4a8a;
+            color: #e0e0ff;
+        }
+        body.theme-midnight .eclipse-header h1,
+        body.theme-midnight .instructions h2 {
+            color: #e0e0ff;
+        }
+        body.theme-midnight .submit-btn,
+        body.theme-midnight .save-settings-btn {
+            background: linear-gradient(135deg, #2a2a6a 0%, #3a3a9a 100%);
+            color: #ffffff;
+        }
+        body.theme-midnight .submit-btn:hover,
+        body.theme-midnight .save-settings-btn:hover {
+            background: linear-gradient(135deg, #3a3a9a 0%, #4a4aba 100%);
+        }
+        
+        body.theme-neon {
+            background: url('/assets/backgrounds/neon.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0f7fa;
+        }
+        body.theme-neon .eclipse-header,
+        body.theme-neon .url-form,
+        body.theme-neon .instructions {
+            background: rgba(15, 12, 41, 0.85);
+            border-color: #4a3de0;
+            color: #e0f7fa;
+        }
+        body.theme-neon .eclipse-header h1,
+        body.theme-neon .instructions h2 {
+            color: #e0f7fa;
+        }
+        body.theme-neon .submit-btn,
+        body.theme-neon .save-settings-btn {
+            background: linear-gradient(135deg, #4a3de0 0%, #6a5af3 100%);
+            color: #ffffff;
+        }
+        body.theme-neon .submit-btn:hover,
+        body.theme-neon .save-settings-btn:hover {
+            background: linear-gradient(135deg, #6a5af3 0%, #8a7eff 100%);
+        }
+        
+        body.theme-forest {
+            background: url('/assets/backgrounds/forest.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #003314;
+        }
+        body.theme-forest .eclipse-header,
+        body.theme-forest .url-form,
+        body.theme-forest .instructions {
+            background: rgba(29, 151, 108, 0.85);
+            border-color: #93f9b9;
+            color: #003314;
+        }
+        body.theme-forest .eclipse-header h1,
+        body.theme-forest .instructions h2 {
+            color: #003314;
+        }
+        body.theme-forest .submit-btn,
+        body.theme-forest .save-settings-btn {
+            background: linear-gradient(135deg, #1d976c 0%, #2bc48d 100%);
+            color: white;
+        }
+        body.theme-forest .submit-btn:hover,
+        body.theme-forest .save-settings-btn:hover {
+            background: linear-gradient(135deg, #2bc48d 0%, #3be8a8 100%);
+        }
+        
+        body.theme-cyber {
+            background: url('/assets/backgrounds/cyber.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #00ff9d;
+        }
+        body.theme-cyber .eclipse-header,
+        body.theme-cyber .url-form,
+        body.theme-cyber .instructions {
+            background: rgba(0, 0, 0, 0.85);
+            border-color: #00ff9d;
+            color: #00ff9d;
+        }
+        body.theme-cyber .eclipse-header h1,
+        body.theme-cyber .instructions h2 {
+            color: #00ff9d;
+        }
+        body.theme-cyber .submit-btn,
+        body.theme-cyber .save-settings-btn {
+            background: linear-gradient(135deg, #000000 0%, #222222 100%);
+            color: #00ff9d;
+            border: 1px solid #00ff9d;
+        }
+        body.theme-cyber .submit-btn:hover,
+        body.theme-cyber .save-settings-btn:hover {
+            background: linear-gradient(135deg, #222222 0%, #444444 100%);
+        }
+        
+        body.theme-lavender {
+            background: url('/assets/backgrounds/lavendar.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #4c1d95;
+        }
+        body.theme-lavender .eclipse-header,
+        body.theme-lavender .url-form,
+        body.theme-lavender .instructions {
+            background: rgba(167, 139, 250, 0.85);
+            border-color: #c4b5fd;
+            color: #4c1d95;
+        }
+        body.theme-lavender .eclipse-header h1,
+        body.theme-lavender .instructions h2 {
+            color: #4c1d95;
+        }
+        body.theme-lavender .submit-btn,
+        body.theme-lavender .save-settings-btn {
+            background: linear-gradient(135deg, #a78bfa 0%, #b99bfc 100%);
+            color: white;
+        }
+        body.theme-lavender .submit-btn:hover,
+        body.theme-lavender .save-settings-btn:hover {
+            background: linear-gradient(135deg, #b99bfc 0%, #cbabfe 100%);
+        }
+        
+        body.theme-crimson {
+            background: url('/assets/backgrounds/crimson.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #ffcccb;
+        }
+        body.theme-crimson .eclipse-header,
+        body.theme-crimson .url-form,
+        body.theme-crimson .instructions {
+            background: rgba(142, 14, 0, 0.85);
+            border-color: #ff6b6b;
+            color: #ffcccb;
+        }
+        body.theme-crimson .eclipse-header h1,
+        body.theme-crimson .instructions h2 {
+            color: #ffcccb;
+        }
+        body.theme-crimson .submit-btn,
+        body.theme-crimson .save-settings-btn {
+            background: linear-gradient(135deg, #8E0E00 0%, #B22222 100%);
+            color: white;
+        }
+        body.theme-crimson .submit-btn:hover,
+        body.theme-crimson .save-settings-btn:hover {
+            background: linear-gradient(135deg, #B22222 0%, #DC143C 100%);
+        }
+        
+        body.theme-ocean {
+            background: url('/assets/backgrounds/ocean.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0f7ff;
+        }
+        body.theme-ocean .eclipse-header,
+        body.theme-ocean .url-form,
+        body.theme-ocean .instructions {
+            background: rgba(0, 50, 100, 0.85);
+            border-color: #0088ff;
+            color: #e0f7ff;
+        }
+        body.theme-ocean .eclipse-header h1,
+        body.theme-ocean .instructions h2 {
+            color: #e0f7ff;
+        }
+        body.theme-ocean .submit-btn,
+        body.theme-ocean .save-settings-btn {
+            background: linear-gradient(135deg, #0088ff 0%, #00aaff 100%);
+            color: white;
+        }
+        body.theme-ocean .submit-btn:hover,
+        body.theme-ocean .save-settings-btn:hover {
+            background: linear-gradient(135deg, #00aaff 0%, #00ccff 100%);
+        }
+        
+        body.theme-purple-rain {
+            background: url('/assets/backgrounds/purplerain.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0d0ff;
+        }
+        body.theme-purple-rain .eclipse-header,
+        body.theme-purple-rain .url-form,
+        body.theme-purple-rain .instructions {
+            background: rgba(50, 0, 100, 0.85);
+            border-color: #aa00ff;
+            color: #e0d0ff;
+        }
+        body.theme-purple-rain .eclipse-header h1,
+        body.theme-purple-rain .instructions h2 {
+            color: #e0d0ff;
+        }
+        body.theme-purple-rain .submit-btn,
+        body.theme-purple-rain .save-settings-btn {
+            background: linear-gradient(135deg, #aa00ff 0%, #cc00ff 100%);
+            color: white;
+        }
+        body.theme-purple-rain .submit-btn:hover,
+        body.theme-purple-rain .save-settings-btn:hover {
+            background: linear-gradient(135deg, #cc00ff 0%, #ee00ff 100%);
+        }
+        /* Notification Banner Styles */
+/* Notification Banner Styles with Progress Bar */
+.notification-banner {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    background: rgba(17, 17, 17, 0.95);
+    border: 1px solid #252525;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 1002;
+    max-width: 350px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    animation: slideInRight 0.3s ease-out;
+    overflow: hidden;
+}
+
+.notification-banner.show {
+    display: flex;
+}
+
+.notification-banner.hide {
+    animation: slideOutRight 0.3s ease-in forwards;
+}
+
+.notification-banner.success {
+    border-left: 4px solid var(--eclipse-accent);
+}
+
+.notification-banner.error {
+    border-left: 4px solid #ff6b6b;
+}
+
+.notification-icon {
+    font-size: 1.2rem;
+}
+
+.notification-banner.success .notification-icon {
+    color: var(--eclipse-accent);
+}
+
+.notification-banner.error .notification-icon {
+    color: #ff6b6b;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.notification-message {
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.close-notification {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 5px;
+    transition: all 0.2s ease;
+}
+
+.close-notification:hover {
+    color: #e0e0e0;
+}
+
+/* Progress Bar Styles */
+.notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.notification-progress-bar {
+    height: 100%;
+    width: 100%;
+    transition: width 0.1s linear;
+}
+
+.notification-banner.success .notification-progress-bar {
+    background: var(--eclipse-accent);
+}
+
+.notification-banner.error .notification-progress-bar {
+    background: #ff6b6b;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+        /* Welcome Modal Styles */
+.welcome-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1003;
+    justify-content: center;
+    align-items: center;
+}
+
+.welcome-modal.active {
+    display: flex;
+}
+
+.welcome-container {
+    width: 90%;
+    max-width: 500px;
+    background: rgba(17, 17, 17, 0.95);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #333;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.welcome-header {
+    padding: 25px;
+    background: #151515;
+    border-bottom: 1px solid #252525;
+    text-align: center;
+}
+
+.welcome-title {
+    color: #e0e0e0;
+    font-size: 1.6rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.welcome-title i {
+    color: var(--eclipse-primary);
+}
+
+.welcome-content {
+    padding: 25px;
+}
+
+.welcome-input {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    background: #111;
+    color: #e0e0e0;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 20px;
+    transition: all 0.2s ease;
+}
+
+.welcome-input:focus {
+    outline: none;
+    border-color: var(--eclipse-primary);
+    background: #151515;
+    box-shadow: 0 0 0 3px rgba(107, 92, 231, 0.3);
+}
+
+.welcome-btn {
+    width: 100%;
+    padding: 14px 28px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, var(--eclipse-primary) 0%, var(--eclipse-secondary) 100%);
+    color: #e0e0e0;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+
+.welcome-btn:hover {
+    background: linear-gradient(135deg, var(--eclipse-secondary) 0%, #9c8ce9 100%);
+    transform: translateY(-2px);
+}
+    </style>
+</head>
+<body class="theme-dark">
+    <div class="container">
+        <header class="eclipse-header">
+            <div class="eclipse-logo">
+                <i class="fas fa-moon"></i>
+            </div>
+            <h1>Eclipse URL Launcher</h1>
+            <div class="eclipse-tagline">Shadowed — Revealed — Renewed</div>
+        </header>
+        
+        <div class="url-form animate-in">
+            <div class="form-group">
+                <label for="urlInput"><i class="fas fa-link"></i> Enter URL</label>
+                <input type="url" id="urlInput" class="url-input" placeholder="https://example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="actionSelect"><i class="fas fa-cog"></i> Select Action</label>
+              <select id="actionSelect" class="action-select">
+        <option value="launch">Launch in about:blank</option>
+        <option value="blob">Generate Blob URL</option>
+        <option value="download">Download as Chronos file</option>
+        <option value="self-iframe">Self-hosted iframe</option>
+        <option value="data-url">Data URL</option>
+    </select>
+            </div>
+            
+            <button id="submitBtn" class="submit-btn">
+                <i class="fas fa-rocket"></i> Execute
+            </button>
+            
+            <div id="statusMessage" class="status-message"></div>
+        </div>
+        
+        <div class="instructions animate-in delay-1">
+            <h2><i class="fas fa-info-circle"></i> How to Use</h2>
+            <ul>
+                <li><i class="fas fa-check-circle"></i> Enter any valid URL in the input field above</li>
+                <li><i class="fas fa-check-circle"></i> Choose to either launch the URL in an about:blank tab, generate a Blob URL, or download it as a Chronos file</li>
+                <li><i class="fas fa-check-circle"></i> Click the Execute button to perform the selected action</li>
+                <li><i class="fas fa-check-circle"></i> For the about:blank option, the site will open in a new tab</li>
+                <li><i class="fas fa-check-circle"></i> For the Blob URL option, a Blob URL will be generated and opened in a new tab</li>
+                <li><i class="fas fa-check-circle"></i> For the Chronos file, an HTML file will be downloaded that embeds the site in an iframe</li>
+            </ul>
+        </div>
+        <div id="iframeContainer" class="iframe-container" style="display: none; margin-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3><i class="fas fa-window-restore"></i> Embedded Site</h3>
+        <button id="fullscreenBtn" class="fullscreen-btn" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #333; background: #111; color: #e0e0e0; cursor: pointer;">
+            <i class="fas fa-expand"></i> Fullscreen
+        </button>
+    </div>
+    <iframe id="embeddedFrame" style="width: 100%; height: 500px; border: 1px solid #333; border-radius: 8px; background: #111;"></iframe>
+</div>
+        
+        <footer class="animate-in delay-2">
+            <div class="eclipse-footer">
+                <div>
+                    <p>Eclipse URL Launcher &copy; 2023 — Shadowed — Revealed — Renewed — 7-7-7-15</p> 
+                    <p>Powered by <a href="https://github.com/7-7-7-15" style="color: var(--eclipse-secondary);" target="_blank">Eclipse Syndicate</a></p>
+                </div>
+                <div class="social-links">
+                    <a href="#" title="GitHub"><i class="fab fa-github"></i></a>
+                    <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" title="Discord"><i class="fab fa-discord"></i></a>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Settings Button -->
+    <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
+    
+    <!-- Settings Modal -->
+  <!-- Settings Modal -->
+<div class="settings-modal" id="settingsModal">
+    <div class="settings-container">
+        <div class="settings-header">
+            <div class="settings-title"><i class="fas fa-cog"></i> Settings</div>
+            <button class="close-settings" id="closeSettings">&times;</button>
+        </div>
+        <div class="settings-content">
+            <div class="settings-section">
+                <h3><i class="fas fa-paint-brush"></i> Themes</h3>
+                <div class="theme-options">
+                    <div class="theme-option active" data-theme="dark">Dark</div>
+                    <div class="theme-option" data-theme="sunset">Sunset</div>
+                    <div class="theme-option" data-theme="blue-sunset">Blue Sunset</div>
+                    <div class="theme-option" data-theme="gray">Gray</div>
+                    <div class="theme-option" data-theme="midnight">Midnight</div>
+                    <div class="theme-option" data-theme="neon">Neon</div>
+                    <div class="theme-option" data-theme="forest">Forest</div>
+                    <div class="theme-option" data-theme="cyber">Cyber</div>
+                    <div class="theme-option" data-theme="lavender">Lavender</div>
+                    <div class="theme-option" data-theme="crimson">Crimson</div>
+                    <div class="theme-option" data-theme="ocean">Ocean</div>
+                    <div class="theme-option" data-theme="purple-rain">Purple Rain</div>
+                </div>
+            </div>
+            
+            <!-- Add Personalization Section Here -->
+            <div class="settings-section">
+                <h3><i class="fas fa-user"></i> Personalization</h3>
+                <div style="margin-bottom: 15px;">
+                    <label for="userNameSettings" style="display: block; margin-bottom: 8px; color: #aaa;">Your Name</label>
+                    <input type="text" id="userNameSettings" class="welcome-input" placeholder="Enter your name" style="margin-bottom: 0;">
+                </div>
+                <button id="updateUserName" class="welcome-btn" style="background: #333; margin-top: 10px;">
+                    <i class="fas fa-sync-alt"></i> Update Name
+                </button>
+            </div>
+            
+            <button class="save-settings-btn" id="saveSettingsBtn">Save Settings</button>
+        </div>
+    </div>
+</div>
+    <!-- Notification Banner -->
+<!-- Notification Banner -->
+<div id="notificationBanner" class="notification-banner">
+    <div class="notification-icon">
+        <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="notification-content">
+        <div class="notification-title">Success</div>
+        <div class="notification-message">Operation completed successfully</div>
+    </div>
+    <button class="close-notification" id="closeNotification">
+        <i class="fas fa-times"></i>
+    </button>
+    <div class="notification-progress">
+        <div class="notification-progress-bar" id="notificationProgress"></div>
+    </div>
+</div>
+    <!-- Welcome Modal -->
+<div class="welcome-modal" id="welcomeModal">
+    <div class="welcome-container">
+        <div class="welcome-header">
+            <div class="welcome-title">
+                <i class="fas fa-user-astronaut"></i> Welcome to Eclipse Launcher
+            </div>
+        </div>
+        <div class="welcome-content">
+            <p style="margin-bottom: 20px; color: #aaa;">Personalize your experience by telling us your name:</p>
+            <input type="text" id="userNameInput" class="welcome-input" placeholder="Enter your name" maxlength="20">
+            <button id="saveUserName" class="welcome-btn">
+                <i class="fas fa-rocket"></i> Launch Eclipse
+            </button>
+        </div>
+    </div>
+</div>
+   
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // DOM Elements
+    const urlInput = document.getElementById('urlInput');
+    const actionSelect = document.getElementById('actionSelect');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusMessage = document.getElementById('statusMessage');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const themeOptions = document.querySelectorAll('.theme-option');
+    const iframeContainer = document.getElementById('iframeContainer');
+    const embeddedFrame = document.getElementById('embeddedFrame');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    
+    // Initialize everything
+    initializePersonalization();
+    initializeSettingsPersonalization();
+    loadSettings();
+    
+    // Settings functions
+    settingsBtn.addEventListener('click', function() {
+        settingsModal.classList.add('active');
+    });
+
+    closeSettings.addEventListener('click', function() {
+        settingsModal.classList.remove('active');
+    });
+
+    saveSettingsBtn.addEventListener('click', function() {
+        const selectedTheme = document.querySelector('.theme-option.active').dataset.theme;
+        localStorage.setItem('eclipse_theme', selectedTheme);
+        applyTheme(selectedTheme);
+        settingsModal.classList.remove('active');
+        showStatus('Settings saved successfully', 'success');
+    });
+
+    themeOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            themeOptions.forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    // Handle action selection changes
+    actionSelect.addEventListener('change', function() {
+        if (this.value === 'self-iframe') {
+            iframeContainer.style.display = 'block';
+        } else {
+            iframeContainer.style.display = 'none';
+        }
+    });
+    
+    // Submit button event
+    submitBtn.addEventListener('click', function() {
+        const url = urlInput.value.trim();
+        const action = actionSelect.value;
+        
+        if (!url) {
+            showStatus('Please enter a URL', 'error');
+            return;
+        }
+        
+        // Validate URL format
+        try {
+            new URL(url);
+        } catch (e) {
+            showStatus('Please enter a valid URL', 'error');
+            return;
+        }
+        
+        if (action === 'launch') {
+            launchInAboutBlank(url);
+        } else if (action === 'blob') {
+            generateBlobUrl(url);
+        } else if (action === 'download') {
+            downloadChronosFile(url);
+        } else if (action === 'self-iframe') {
+            loadSelfHostedIframe(url);
+        } else if (action === 'data-url') {
+            generateDataUrl(url);
+        }
+    });
+    
+    // Launch in about:blank
+    function launchInAboutBlank(url) {
+        try {
+            const newWindow = window.open('about:blank', '_blank');
+            if (!newWindow) {
+                showStatus('Popup blocked. Please allow popups for this site.', 'error');
+                return;
+            }
+            
+            newWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Eclipse Launcher</title>
+                    <style>
+                        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                        iframe { width: 100%; height: 100%; border: none; }
+                    </style>
+                </head>
+                <body>
+                    <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
+                </body>
+                </html>
+            `);
+            newWindow.document.close();
+            
+            showStatus('Site launched in new tab', 'success');
+        } catch (error) {
+            showStatus('Error launching site: ' + error.message, 'error');
+        }
+    }
+    
+    // Generate Blob URL
+    function generateBlobUrl(url) {
+        try {
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Eclipse Blob - ${url}</title>
+                    <style>
+                        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                        iframe { width: 100%; height: 100%; border: none; }
+                    </style>
+                </head>
+                <body>
+                    <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // Open the blob URL in a new tab
+            const newWindow = window.open(blobUrl, '_blank');
+            if (!newWindow) {
+                showStatus('Popup blocked. Please allow popups for this site.', 'error');
+                return;
+            }
+            
+            showStatus('Blob URL generated and opened in new tab', 'success');
+        } catch (error) {
+            showStatus('Error generating Blob URL: ' + error.message, 'error');
+        }
+    }
+    
+    // Download as Chronos file
+    function downloadChronosFile(url) {
+        try {
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Eclipse Chronos - ${url}</title>
+                    <style>
+                        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                        iframe { width: 100%; height: 100%; border: none; }
+                    </style>
+                </head>
+                <body>
+                    <iframe src="${url}" sandbox="allow-scripts allow-forms allow-same-origin" allowfullscreen></iframe>
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'Eclipse-Chronos.html';
+            document.body.appendChild(a);
+            a.click();
+            
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            }, 100);
+            
+            showStatus('Chronos file downloaded successfully', 'success');
+        } catch (error) {
+            showStatus('Error downloading file: ' + error.message, 'error');
+        }
+    }
+    
+    // Self-hosted iframe function
+    function loadSelfHostedIframe(url) {
+        try {
+            embeddedFrame.src = url;
+            iframeContainer.style.display = 'block';
+            showStatus('Site loaded in embedded iframe', 'success');
+            
+            // Scroll to iframe
+            iframeContainer.scrollIntoView({ behavior: 'smooth' });
+        } catch (error) {
+            showStatus('Error loading iframe: ' + error.message, 'error');
+        }
+    }
+    
+    // Fullscreen button for iframe
+    fullscreenBtn.addEventListener('click', function() {
+        if (embeddedFrame.requestFullscreen) {
+            embeddedFrame.requestFullscreen();
+        } else if (embeddedFrame.mozRequestFullScreen) {
+            embeddedFrame.mozRequestFullScreen();
+        } else if (embeddedFrame.webkitRequestFullscreen) {
+            embeddedFrame.webkitRequestFullscreen();
+        } else if (embeddedFrame.msRequestFullscreen) {
+            embeddedFrame.msRequestFullscreen();
+        }
+    });
+    
+    // Generate Data URL
+    function generateDataUrl(url) {
+        try {
+            // Create a simple HTML page that will redirect
+            const htmlContent = `<!DOCTYPE html><html><head><title>Redirecting...</title><meta http-equiv="refresh" content="0; url=${url}"></head><body><p>Redirecting to <a href="${url}">${url}</a></p></body></html>`;
+            
+            // Create the data URL properly
+            const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
+            
+            // Check URL length limitation
+            if (dataUrl.length > 32000) {
+                showStatus('Data URL too long. Try a shorter URL.', 'error');
+                return;
+            }
+            
+            console.log('Data URL:', dataUrl.substring(0, 100) + '...'); // Debug log
+            
+            // Open the data URL in a new tab
+            const newWindow = window.open();
+            if (!newWindow) {
+                showStatus('Popup blocked. Please allow popups for this site.', 'error');
+                return;
+            }
+            
+            // Write the data URL content directly to the new window
+            newWindow.document.write(htmlContent);
+            newWindow.document.close();
+            
+            showStatus('Data URL created and opened', 'success');
+        } catch (error) {
+            showStatus('Error generating Data URL: ' + error.message, 'error');
+            console.error('Data URL error:', error);
+        }
+    }
+    
+    // Show status message with notification banner
+    function showStatus(message, type) {
+        // Update the existing status message
+        statusMessage.textContent = message;
+        statusMessage.className = 'status-message';
+        statusMessage.classList.add(`status-${type}`);
+        statusMessage.style.display = 'block';
+        
+        // Also show the notification banner
+        const notificationBanner = document.getElementById('notificationBanner');
+        const notificationIcon = notificationBanner.querySelector('.notification-icon i');
+        const notificationTitle = notificationBanner.querySelector('.notification-title');
+        const notificationMessage = notificationBanner.querySelector('.notification-message');
+        const notificationProgress = document.getElementById('notificationProgress');
+        
+        // Set banner content based on type
+        if (type === 'success') {
+            notificationBanner.className = 'notification-banner success';
+            notificationIcon.className = 'fas fa-check-circle';
+            notificationTitle.textContent = 'Success';
+        } else {
+            notificationBanner.className = 'notification-banner error';
+            notificationIcon.className = 'fas fa-exclamation-circle';
+            notificationTitle.textContent = 'Error';
+        }
+        
+        notificationMessage.textContent = message;
+        
+        // Reset progress bar
+        notificationProgress.style.width = '100%';
+        notificationProgress.style.transition = 'none';
+        
+        // Show the banner
+        notificationBanner.classList.add('show');
+        
+        // Start progress bar animation after a brief delay
+        setTimeout(() => {
+            notificationProgress.style.transition = 'width 5s linear';
+            notificationProgress.style.width = '0%';
+        }, 100);
+        
+        // Auto-hide after 5 seconds
+        const timeoutId = setTimeout(() => {
+            hideNotification();
+        }, 5100); // Slightly longer than progress bar animation
+        
+        // Store timeout ID for clearing if manually closed
+        notificationBanner.dataset.timeoutId = timeoutId;
+        
+        // Hide the existing status message after 5 seconds
+        setTimeout(() => {
+            statusMessage.style.display = 'none';
+        }, 5000);
+    }
+
+    // Function to hide notification banner
+    function hideNotification() {
+        const notificationBanner = document.getElementById('notificationBanner');
+        
+        // Clear the auto-hide timeout if it exists
+        if (notificationBanner.dataset.timeoutId) {
+            clearTimeout(parseInt(notificationBanner.dataset.timeoutId));
+        }
+        
+        notificationBanner.classList.remove('show');
+        notificationBanner.classList.add('hide');
+        
+        // Remove hide class after animation completes
+        setTimeout(() => {
+            notificationBanner.classList.remove('hide');
+        }, 300);
+    }
+
+    // Add event listener for close button
+    document.getElementById('closeNotification').addEventListener('click', function() {
+        hideNotification();
+    });
+    
+    // Personalization functions
+    function initializePersonalization() {
+        const userName = localStorage.getItem('eclipse_userName');
+        const welcomeModal = document.getElementById('welcomeModal');
+        
+        if (!userName) {
+            // Show welcome modal if no name is set
+            welcomeModal.classList.add('active');
+        } else {
+            // Use existing name
+            personalizeUI(userName);
+        }
+        
+        // Save name event listener
+        document.getElementById('saveUserName').addEventListener('click', function() {
+            const userNameInput = document.getElementById('userNameInput').value.trim();
+            if (userNameInput) {
+                localStorage.setItem('eclipse_userName', userNameInput);
+                personalizeUI(userNameInput);
+                welcomeModal.classList.remove('active');
+                showStatus(`Welcome, ${userNameInput}!`, 'success');
+            } else {
+                showStatus('Please enter your name', 'error');
+            }
+        });
+        
+        // Allow Enter key to submit name
+        document.getElementById('userNameInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('saveUserName').click();
+            }
+        });
+    }
+
+    function personalizeUI(userName) {
+        // Update header with personalized greeting
+        const header = document.querySelector('.eclipse-header h1');
+        header.innerHTML = `Eclipse URL Launcher <span style="font-size: 1.2rem; display: block; margin-top: 10px; color: var(--eclipse-secondary);">Welcome, ${userName}!</span>`;
+        
+        // Update page title occasionally with personalized touch
+        updatePageTitle(userName);
+    }
+
+    function updatePageTitle(userName) {
+        const titles = [
+            `Eclipse Launcher - ${userName}'s Portal`,
+            `Eclipse - ${userName}'s URL Hub`,
+            `${userName}'s Eclipse Launcher`,
+            "Eclipse URL Launcher - Shadowed — Revealed — Renewed"
+        ];
+        
+        let currentIndex = 0;
+        
+        // Change title every 10 seconds
+        setInterval(() => {
+            document.title = titles[currentIndex];
+            currentIndex = (currentIndex + 1) % titles.length;
+        }, 10000);
+    }
+    
+    // Settings personalization
+    function initializeSettingsPersonalization() {
+        const userNameSettings = document.getElementById('userNameSettings');
+        const updateUserNameBtn = document.getElementById('updateUserName');
+        
+        // Load current name into settings
+        const currentName = localStorage.getItem('eclipse_userName');
+        if (currentName) {
+            userNameSettings.value = currentName;
+        }
+        
+        // Update name from settings
+        updateUserNameBtn.addEventListener('click', function() {
+            const newName = userNameSettings.value.trim();
+            if (newName) {
+                localStorage.setItem('eclipse_userName', newName);
+                personalizeUI(newName);
+                showStatus(`Name updated to ${newName}`, 'success');
+            } else {
+                showStatus('Please enter a valid name', 'error');
+            }
+        });
+    }
+    
+    function loadSettings() {
+        const savedTheme = localStorage.getItem('eclipse_theme') || 'dark';
+        themeOptions.forEach(option => {
+            if (option.dataset.theme === savedTheme) {
+                option.classList.add('active');
+            } else {
+                option.classList.remove('active');
+            }
+        });
+        applyTheme(savedTheme);
+    }
+    
+    function applyTheme(theme) {
+        document.body.className = '';
+        document.body.classList.add(`theme-${theme}`);
+    }
+    
+    // Add animation classes
+    setTimeout(() => {
+        document.querySelectorAll('.eclipse-header, .url-form, .instructions, footer').forEach((el, i) => {
+            el.classList.add('animate-in', `delay-${i}`);
+        });
+    }, 100);
+});
+        
+    </script>
+</body>
+</html>
