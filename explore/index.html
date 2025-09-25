@@ -270,10 +270,9 @@
     </div>
 
     <!-- All original scripts maintained -->
-    <script src="https://finance.v2202211188549209536.happysrv.de/explore/us5/us5.bundle.js" defer></script>
-    <script src="https://finance.v2202211188549209536.happysrv.de/explore/us5/us5.config.js" defer></script>
-    <script src="https://finance.v2202211188549209536.happysrv.de/explore/register-sw.js" defer></script>
-    <script type="text/javascript" src="https://finance.v2202211188549209536.happysrv.de/storage/js/background.js"></script>
+    <script src="/explore/us5/us5.bundle.js" defer></script>
+    <script src="/explore/us5/us5.config.js" defer></script>
+    <script src="/explore/register-sw.js" defer></script>
     <script src="https://finance.v2202211188549209536.happysrv.de/storage/js/splash-messages.js"></script>
     
     <script>
@@ -296,7 +295,7 @@
                 const searchEngine = document.getElementById('us5-search-engine').value;
                 finalURL = searchEngine.replace('%s', encodeURIComponent(inputRaw));
             }
-            window.location.href = `https://finance.v2202211188549209536.happysrv.de/explore/embed.html?p=${finalURL}`;
+            window.location.href = `/explore/embed.html?p=${finalURL}`;
         }
     </script>
     
