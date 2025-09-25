@@ -1,0 +1,101 @@
+<html>
+  <head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-08BNGSL74W"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-08BNGSL74W');
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-K8CCSDNPV3"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-K8CCSDNPV3');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Tab</title>
+    <link rel="stylesheet" href="https://finance.v2202211188549209536.happysrv.de/storage/css/evenmorestyles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://finance.v2202211188549209536.happysrv.de/storage/css/static.css">
+
+  </head>
+  <body>
+    <script src="https://finance.v2202211188549209536.happysrv.de/storage/js/parts.js"></script>
+    <script src="https://finance.v2202211188549209536.happysrv.de/storage/js/ap.js"></script>
+    <div id="parts"></div>
+    <h1>US5</h1>
+    <p id="dynamicParagraph">(TEXT)</p>
+    <div id="search-container">
+      <form id="us5-form">
+        <input id="us5-search-engine" value="https://duckduckgo.com/?q=%s" type="hidden" />
+        <input id="us5-address" type="text" class="search-bar-home" placeholder="Search or enter a URL" />
+        <button id="search-button" onclick="search()">SEARCH <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </form>
+      <div class="desc left-margin">
+        <p id="us5-error"></p>
+        <pre id="us5-error-code"></pre>
+      </div>
+    </div>
+    <script src="https://finance.v2202211188549209536.happysrv.de/explore/us5/us5.bundle.js" defer></script>
+    <script src="https://finance.v2202211188549209536.happysrv.de/explore/us5/us5.config.js" defer></script>
+    <script src="https://finance.v2202211188549209536.happysrv.de/explore/register-sw.js" defer></script>
+    <script type="text/javascript" src="https://finance.v2202211188549209536.happysrv.de/storage/js/background.js"></script>
+    <script src="https://finance.v2202211188549209536.happysrv.de/storage/js/splash-messages.js"></script>
+    <script>
+      document.getElementById('us5-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        search();
+      });
+
+      function search() {
+        const inputRaw = document.getElementById('us5-address').value.trim();
+        if (!inputRaw) return;
+        const hasProtocol = /^https?:\/\//i.test(inputRaw);
+        const looksLikeURL = /\.[a-z]{2,}(\/|$)/i.test(inputRaw);
+        let finalURL;
+        if (hasProtocol) {
+          finalURL = inputRaw;
+        } else if (looksLikeURL) {
+          finalURL = 'http://' + inputRaw;
+        } else {
+          const searchEngine = document.getElementById('us5-search-engine').value;
+          finalURL = searchEngine.replace('%s', encodeURIComponent(inputRaw));
+        }
+        window.location.href = `https://finance.v2202211188549209536.happysrv.de/explore/embed.html?p=${finalURL}`;
+      }
+    </script>
+    <script>
+      async function regsw() {
+        await navigator.serviceWorker.register("/explore/us5-sw.js", {
+          scope: "/explore/",
+        });
+      }
+      regsw();
+    </script>
+    <script>
+      const code = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a', 'Enter'];
+      let currentKeyIndex = 0;
+      document.addEventListener('keydown', (event) => {
+        if (event.key === code[currentKeyIndex]) {
+          currentKeyIndex++;
+          if (currentKeyIndex === code.length) {
+            window.location.href = "/pages/super-secret.html"
+            currentKeyIndex = 0;
+          }
+        } else {
+          currentKeyIndex = 0;
+        }
+      });
+    </script>
+  </body>
+</html>
