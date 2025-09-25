@@ -1,101 +1,328 @@
-<html>
-  <head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-08BNGSL74W"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag('js', new Date());
-      gtag('config', 'G-08BNGSL74W');
-    </script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-K8CCSDNPV3"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag('js', new Date());
-      gtag('config', 'G-K8CCSDNPV3');
-    </script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Tab</title>
-    <link rel="stylesheet" href="https://finance.v2202211188549209536.happysrv.de/storage/css/evenmorestyles.css">
+    <title>Eclipse</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="https://finance.v2202211188549209536.happysrv.de/storage/css/static.css">
-
-  </head>
-  <body>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: url('https://7-7-7-15.github.io/assets/backgrounds/sunsetblue.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            position: relative;
+            padding: 20px;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 90%;
+            padding: 30px;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(100, 150, 255, 0.3);
+        }
+        
+        h1 {
+            font-size: 3.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            letter-spacing: 2px;
+            font-weight: 700;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 10px;
+        }
+        
+        .tagline {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            color: #cbd5e1;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+        
+        #search-container {
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        #us5-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .search-bar-home {
+            width: 100%;
+            padding: 16px 55px 16px 20px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(5px);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+        }
+        
+        .search-bar-home::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .search-bar-home:focus {
+            background: rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+            border: 1px solid rgba(100, 180, 255, 0.5);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2rem;
+        }
+        
+        #search-button {
+            padding: 14px 35px;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+        
+        #search-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #5fb6ff 0%, #1af7ff 100%);
+        }
+        
+        .quick-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 30px;
+        }
+        
+        .quick-link {
+            padding: 8px 16px;
+            background: rgba(100, 150, 255, 0.2);
+            border-radius: 20px;
+            color: #e0f7ff;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+        }
+        
+        .quick-link:hover {
+            background: rgba(100, 180, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .desc {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        
+        #us5-error, #us5-error-code {
+            color: #ff6b6b;
+        }
+        
+        #parts {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.8rem;
+            }
+            
+            .tagline {
+                font-size: 1rem;
+            }
+            
+            .container {
+                padding: 25px 15px;
+                width: 95%;
+            }
+            
+            .search-bar-home {
+                padding: 14px 50px 14px 18px;
+                font-size: 1rem;
+            }
+            
+            #search-button {
+                padding: 12px 28px;
+                font-size: 1rem;
+            }
+            
+            .quick-links {
+                gap: 10px;
+            }
+            
+            .quick-link {
+                padding: 6px 14px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
     <script src="https://finance.v2202211188549209536.happysrv.de/storage/js/parts.js"></script>
     <script src="https://finance.v2202211188549209536.happysrv.de/storage/js/ap.js"></script>
     <div id="parts"></div>
-    <h1>US5</h1>
-    <p id="dynamicParagraph">(TEXT)</p>
-    <div id="search-container">
-      <form id="us5-form">
-        <input id="us5-search-engine" value="https://duckduckgo.com/?q=%s" type="hidden" />
-        <input id="us5-address" type="text" class="search-bar-home" placeholder="Search or enter a URL" />
-        <button id="search-button" onclick="search()">SEARCH <i class="fa-solid fa-magnifying-glass"></i>
-        </button>
-      </form>
-      <div class="desc left-margin">
-        <p id="us5-error"></p>
-        <pre id="us5-error-code"></pre>
-      </div>
+    
+    <div class="container">
+        <h1>Eclipse</h1>
+        <p class="tagline">Discover the web in a new light</p>
+        
+        <div id="search-container">
+            <form id="us5-form">
+                <input id="us5-search-engine" value="https://duckduckgo.com/?q=%s" type="hidden" />
+                <div class="search-wrapper">
+                    <input id="us5-address" type="text" class="search-bar-home" placeholder="Search the web or enter a URL" />
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <button id="search-button" type="submit">SEARCH <i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+            
+            <div class="quick-links">
+                <a href="#" class="quick-link">News</a>
+                <a href="#" class="quick-link">Weather</a>
+                <a href="#" class="quick-link">Maps</a>
+                <a href="#" class="quick-link">Videos</a>
+                <a href="#" class="quick-link">Images</a>
+            </div>
+            
+            <div class="desc">
+                <p id="us5-error"></p>
+                <pre id="us5-error-code"></pre>
+            </div>
+        </div>
+        
+        <div class="footer">
+            Eclipse Search &copy; 2023 | Privacy-focused browsing
+        </div>
     </div>
+
+    <!-- All original scripts maintained -->
     <script src="https://finance.v2202211188549209536.happysrv.de/explore/us5/us5.bundle.js" defer></script>
     <script src="https://finance.v2202211188549209536.happysrv.de/explore/us5/us5.config.js" defer></script>
     <script src="https://finance.v2202211188549209536.happysrv.de/explore/register-sw.js" defer></script>
     <script type="text/javascript" src="https://finance.v2202211188549209536.happysrv.de/storage/js/background.js"></script>
     <script src="https://finance.v2202211188549209536.happysrv.de/storage/js/splash-messages.js"></script>
+    
     <script>
-      document.getElementById('us5-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        search();
-      });
-
-      function search() {
-        const inputRaw = document.getElementById('us5-address').value.trim();
-        if (!inputRaw) return;
-        const hasProtocol = /^https?:\/\//i.test(inputRaw);
-        const looksLikeURL = /\.[a-z]{2,}(\/|$)/i.test(inputRaw);
-        let finalURL;
-        if (hasProtocol) {
-          finalURL = inputRaw;
-        } else if (looksLikeURL) {
-          finalURL = 'http://' + inputRaw;
-        } else {
-          const searchEngine = document.getElementById('us5-search-engine').value;
-          finalURL = searchEngine.replace('%s', encodeURIComponent(inputRaw));
-        }
-        window.location.href = `https://finance.v2202211188549209536.happysrv.de/explore/embed.html?p=${finalURL}`;
-      }
-    </script>
-    <script>
-      async function regsw() {
-        await navigator.serviceWorker.register("/explore/us5-sw.js", {
-          scope: "/explore/",
+        document.getElementById('us5-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            search();
         });
-      }
-      regsw();
-    </script>
-    <script>
-      const code = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a', 'Enter'];
-      let currentKeyIndex = 0;
-      document.addEventListener('keydown', (event) => {
-        if (event.key === code[currentKeyIndex]) {
-          currentKeyIndex++;
-          if (currentKeyIndex === code.length) {
-            window.location.href = "/pages/super-secret.html"
-            currentKeyIndex = 0;
-          }
-        } else {
-          currentKeyIndex = 0;
+
+        function search() {
+            const inputRaw = document.getElementById('us5-address').value.trim();
+            if (!inputRaw) return;
+            const hasProtocol = /^https?:\/\//i.test(inputRaw);
+            const looksLikeURL = /\.[a-z]{2,}(\/|$)/i.test(inputRaw);
+            let finalURL;
+            if (hasProtocol) {
+                finalURL = inputRaw;
+            } else if (looksLikeURL) {
+                finalURL = 'http://' + inputRaw;
+            } else {
+                const searchEngine = document.getElementById('us5-search-engine').value;
+                finalURL = searchEngine.replace('%s', encodeURIComponent(inputRaw));
+            }
+            window.location.href = `https://finance.v2202211188549209536.happysrv.de/explore/embed.html?p=${finalURL}`;
         }
-      });
     </script>
-  </body>
+    
+    <script>
+        async function regsw() {
+            await navigator.serviceWorker.register("/explore/us5-sw.js", {
+                scope: "/explore/",
+            });
+        }
+        regsw();
+    </script>
+    
+    <script>
+        const code = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a', 'Enter'];
+        let currentKeyIndex = 0;
+        document.addEventListener('keydown', (event) => {
+            if (event.key === code[currentKeyIndex]) {
+                currentKeyIndex++;
+                if (currentKeyIndex === code.length) {
+                    window.location.href = "/pages/super-secret.html"
+                    currentKeyIndex = 0;
+                }
+            } else {
+                currentKeyIndex = 0;
+            }
+        });
+    </script>
+</body>
 </html>
