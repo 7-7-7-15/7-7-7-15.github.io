@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://finance.v2202211188549209536.happysrv.de/explore/us5/us5.bundle.js" defer></script>
+    <script src="https://finance.v2202211188549209536.happysrv.de/explore/us5/us5.config.js" defer></script>
+    <script src="https://finance.v2202211188549209536.happysrv.de/explore/register-sw.js" defer></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-08BNGSL74W"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-08BNGSL74W');
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-K8CCSDNPV3"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-K8CCSDNPV3');
+    </script>
+    <meta property="og:title" content="US5">
+    <meta property="og:description" content="Search the web freely, watch your favorite movies and shows, and play your favorite gаmes with US5!">
+    <meta property="og:image" content="https://finance.v2202211188549209536.happysrv.de/storage/images/logo.png">
+    <meta name="keywords" content="US5">
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Home</title>
+    <link rel="icon" href="https://finance.v2202211188549209536.happysrv.de/storage/images/googleclassroom.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Comfortaa', sans-serif;
+        font-weight: bold;
+      }
+
+      body,
+      html {
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        background-color: black;
+        text-shadow: 0 0 0.8px black;
+      }
+
+      .tabs {
+        display: flex;
+        align-items: center;
+        padding: 2px 5px;
+        width: 100%;
+        position: fixed;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1200;
+        justify-content: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
+        max-height: 40px;
+        transition: transform 0.3s ease-in-out;
+      }
+
+      .tab {
+        display: flex;
+        align-items: center;
+        padding: 3px 10px;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        flex-shrink: 0;
+        min-width: 15px;
+        max-width: 500px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        height: 40px;
+        background-color: rgba(0, 0, 0, 0.03);
+      }
+
+      .tab.active {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        background-color: rgba(0, 0, 0, 0.2);
+        color: white;
+      }
+
+      .tab:hover {
+        border-radius: 10px;
+        background-color: rgba(0, 0, 0, 0.2);
+      }
+
+      .tab.active:hover {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        border-bottom-left-radius: 0px;
+        border-bottom-right-radius: 0px;
+        background-color: rgba(0, 0, 0, 0.2);
+        color: white;
+      }
+
+      .tab .close-button {
+        align-items: right;
+        margin-left: 5px;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .add-tab-button {
+        padding: 15px;
+        cursor: pointer;
+        background: none;
+        color: white;
+        border: none;
+        outline: none;
+        font-size: 20px;
+        border-radius: 70px;
+        transition: background-color 0.3s;
+        text-shadow: 0 0 0.8px black;
+      }
+
+      .add-tab-button:hover {
+        background: rgba(0, 0, 0, 0.2);
+      }
+
+      .tabs::-webkit-scrollbar {
+        height: 4px;
+      }
+
+      .tabs::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+      }
+
+      .tabs::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 10px;
+        transition: background-color 0.3s ease-in-out;
+      }
+
+      .tabs::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.7);
+      }
+
+      .navbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(0, 0, 0, 0.2);
+        border-bottom: 2px solid rgba(255, 255, 255);
+        padding: 10px 5%;
+        color: white;
+        position: fixed;
+        top: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        z-index: 1100;
+        transition: transform 0.3s ease-in-out;
+        height: 45px;
+      }
+
+      .navbar-left,
+      .navbar-right {
+        display: flex;
+        gap: 10px;
+      }
+
+      .nav-btn {
+        text-decoration: none;
+        color: white;
+        font-size: 16px;
+        padding: 8px 15px;
+        border-radius: 70px;
+        background: none;
+        border: none;
+        transition: background-color 0.3s;
+        flex-grow: 1;
+        text-align: center;
+      }
+
+      .nav-icon {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+        pointer-events: none;
+      }
+
+      .nav-btn:hover {
+        background: rgba(0, 0, 0, 0.3);
+      }
+
+      .search-bar-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-left: 15px;
+      }
+
+      .search-bar {
+        flex-grow: 1;
+        padding: 10px;
+        border-radius: 20px;
+        border: 2px solid rgba(255, 255, 255);
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(10px);
+        color: white;
+        font-size: 16px;
+        outline: none;
+        text-align: left;
+        height: 30px
+      }
+
+      .search-bar::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .search-bar:focus {
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .content-wrapper {
+        flex-grow: 1;
+        overflow: hidden;
+        position: relative;
+        padding-top: 85px;
+        padding-bottom: 60px;
+        height: calc(100% - 145px);
+      }
+
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: none;
+        position: absolute;
+        /*padding-top: 1px; */
+        padding-bottom: 95px;
+        height: calc(100% - 45px);
+      }
+
+      iframe.active {
+        display: block;
+      }
+
+      .lower-navbar {
+        background: rgba(0, 0, 0, 0.2);
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        height: 56px;
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+        padding: 10px 0;
+        border-top: 2px solid rgba(255, 255, 255);
+        z-index: 999;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tabs" id="tabs">
+      <div class="tab active" onclick="selectTab(this)">
+        <img src="https://finance.v2202211188549209536.happysrv.de/storage/images/browser.svg" alt="favicon" style="width:24px;height:24px;margin-right:6px;"> New Tab <span class="close-button" onclick="closeTab(event)">×</span>
+      </div>
+      <button class="add-tab-button">+</button>
+    </div>
+    <div class="navbar" id="navbar">
+      <div class="navbar-left">
+        <button onclick="document.querySelector('.tab-iframe.active').contentWindow.history.back()" class="nav-btn">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <button onclick="document.querySelector('.tab-iframe.active').contentWindow.history.forward()" class="nav-btn">
+          <i class="fas fa-arrow-right"></i>
+        </button>
+        <button onclick="document.querySelector('.tab-iframe.active').contentWindow.location.reload()" class="nav-btn">
+          <i class="fas fa-redo"></i>
+        </button>
+        <button onclick="setIframe('https://finance.v2202211188549209536.happysrv.de/explore/index.html', 'New Tab', 'https://finance.v2202211188549209536.happysrv.de/storage/images/browser.svg')" class="nav-btn">
+          <i class="fa fa-home"></i>
+        </button>
+      </div>
+      <div class="search-bar-container">
+        <input type="text" id="search-input" value="us5://new-tab-page" class="search-bar" placeholder="Search or enter a URL">
+      </div>
+      <div class="navbar-right">
+        <button onclick="openInAboutBlank()" class="nav-btn">
+          <i class="fa-solid fa-up-right-from-square"></i>
+        </button>
+        <button onclick="toggleFullscreen()" class="nav-btn">
+          <i class="fas fa-expand"></i>
+        </button>
+        <button onclick="inspect()" class="nav-btn">
+          <i class="fa fa-code"></i>
+        </button>
+        <button onclick="settings()" class="nav-btn">
+          <i class="fa fa-cog"></i>
+        </button>
+      </div>
+    </div>
+    <div class="content-wrapper" id="content-wrapper">
+      <iframe class="tab-iframe active" src="https://finance.v2202211188549209536.happysrv.de/explore/index.html"></iframe>
+    </div>
+    <div class="lower-navbar">
+      <button class="nav-btn" onclick="setIframe('/pages/games.html', 'Games', 'https://finance.v2202211188549209536.happysrv.de/storage/images/controller.webp')">
+        <img src="https://finance.v2202211188549209536.happysrv.de/storage/images/controller.webp" alt="Games" class="nav-icon">
+      </button>
+      <button class="nav-btn" onclick="setIframe('/pages/heartive/home.html', 'Media', 'https://finance.v2202211188549209536.happysrv.de/storage/images/media.png')">
+        <img src="https://finance.v2202211188549209536.happysrv.de/storage/images/media.png" alt="Media" class="nav-icon">
+      </button>
+      <!--<button class="nav-btn" onclick="setIframe('/pages/music.html', 'Music', 'https://finance.v2202211188549209536.happysrv.de/storage/images/music.png')">
+        <img src="https://finance.v2202211188549209536.happysrv.de/storage/images/music.png" alt="Music" class="nav-icon">
+      </button> -->
+      <button class="nav-btn" onclick="setIframe('https://finance.v2202211188549209536.happysrv.de/pages/apps.html', 'Apps', 'https://finance.v2202211188549209536.happysrv.de/storage/images/apps.png')">
+        <img src="https://finance.v2202211188549209536.happysrv.de/storage/images/apps.png" alt="Apps" class="nav-icon">
+      </button>
+      <button class="nav-btn" onclick="setIframe('https://finance.v2202211188549209536.happysrv.de/pages/partners.html', 'Partners', 'https://finance.v2202211188549209536.happysrv.de/storage/images/partners.png')">
+        <img src="https://finance.v2202211188549209536.happysrv.de/storage/images/partners.png" alt="Partners" class="nav-icon">
+      </button>
+      <button class="nav-btn" onclick="setIframe('https://finance.v2202211188549209536.happysrv.de/pages/credits.html', 'Credits', 'https://finance.v2202211188549209536.happysrv.de/storage/images/credits.png')">
+        <img src="https://finance.v2202211188549209536.happysrv.de/storage/images/credits.png" alt="Credits" class="nav-icon">
+      </button>
+      <button class="nav-btn" onclick="setIframe('https://finance.v2202211188549209536.happysrv.de/pages/data.html', 'Data', 'https://finance.v2202211188549209536.happysrv.de/storage/images/data.png')">
+        <img src="https://finance.v2202211188549209536.happysrv.de/storage/images/data.png" alt="Data" class="nav-icon">
+      </button>
+      <button class="nav-btn" onclick="setIframe('https://finance.v2202211188549209536.happysrv.de/pages/links.html', 'Link Portal', 'https://finance.v2202211188549209536.happysrv.de/storage/images/link.png')">
+        <img src="/storage/images/link.png" alt="link" class="nav-icon">
+      </button>
+      <button class="nav-btn" onclick="setIframe('https://finance.v2202211188549209536.happysrv.de/pages/extra.html', 'Extra', 'https://finance.v2202211188549209536.happysrv.de/storage/images/extra.png')">
+        <img src="https://finance.v2202211188549209536.happysrv.de/storage/images/extra.png" alt="Extra" class="nav-icon">
+      </button>
+    </div>
+    </div>
+    <script>
+      let tabCount = 1;
+
+      function selectTab(tab) {
+        document.querySelectorAll('.tab, .tab-iframe').forEach(el => el.classList.remove('active'));
+        tab.classList.add('active');
+        const tabIndex = Array.from(tab.parentNode.children).indexOf(tab);
+        document.querySelectorAll('.tab-iframe')[tabIndex].classList.add('active');
+        const iframe = document.querySelector('.tab-iframe.active');
+        updateSearchBar(iframe);
+        updateTabName(iframe);
+      }
+
+      function addTab() {
+        tabCount++;
+        const tabsContainer = document.getElementById('tabs');
+        const newTab = document.createElement('div');
+        newTab.classList.add('tab');
+        newTab.innerHTML = `
+																							
+																							
+																								
+																							
+																							
+																							
+																							
+																							<img src="https://finance.v2202211188549209536.happysrv.de/storage/images/browser.svg" alt="favicon" style="width:24px;height:24px;margin-right:6px;"> New Tab 
+																								
+																								
+																									
+																								
+																								
+																								
+																								
+																								<span class="close-button" onclick="closeTab(event)">×</span>`;
+        newTab.addEventListener("click", () => selectTab(newTab));
+        tabsContainer.insertBefore(newTab, document.querySelector('.add-tab-button'));
+        const iframe = document.createElement('iframe');
+        iframe.classList.add('tab-iframe');
+        iframe.src = '/explore/index.html';
+        iframe.onload = function() {
+          updateSearchBar(iframe);
+          updateTabName(iframe);
+        };
+        document.getElementById('content-wrapper').appendChild(iframe);
+        selectTab(newTab);
+      }
+
+      function settings() {
+        tabCount++;
+        const tabsContainer = document.getElementById('tabs');
+        const newTab = document.createElement('div');
+        newTab.classList.add('tab');
+        newTab.innerHTML = `
+																								
+																								
+																									
+																								
+																								
+																								
+																								
+																								<img src="https://finance.v2202211188549209536.happysrv.de/storage/images/settings.png" alt="favicon" style="width:24px;height:24px;margin-right:6px;"> Settings 
+																									
+																									
+																										
+																									
+																									
+																									
+																									
+																									<span class="close-button" onclick="closeTab(event)">×</span>`;
+        newTab.addEventListener("click", () => selectTab(newTab));
+        tabsContainer.insertBefore(newTab, document.querySelector('.add-tab-button'));
+        const iframe = document.createElement('iframe');
+        iframe.classList.add('tab-iframe');
+        iframe.src = 'https://finance.v2202211188549209536.happysrv.de/pages/settings.html';
+        iframe.onload = function() {
+          updateSearchBar(iframe);
+          updateTabName(iframe);
+        };
+        document.getElementById('content-wrapper').appendChild(iframe);
+        selectTab(newTab);
+      }
+
+      function closeTab(event) {
+        event.stopPropagation();
+        const tab = event.target.closest('.tab');
+        const iframe = document.querySelectorAll('.tab-iframe')[Array.from(tab.parentNode.children).indexOf(tab)];
+        let previousTab = tab.previousElementSibling || tab.nextElementSibling;
+        tab.remove();
+        iframe.remove();
+        if (document.querySelectorAll('.tab').length === 0) {
+          addTab();
+        } else {
+          selectTab(previousTab);
+        }
+      }
+
+      function internal(url) {
+        try {
+          if (url.startsWith('us5-games://')) {
+            const path = url.replace('us5-games://', 'https://finance.v2202211188549209536.happysrv.de/pages/games-frame.html?url=https://finance.v2202211188549209536.happysrv.de/pages/games/');
+            return () => setIframe(path + '/index.html', 'Games', '/storage/images/controller.webp');
+          }
+          if (url.startsWith('us5-apps://')) {
+            const path = url.replace('us5-apps://', 'https://finance.v2202211188549209536.happysrv.de/pages/apps-frame.html?url=https://finance.v2202211188549209536.happysrv.de/pages/apps/');
+            return () => setIframe(path + '/index.html', 'Apps', 'https://finance.v2202211188549209536.happysrv.de/storage/images/apps.png');
+          }
+          if (url.startsWith('us5-media://home')) {
+            return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/heartive/home.html', 'Media', 'https://finance.v2202211188549209536.happysrv.de/storage/images/media.png');
+          }
+          if (url.startsWith('us5-media://')) {
+            const path = url.replace('us5-media://', 'https://finance.v2202211188549209536.happysrv.de/pages/heartive/');
+            return () => setIframe(path, 'Media', 'https://finance.v2202211188549209536.happysrv.de/storage/images/media.png');
+          }
+          switch (url) {
+            case 'us5://new-tab-page':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/explore/index.html', 'New Tab', '/storage/images/browser.svg');
+            case 'us5://settings':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/settings.html', 'Settings', '/storage/images/settings.png');
+            case 'us5://games':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/games.html', 'Games', 'https://finance.v2202211188549209536.happysrv.de/storage/images/controller.webp');
+            case 'us5://apps':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/apps.html', 'Apps', '/storage/images/apps.png');
+            case 'us5://partners':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/partners.html', 'Partners', 'https://finance.v2202211188549209536.happysrv.de/storage/images/partners.png');
+            case 'us5://credits':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/credits.html', 'Credits', '/storage/images/credits.png');
+            case 'us5://extra':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/extra.html', 'Extra', 'https://finance.v2202211188549209536.happysrv.de/storage/images/extra.png');
+            case 'us5://data':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/data.html', 'Data', '/storage/images/data.png');
+            case 'us5://data-usage':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/extra/data-use.html', 'Data Usage', 'https://finance.v2202211188549209536.happysrv.de/storage/images/data.png');
+            case 'us5://secret':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/super-secret.html', 'secret', 'https://finance.v2202211188549209536.happysrv.de/storage/images/questionmark.png');
+            case 'us5://music':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/music.html', 'Music', 'https://finance.v2202211188549209536.happysrv.de/storage/images/music.png');
+            case 'us5://link-portal':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/links.html', 'Link Portal', '/storage/images/link.png');
+            case 'us5://link-portal/us5':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/us5.html', 'Link Portal', 'https://finance.v2202211188549209536.happysrv.de/storage/images/link.png');
+            case 'us5://link-portal/us4':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/us4.html', 'Link Portal', 'https://finance.v2202211188549209536.happysrv.de/storage/images/link.png');
+            case 'us5://cheese.png':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/storage/images/cheese.png', 'cheese', 'https://finance.v2202211188549209536.happysrv.de/storage/images/cheese.png');
+            case 'us5://announcement-maker':
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/announcement-maker.html', 'announcement-maker', 'https://finance.v2202211188549209536.happysrv.de/storage/images/speaker.png');
+            default:
+              return url;
+          }
+        } catch (e) {
+          console.error('internal page failed:', e);
+          return url;
+        }
+      }
+
+      function search() {
+        const inputRaw = document.getElementById('search-input').value.trim();
+        const iframe = document.querySelector('.tab-iframe.active');
+        if (!inputRaw || !iframe) return;
+        const mapped = internal(inputRaw);
+        if (typeof mapped === 'function') {
+          mapped();
+        } else {
+          const isInternal = mapped === '/explore/index.html' || mapped === '/pages/settings.html';
+          let finalURL = mapped;
+          if (!isInternal) {
+            const hasProtocol = /^https?:\/\//i.test(mapped);
+            const looksLikeURL = /\.[a-z]{2,}(\/|$)/i.test(mapped);
+            if (hasProtocol) {
+              finalURL = mapped;
+            } else if (looksLikeURL) {
+              finalURL = 'http://' + mapped;
+            } else {
+              finalURL = `https://duckduckgo.com/?q=${encodeURIComponent(mapped)}`;
+            }
+          }
+          iframe.src = isInternal ? mapped : `/explore/embed.html?p=${finalURL}`;
+          iframe.onload = () => {
+            updateSearchBar(iframe);
+            updateTabName(iframe);
+          };
+        }
+      }
+
+      function toggleFullscreen() {
+        const iframe = document.querySelector('.tab-iframe.active');
+        if (iframe.requestFullscreen) {
+          iframe.requestFullscreen();
+        } else if (iframe.mozRequestFullScreen) {
+          iframe.mozRequestFullScreen();
+        } else if (iframe.webkitRequestFullscreen) {
+          iframe.webkitRequestFullscreen();
+        } else if (iframe.msRequestFullscreen) {
+          iframe.msRequestFullscreen();
+        }
+      }
+
+      function inspect() {
+        window.location.href = "javascript: (function() { fetch('/storage/js/eruda.js') .then(response => { if (!response.ok) throw new Error('Network response was not ok'); return response.text(); }) .then(scriptText => eval(scriptText)) .catch(error => console.error('Error fetching or executing the script:', error)); })();"
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        document.querySelector(".add-tab-button").addEventListener("click", addTab);
+        document.getElementById("search-input").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") search();
+        });
+      });
+      const proxyPrefix = "https://finance.v2202211188549209536.happysrv.de/explore/embed.html?p=";
+      //unprxy
+      function getUnproxifiedUrl(proxifiedUrl) {
+        try {
+          const hostname = window.location.hostname;
+          const localhost = window.origin
+          const hostPrefix = `${localhost}/explore/embed.html?p=`;
+          const exploreLoadPrefix = `${localhost}/explore/web/`;
+          const iframe = document.querySelector('.tab-iframe.active');
+          const docHref = iframe.contentWindow.location.href;
+          if (docHref.startsWith(exploreLoadPrefix)) {
+            const path = docHref.replace(exploreLoadPrefix, "");
+            const decodedUrl = __us5$config.decodeUrl(path);
+            return new URL(decodedUrl);
+          }
+          //origin
+          if (docHref.includes(`${localhost}/pages/games-frame.html?url=/pages/games/`)) {
+            const remaining = docHref.replace(`${localhost}/pages/games-frame.html?url=/pages/games/`, "").replace("/index.html", "").replace(".html", "");
+            return `us5-games://${remaining}`;
+          }
+          if (docHref.includes(`${localhost}/pages/apps-frame.html?url=/pages/apps/`)) {
+            const remaining = docHref.replace(`${localhost}/pages/apps-frame.html?url=/pages/apps/`, "").replace("/index.html", "").replace(".html", "");
+            return `us5-apps://${remaining}`;
+          }
+          //heartive
+          if (docHref.includes(`${localhost}/pages/heartive/`)) {
+            const remaining = docHref.replace(`${localhost}/pages/heartive/`, "").replace("/index.html", "").replace(".html", "");
+            return `us5-media://${remaining}`;
+          }
+          switch (docHref) {
+              //origin
+            case `${localhost}/explore/index.html`:
+              return "us5://new-tab-page";
+            case `${localhost}/pages/settings.html`:
+              return "us5://settings";
+            case `${localhost}/pages/games.html`:
+              return "us5://games";
+            case `${localhost}/pages/apps.html`:
+              return "us5://apps";
+            case `${localhost}/pages/partners.html`:
+              return "us5://partners";
+            case `${localhost}/pages/credits.html`:
+              return "us5://credits";
+            case `${localhost}/pages/extra.html`:
+              return "us5://extra";
+            case `${localhost}/pages/data.html`:
+              return "us5://data";
+            case `${localhost}/pages/extra/data-use.html`:
+              return "us5://data-usage";
+            case `${localhost}/pages/super-secret.html`:
+              return "us5://secret";
+            case `${localhost}/pages/music.html`:
+              return "us5://music";
+            case `${localhost}/pages/links.html`:
+              return "us5://link-portal";
+            case `${localhost}/pages/us5.html`:
+              return "us5://link-portal/us5";
+            case `${localhost}/pages/us4.html`:
+              return "us5://link-portal/us4";
+            case `${localhost}/storage/images/cheese.png`:
+              return "us5://cheese.png";
+            case `${localhost}/pages/announcement-maker.html`:
+              return "us5://announcement-maker";
+            default:
+              if (docHref.startsWith(hostPrefix)) {
+                return decodeURI(docHref.replace(hostPrefix, ""));
+              }
+              return decodeURI(docHref);
+          }
+        } catch (e) {
+          console.error('Error unproxifying URL:', e);
+          return docHref;
+        }
+      }
+      //updsb
+      function updateSearchBar(iframe) {
+        try {
+          let rawUrl = iframe.src;
+          try {
+            rawUrl = iframe.contentWindow.location.href;
+          } catch {}
+          const unproxifiedUrl = getUnproxifiedUrl(rawUrl);
+          document.getElementById('search-input').value = unproxifiedUrl;
+          const activeTab = document.querySelector('.tab.active');
+          updateTabName(iframe, activeTab);
+        } catch (e) {
+          console.error('Error updating search bar:', e);
+        }
+      }
+      //tabft
+      function updateTabName(iframe) {
+        setTimeout(() => {
+          const tabIndex = Array.from(document.querySelectorAll('.tab-iframe')).indexOf(iframe);
+          const tab = document.querySelectorAll('.tab')[tabIndex];
+          if (tab) {
+            const exploreLoadPrefix = "https://" + window.location.hostname + "/explore/web/";
+            const docHref = iframe.contentWindow.location.href;
+            if (docHref.startsWith(exploreLoadPrefix)) {
+              const path = docHref.replace(exploreLoadPrefix, "");
+              let host;
+              try {
+                host = new URL(__us5$config.decodeUrl(path));
+              } catch {
+                host = new URL("https://voucan-us4.github.io");
+              }
+              const faviconUrl = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${host.hostname}&size=24`;
+              let title = '';
+              try {
+                title = iframe.contentWindow.document.title || host.hostname;
+              } catch {
+                title = host.hostname || 'Tabname not Loaded';
+              }
+              if (title.length > 29) {
+                title = title.substring(0, 26) + '...';
+              }
+              tab.innerHTML = `
+																									
+																									
+																										
+																									
+																									
+																									
+																									
+																									<img src="${faviconUrl}" alt="favicon" style="width:24px;height:24px;margin-right:6px;">${title}
+																										
+																										
+																											
+																										
+																										
+																										
+																										
+																										<span class="close-button" onclick="closeTab(event)">×</span> `;
+            }
+          }
+        }, 500);
+      }
+      //searchbar engage check
+      function engaged() {
+        const input = document.getElementById('search-input');
+        return document.activeElement === input || input.matches(':hover');
+      }
+      setInterval(() => {
+        const iframe = document.querySelector('.tab-iframe.active');
+        if (!iframe || engaged()) return;
+        try {
+          const docHref = iframe.contentWindow.location.href;
+          if (docHref) {
+            updateSearchBar(iframe);
+          }
+        } catch (e) {
+          console.warn('Unable to access iframe location:', e);
+        }
+      }, 500);
+      //param
+      document.addEventListener("DOMContentLoaded", () => {
+        const link = new URLSearchParams(window.location.search).get('link');
+        if (link) {
+          const startingtab = document.querySelector('.tab-iframe');
+          if (startingtab) {
+            startingtab.src = `/explore/web/${__us5$config.encodeUrl(link)}`;
+            startingtab.onload = () => {
+              updateSearchBar(startingtab);
+              updateTabName(startingtab);
+            };
+          }
+        }
+      });
+
+      function setIframe(url, name, icon) {
+        const tabs = Array.from(document.querySelectorAll('.tab'));
+        const iframes = Array.from(document.querySelectorAll('.tab-iframe'));
+        const activeTab = document.querySelector('.tab.active');
+        const tabIndex = tabs.indexOf(activeTab);
+        if (activeTab && tabIndex !== -1) {
+          tabs[tabIndex].remove();
+          iframes[tabIndex].remove();
+        }
+        tabCount++;
+        const tabsContainer = document.getElementById('tabs');
+        const newTab = document.createElement('div');
+        newTab.classList.add('tab');
+        newTab.innerHTML = `
+																										
+																										
+																											
+																										
+																										
+																										
+																										
+																										<img src=${icon} alt="favicon" style="width:24px;height:24px;margin-right:6px;"> ${name} 
+																											
+																											
+																												
+																											
+																											
+																											
+																											
+																											<span class="close-button" onclick="closeTab(event)">×</span>`;
+        newTab.addEventListener("click", () => selectTab(newTab));
+        const referenceTab = document.querySelectorAll('.tab')[tabIndex];
+        if (referenceTab) {
+          tabsContainer.insertBefore(newTab, referenceTab);
+        } else {
+          tabsContainer.insertBefore(newTab, document.querySelector('.add-tab-button'));
+        }
+        const iframe = document.createElement('iframe');
+        iframe.classList.add('tab-iframe');
+        iframe.src = url;
+        iframe.onload = function() {
+          updateSearchBar(iframe);
+          updateTabName(iframe);
+        };
+        const contentWrapper = document.getElementById('content-wrapper');
+        const allIframes = document.querySelectorAll('.tab-iframe');
+        const referenceIframe = allIframes[tabIndex];
+        if (referenceIframe) {
+          contentWrapper.insertBefore(iframe, referenceIframe);
+        } else {
+          contentWrapper.appendChild(iframe);
+        }
+        selectTab(newTab);
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        const launch = new URLSearchParams(window.location.search).get('launch');
+        if (launch) {
+          const startingtab = document.querySelector('.tab-iframe');
+          if (startingtab) {
+            startingtab.src = `/explore/web/${__us5$config.encodeUrl(launch)}`;
+            startingtab.onload = () => {
+              updateSearchBar(startingtab);
+              updateTabName(startingtab);
+            };
+          }
+        }
+      });
+
+      function openInAboutBlank() {
+        const siteTitle = localStorage.getItem('siteTitle') || "Home";
+        const siteLogo = localStorage.getItem('siteLogo') || "https://raw.githubusercontent.com/voucan/voucan.github.io/refs/heads/main/googleclassroom.png";
+        const newTab = window.open('about:blank', '_blank');
+        if (newTab) {
+          newTab.document.title = siteTitle;
+          const favicon = newTab.document.createElement('link');
+          favicon.rel = 'icon';
+          favicon.href = siteLogo;
+          newTab.document.head.appendChild(favicon);
+          const iframe = newTab.document.createElement('iframe');
+          const frame = document.querySelector('.tab-iframe.active');
+          const open = frame.contentWindow.location.href;
+          iframe.src = open;
+          iframe.style.width = '100vw';
+          iframe.style.height = '100vh';
+          iframe.style.border = 'none';
+          newTab.document.body.style.margin = '0';
+          newTab.document.body.appendChild(iframe);
+        } else {
+          console.error("Failed to open About:Blank page.");
+        }
+      }
+    </script>
+    <script>
+      document.getElementById("tabs").addEventListener("dblclick", () => {
+        const docElm = document.documentElement;
+        if (!document.fullscreenElement) {
+          if (docElm.requestFullscreen) {
+            docElm.requestFullscreen();
+          } else if (docElm.mozRequestFullScreen) {
+            docElm.mozRequestFullScreen();
+          } else if (docElm.webkitRequestFullscreen) {
+            docElm.webkitRequestFullscreen();
+          } else if (docElm.msRequestFullscreen) {
+            docElm.msRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        }
+      });
+    </script>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const prvtime = localStorage.getItem("welcomecd");
+        const today = new Date().toLocaleDateString();
+        if (prvtime === today) {
+          return;
+        }
+        localStorage.setItem("welcomecd", today);
+        const username = localStorage.getItem("username");
+        if (username) {
+          showWelcome(username);
+          return;
+        }
+        showUsernamePrompt();
+      });
+
+      function showUsernamePrompt() {
+        const userBgColor = localStorage.getItem('backgroundColor') || '#070c24';
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = 0;
+        overlay.style.left = 0;
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.background = 'rgba(0, 0, 0, 0.5)';
+        overlay.style.backdropFilter = 'blur(5px)';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.zIndex = '3000';
+        const modal = document.createElement('div');
+        modal.style.background = userBgColor;
+        modal.style.color = 'white';
+        modal.style.padding = '30px 40px';
+        modal.style.borderRadius = '20px';
+        modal.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.2)';
+        modal.style.fontFamily = "'Comfortaa', sans-serif";
+        modal.style.fontSize = '16px';
+        modal.style.textAlign = 'center';
+        modal.style.maxWidth = '400px';
+        modal.style.width = '90%';
+        modal.style.position = 'relative';
+        const header = document.createElement('h2');
+        header.textContent = 'Enter a Username';
+        header.style.marginBottom = '15px';
+        header.style.fontSize = '22px';
+        header.style.letterSpacing = '1px';
+        header.style.color = 'white';
+        header.style.textShadow = '0 0 0.8px black';
+        modal.appendChild(header);
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Your username';
+        input.style.padding = '10px';
+        input.style.marginBottom = '20px';
+        input.style.width = '80%';
+        input.style.borderRadius = '10px';
+        input.style.border = 'none';
+        input.style.outline = 'none';
+        input.style.fontSize = '16px';
+        input.style.textAlign = 'center';
+        input.style.fontFamily = "'Comfortaa', sans-serif";
+        modal.appendChild(input);
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.style.display = 'flex';
+        buttonsContainer.style.flexDirection = 'row';
+        buttonsContainer.style.justifyContent = 'center';
+        buttonsContainer.style.gap = '15px';
+        buttonsContainer.style.alignItems = 'center';
+        buttonsContainer.style.marginTop = '10px';
+        const submitButton = document.createElement('button');
+        submitButton.textContent = 'Continue';
+        styleButton(submitButton);
+        const skipButton = document.createElement('button');
+        skipButton.textContent = 'Skip';
+        styleButton(skipButton);
+        submitButton.addEventListener('click', () => {
+          const name = input.value.trim();
+          if (name) {
+            localStorage.setItem("username", name);
+            document.body.removeChild(overlay);
+            showWelcome(name);
+          }
+        });
+        skipButton.addEventListener('click', () => {
+          localStorage.setItem("username", "Anonymous");
+          document.body.removeChild(overlay);
+          showWelcome("Anonymous");
+        });
+        buttonsContainer.appendChild(submitButton);
+        buttonsContainer.appendChild(skipButton);
+        modal.appendChild(buttonsContainer);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+      }
+
+      function styleButton(btn) {
+        btn.style.padding = '10px 20px';
+        btn.style.border = 'none';
+        btn.style.borderRadius = '70px';
+        btn.style.background = 'rgba(255, 255, 255, 0.2)';
+        btn.style.color = 'white';
+        btn.style.cursor = 'pointer';
+        btn.style.fontFamily = "'Comfortaa', sans-serif";
+        btn.style.transition = 'background-color 0.3s';
+        btn.addEventListener('mouseenter', () => {
+          btn.style.background = 'rgba(255, 255, 255, 0.4)';
+        });
+        btn.addEventListener('mouseleave', () => {
+          btn.style.background = 'rgba(255, 255, 255, 0.2)';
+        });
+      }
+
+      function showWelcome(username) {
+        const userBgColor = localStorage.getItem('backgroundColor') || '#070c24';
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = 0;
+        overlay.style.left = 0;
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.background = 'rgba(0, 0, 0, 0.5)';
+        overlay.style.backdropFilter = 'blur(5px)';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.zIndex = '3000';
+        const modal = document.createElement('div');
+        modal.style.background = userBgColor;
+        modal.style.color = 'white';
+        modal.style.padding = '30px 40px';
+        modal.style.borderRadius = '20px';
+        modal.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.2)';
+        modal.style.fontFamily = "'Comfortaa', sans-serif";
+        modal.style.fontSize = '16px';
+        modal.style.textAlign = 'center';
+        modal.style.maxWidth = '400px';
+        modal.style.width = '90%';
+        modal.style.position = 'relative';
+        modal.style.display = 'flex';
+        modal.style.flexDirection = 'column';
+        modal.style.alignItems = 'center';
+        const img = document.createElement('img');
+        img.src = '/storage/images/512x512.png';
+        img.style.width = '100px';
+        img.style.marginBottom = '15px';
+        img.style.opacity = '0';
+        img.style.transform = 'scale(0.8)';
+        img.style.transition = 'all 1s ease';
+        modal.appendChild(img);
+        const header = document.createElement('h2');
+        header.textContent = username === "Anonymous" ? "Welcome to US5!" : `Welcome to US5, ${username}!`;
+        header.style.marginTop = '0';
+        header.style.fontSize = '22px';
+        header.style.letterSpacing = '1px';
+        header.style.color = 'white';
+        header.style.textShadow = '0 0 0.8px black';
+        header.style.opacity = '0';
+        header.style.transition = 'opacity 1s ease';
+        modal.appendChild(header);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        setTimeout(() => {
+          img.style.opacity = '1';
+          img.style.transform = 'scale(1)';
+          header.style.opacity = '1';
+        }, 100);
+        setTimeout(() => {
+          overlay.style.transition = 'opacity 1s ease';
+          overlay.style.opacity = '0';
+          setTimeout(() => overlay.remove(), 1000);
+        }, 3000);
+      }
+    </script>
+    <script src="/storage/js/settings.js"></script>
+    <script type="text/javascript" src="/storage/js/notify.js"></script>
+    <script type="text/javascript" src="/storage/js/ads.js"></script>
+    <script type="text/javascript" src="/storage/js/panic.js"></script>
+    <script type="text/javascript" src="/storage/js/background.js"></script>
+    <script type="module">
+      async function addurl() {
+        try {
+          let res = await fetch("/add", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              url: window.location.origin
+            })
+          });
+          if (!res.ok) {
+            console.error("Failed to send URL:", res.statusText);
+          }
+        } catch (err) {
+          console.error("Error sending URL:", err);
+        }
+      }
+      addurl();
+    </script>
+  </body>
+</html>
