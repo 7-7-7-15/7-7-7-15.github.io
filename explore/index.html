@@ -77,23 +77,21 @@
         
         #us5-form {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .search-wrapper {
-            position: relative;
-            width: 100%;
+            flex-direction: row;
+            align-items: stretch; /* Changed to stretch for equal height */
+            justify-content: center;
+            gap: 0;
             max-width: 500px;
+            margin: 0 auto;
+            height: 54px; /* Fixed height for the form */
         }
         
         .search-bar-home {
-            width: 100%;
-            padding: 16px 55px 16px 20px;
+            flex: 1;
+            padding: 16px 20px;
             font-size: 1.1rem;
             border: none;
-            border-radius: 50px;
+            border-radius: 10px 0 0 10px;
             background: rgba(255, 255, 255, 0.12);
             backdrop-filter: blur(5px);
             color: white;
@@ -102,6 +100,8 @@
             transition: all 0.3s ease;
             font-family: 'Poppins', sans-serif;
             border: 1px solid rgba(100, 150, 255, 0.3);
+            border-right: none;
+            height: 100%; /* Take full height of parent */
         }
         
         .search-bar-home::placeholder {
@@ -111,67 +111,35 @@
         .search-bar-home:focus {
             background: rgba(255, 255, 255, 0.18);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            transform: translateY(-2px);
             border: 1px solid rgba(100, 180, 255, 0.5);
-        }
-        
-        .search-icon {
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1.2rem;
+            border-right: none;
         }
         
         #search-button {
-            padding: 14px 35px;
+            padding: 0 25px; /* Remove vertical padding since height is fixed */
             font-size: 1.1rem;
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
             border: none;
-            border-radius: 50px;
+            border-radius: 0 10px 10px 0;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
             font-family: 'Poppins', sans-serif;
             font-weight: 500;
             letter-spacing: 1px;
-            margin-top: 5px;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-left: none;
+            height: 100%; /* Take full height of parent */
+            min-width: 60px; /* Ensure button has minimum width */
         }
         
         #search-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
             background: linear-gradient(135deg, #5fb6ff 0%, #1af7ff 100%);
-        }
-        
-        .quick-links {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 30px;
-        }
-        
-        .quick-link {
-            padding: 8px 16px;
-            background: rgba(100, 150, 255, 0.2);
-            border-radius: 20px;
-            color: #e0f7ff;
-            text-decoration: none;
-            font-size: 0.85rem;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(100, 150, 255, 0.3);
-        }
-        
-        .quick-link:hover {
-            background: rgba(100, 180, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         
         .desc {
@@ -210,23 +178,19 @@
                 width: 95%;
             }
             
+            #us5-form {
+                height: 50px; /* Slightly smaller on mobile */
+            }
+            
             .search-bar-home {
-                padding: 14px 50px 14px 18px;
+                padding: 14px 18px;
                 font-size: 1rem;
             }
             
             #search-button {
-                padding: 12px 28px;
+                padding: 0 20px;
                 font-size: 1rem;
-            }
-            
-            .quick-links {
-                gap: 10px;
-            }
-            
-            .quick-link {
-                padding: 6px 14px;
-                font-size: 0.8rem;
+                min-width: 55px;
             }
         }
     </style>
@@ -243,20 +207,9 @@
         <div id="search-container">
             <form id="us5-form">
                 <input id="us5-search-engine" value="https://duckduckgo.com/?q=%s" type="hidden" />
-                <div class="search-wrapper">
-                    <input id="us5-address" type="text" class="search-bar-home" placeholder="Search the web or enter a URL" />
-                    <i class="fas fa-search search-icon"></i>
-                </div>
-                <button id="search-button" type="submit">SEARCH <i class="fa-solid fa-magnifying-glass"></i></button>
+                <input id="us5-address" type="text" class="search-bar-home" placeholder="Search or enter a URL" />
+                <button id="search-button" type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
             </form>
-            
-            <div class="quick-links">
-                <a href="#" class="quick-link">News</a>
-                <a href="#" class="quick-link">Weather</a>
-                <a href="#" class="quick-link">Maps</a>
-                <a href="#" class="quick-link">Videos</a>
-                <a href="#" class="quick-link">Images</a>
-            </div>
             
             <div class="desc">
                 <p id="us5-error"></p>
@@ -265,7 +218,7 @@
         </div>
         
         <div class="footer">
-            Eclipse Search &copy; 2023 | Privacy-focused browsing
+            Eclipse Search &copy; 2025 | Privacy-focused browsing
         </div>
     </div>
 
@@ -276,6 +229,26 @@
     <script src="https://finance.v2202211188549209536.happysrv.de/storage/js/splash-messages.js"></script>
     
     <script>
+        // Splash messages functionality
+        const splashMessages = [
+            "Discover something new today",
+            "The web at your fingertips",
+            "Search with privacy in mind",
+            "Explore without boundaries",
+            "Your gateway to knowledge"
+        ];
+        
+        function showSplashMessage() {
+            const tagline = document.querySelector('.tagline');
+            if (tagline) {
+                const randomMessage = splashMessages[Math.floor(Math.random() * splashMessages.length)];
+                tagline.textContent = randomMessage;
+            }
+        }
+        
+        // Initialize splash message
+        document.addEventListener('DOMContentLoaded', showSplashMessage);
+        
         document.getElementById('us5-form').addEventListener('submit', function(event) {
             event.preventDefault();
             search();
