@@ -445,15 +445,15 @@
       function internal(url) {
         try {
           if (url.startsWith('Eclipse-Games://')) {
-            const path = url.replace('Eclipse-games://', 'https://finance.v2202211188549209536.happysrv.de/pages/games-frame.html?url=https://finance.v2202211188549209536.happysrv.de/pages/games/');
-            return () => setIframe(path + '/index.html', 'Games', '/storage/images/controller.webp');
+            const path = url.replace('Eclipse-games://', 'https://7-7-7-15.github.io/EclipseGames');
+            return () => setIframe(path + '/index.html', 'Games', 'https://finance.v2202211188549209536.happysrv.de/storage/images/controller.webp');
           }
           if (url.startsWith('Eclipse-apps://')) {
             const path = url.replace('Eclipse-apps://', 'https://finance.v2202211188549209536.happysrv.de/pages/apps-frame.html?url=https://finance.v2202211188549209536.happysrv.de/pages/apps/');
             return () => setIframe(path + '/index.html', 'Apps', 'https://finance.v2202211188549209536.happysrv.de/storage/images/apps.png');
           }
           if (url.startsWith('Eclipse-media://home')) {
-            return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/heartive/home.html', 'Media', 'https://finance.v2202211188549209536.happysrv.de/storage/images/media.png');
+            return () => setIframe('https://7-7-7-15.github.io', 'Media', 'https://finance.v2202211188549209536.happysrv.de/storage/images/media.png');
           }
           if (url.startsWith('Eclipse-media://')) {
             const path = url.replace('Eclipse-media://', 'https://finance.v2202211188549209536.happysrv.de/pages/heartive/');
@@ -461,21 +461,21 @@
           }
           switch (url) {
             case 'Eclipse://new-tab-page':
-              return () => setIframe('/explore/index.html', 'New Tab', '/storage/images/browser.svg');
+              return () => setIframe('/explore/index.html', 'New Tab', 'https://finance.v2202211188549209536.happysrv.de/storage/images/browser.svg');
             case 'Ecipse://settings':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/settings.html', 'Settings', '/storage/images/settings.png');
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/settings.html', 'Settings', 'https://finance.v2202211188549209536.happysrv.de/storage/images/settings.png');
             case 'Eclipse://games':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/games.html', 'Games', 'https://finance.v2202211188549209536.happysrv.de/storage/images/controller.webp');
+              return () => setIframe('https://7-7-7-15.github.io/EclipseGames/', 'Games', 'https://finance.v2202211188549209536.happysrv.de/storage/images/controller.webp');
             case 'Eclipse://apps':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/apps.html', 'Apps', '/storage/images/apps.png');
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/apps.html', 'Apps', 'https://finance.v2202211188549209536.happysrv.de/storage/images/apps.png');
             case 'Eclipse://partners':
               return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/partners.html', 'Partners', 'https://finance.v2202211188549209536.happysrv.de/storage/images/partners.png');
             case 'Eclipse://credits':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/credits.html', 'Credits', '/storage/images/credits.png');
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/credits.html', 'Credits', 'https://finance.v2202211188549209536.happysrv.de/storage/images/credits.png');
             case 'Eclipse://extra':
               return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/extra.html', 'Extra', 'https://finance.v2202211188549209536.happysrv.de/storage/images/extra.png');
             case 'Eclipse://data':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/data.html', 'Data', '/storage/images/data.png');
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/data.html', 'Data', 'https://finance.v2202211188549209536.happysrv.de/storage/images/data.png');
             case 'Eclipse://data-usage':
               return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/extra/data-use.html', 'Data Usage', 'https://finance.v2202211188549209536.happysrv.de/storage/images/data.png');
             case 'Eclipse://secret':
@@ -483,7 +483,7 @@
             case 'Eclipse://music':
               return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/music.html', 'Music', 'https://finance.v2202211188549209536.happysrv.de/storage/images/music.png');
             case 'Eclipse://link-portal':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/links.html', 'Link Portal', '/storage/images/link.png');
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/links.html', 'Link Portal', 'https://finance.v2202211188549209536.happysrv.de/storage/images/link.png');
             case 'Eclipse://link-portal/us5':
               return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/us5.html', 'Link Portal', 'https://finance.v2202211188549209536.happysrv.de/storage/images/link.png');
             case 'Eclipse://link-portal/us4':
@@ -552,7 +552,7 @@
           if (e.key === "Enter") search();
         });
       });
-      const proxyPrefix = "https://finance.v2202211188549209536.happysrv.de/explore/embed.html?p=";
+      const proxyPrefix = "https://7-7-7-15.github.io/explore/embed.html?p=";
       //unprxy
       function getUnproxifiedUrl(proxifiedUrl) {
         try {
@@ -568,8 +568,8 @@
             return new URL(decodedUrl);
           }
           //origin
-          if (docHref.includes(`${localhost}/pages/games-frame.html?url=/pages/games/`)) {
-            const remaining = docHref.replace(`${localhost}/pages/games-frame.html?url=/pages/games/`, "").replace("/index.html", "").replace(".html", "");
+          if (docHref.includes(`${localhost}/EclipseGames`)) {
+            const remaining = docHref.replace(`${localhost}/EclipseGames`, "").replace("/index.html", "").replace(".html", "");
             return `Eclipse-games://${remaining}`;
           }
           if (docHref.includes(`${localhost}/pages/apps-frame.html?url=/pages/apps/`)) {
@@ -577,8 +577,8 @@
             return `Eclipse-apps://${remaining}`;
           }
           //heartive
-          if (docHref.includes(`${localhost}/pages/heartive/`)) {
-            const remaining = docHref.replace(`${localhost}/pages/heartive/`, "").replace("/index.html", "").replace(".html", "");
+          if (docHref.includes(`${localhost}`)) {
+            const remaining = docHref.replace(`${localhost}`, "").replace("/index.html", "").replace(".html", "");
             return `Eclipse-media://${remaining}`;
           }
           switch (docHref) {
@@ -587,7 +587,7 @@
               return "Eclipse://new-tab-page";
             case `${localhost}/pages/settings.html`:
               return "Eclipse://settings";
-            case `${localhost}/pages/games.html`:
+            case `${localhost}/EclipseGames`:
               return "Eclipse://games";
             case `${localhost}/pages/apps.html`:
               return "Eclipse://apps";
