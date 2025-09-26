@@ -316,7 +316,7 @@
       <iframe class="tab-iframe active" src="/explore/index.html"></iframe>
     </div>
     <div class="lower-navbar">
-      <button class="nav-btn" onclick="setIframe('/pages/games.html', 'Games', 'https://finance.v2202211188549209536.happysrv.de/storage/images/controller.webp')">
+      <button class="nav-btn" onclick="setIframe('https://7-7-7-15.github.io/EclipseGames', 'Games', 'https://finance.v2202211188549209536.happysrv.de/storage/images/controller.webp')">
         <img src="https://finance.v2202211188549209536.happysrv.de/storage/images/controller.webp" alt="Games" class="nav-icon">
       </button>
       <button class="nav-btn" onclick="setIframe('https://7-7-7-15.github.io', 'Media', 'https://finance.v2202211188549209536.happysrv.de/storage/images/media.png')">
@@ -575,10 +575,7 @@
             return `Eclipse-apps://${remaining}`;
           }
           //heartive
-          if (docHref.includes(`${localhost}`)) {
-            const remaining = docHref.replace(`${localhost}`, "").replace("/index.html", "").replace(".html", "");
-            return `Eclipse-media://${remaining}`;
-          }
+       
           switch (docHref) {
               //origin
             case `${localhost}/explore/index.html`:
