@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-08BNGSL74W"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-08BNGSL74W');
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-K8CCSDNPV3"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-K8CCSDNPV3');
+    </script>
+    <meta property="og:title" content="US4 | Credits">
+    <meta property="og:description" content="Credits page for US4">
+    <meta property="og:image" content="/storage/images/logo.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="icon" href="../storage/images/googleclassroom.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../storage/css/anotherstyle.css">
+    <link rel="stylesheet" href="../storage/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+</head>
+<body>
+
+<script src="/storage/js/parts.js"></script>
+<script src="/storage/js/ap.js"></script>
+<div id="parts"></div>
+
+<div class="navbar">
+    <div class="left-side">
+        <a href="/">
+            <img src="/storage/images/logo.png" alt="logo">
+        </a>
+    </div>
+    <div class="right-side">
+        <script type="text/javascript" src="/storage/js/nav.js"></script>
+    </div>
+</div>
+
+<div class="game-title">Credits</div>
+
+    <div class="game-grid" id="gameGrid"></div>
+    <script>
+      const name = "credits";
+      const CACHE_KEY = `${name}-cache`;
+      const CACHE_TIME_KEY = `${name}-cache-time`;
+      const json = `${name}.json`;
+      async function loadGames() {
+        const gameGrid = document.getElementById("gameGrid");
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          try {
+            const games = JSON.parse(cached);
+            renderGames(games);
+          } catch (e) {
+            console.warn("Failed to parse cached games:", e);
+          }
+        }
+        try {
+          const res = await fetch(`/storage/json/${json}`, {
+            cache: "no-store"
+          });
+          const freshGames = await res.json();
+          const cachedString = localStorage.getItem(CACHE_KEY);
+          const freshString = JSON.stringify(freshGames);
+          if (freshString !== cachedString) {
+            localStorage.setItem(CACHE_KEY, freshString);
+            localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+            renderGames(freshGames);
+          }
+        } catch (err) {
+          console.error(`Failed to fetch latest ${json}:`, err);
+        }
+      }
+
+      function renderGames(games) {
+        const gameGrid = document.getElementById("gameGrid");
+        gameGrid.innerHTML = "";
+        for (const game of games) {
+          const div = document.createElement("div");
+          div.className = "game-button";
+          div.innerHTML = `<a href="${game.url}" target="_blank"> <img src="${game.image}" alt="${game.title}" onerror="this.onerror=null;this.src='/storage/images/404.png';"> <div class="overlay-text">${game.title}</div> </a>`;
+          gameGrid.appendChild(div);
+        }
+        checkGridAlignment();
+      }
+
+      function filterGames() {
+        const searchInput = document.getElementById('gameSearch').value.toLowerCase();
+        const games = document.querySelectorAll('.game-button');
+        games.forEach(game => {
+          const title = game.querySelector('.overlay-text').textContent.toLowerCase();
+          game.style.display = title.includes(searchInput) ? 'block' : 'none';
+        });
+      }
+
+      function checkGridAlignment() {
+        const buttons = document.querySelectorAll('.game-button');
+        const pageWidth = window.innerWidth;
+        buttons.forEach(button => {
+          const rect = button.getBoundingClientRect();
+          const distanceToRightEdge = pageWidth - rect.right;
+          button.style.clear = distanceToRightEdge < 75 ? 'both' : 'none';
+        });
+      }
+      window.addEventListener('resize', checkGridAlignment);
+      window.addEventListener('load', () => {
+        loadGames();
+        checkGridAlignment();
+      });
+    </script>
+    <script type="text/javascript" src="/storage/js/settings-1.js"></script>
+    <script type="text/javascript" src="/storage/js/background.js"></script>
+    <script type="text/javascript" src="/storage/js/resort.js"></script>
+    
+    <script src="/explore/us5/us5.bundle.js" defer></script>
+    <script src="/explore/us5/us5.config.js" defer></script>
+    <script src="/explore/register-sw.js" defer></script>
+    <script src="/explore/search.js" defer></script>
+    <script src="/explore/index.js" defer></script>
+    <script>
+      async function regsw() {
+        await navigator.serviceWorker.register("/explore/us5-sw.js", {
+          scope: "/explore/",
+        });
+      }
+      regsw();
+    </script>
+  </body>
+</html>
