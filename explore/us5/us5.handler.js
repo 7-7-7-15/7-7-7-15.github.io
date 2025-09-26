@@ -725,7 +725,11 @@ async function __us5Hook(window, config = {}, bare = '/bare/') {
 
         if (protocols.length) headers['Sec-WebSocket-Protocol'] = protocols.join(', ');
 
-        event.data.url =  (__us5.bare.protocol === 'https:' ? 'wss://' : 'ws://') + __us5.bare.host + __us5.bare.pathname + 'v1/';
+       event.data.url =  (
+    __us5.bare.protocol === 'https:' || __us5.bare.protocol === 'wss:'
+        ? 'wss://'
+        : 'ws://'
+    ) + __us5.bare.host + __us5.bare.pathname + 'v1/';
         event.data.protocols = [
             'bare',
             __us5.encodeProtocol(JSON.stringify({
