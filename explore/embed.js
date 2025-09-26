@@ -4,3 +4,4 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = `/explore/web/${__us5$config.encodeUrl(link)}`;
   }
 });
+
