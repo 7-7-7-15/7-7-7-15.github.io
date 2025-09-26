@@ -1,24 +1,6 @@
 importScripts('/explore/us5/us5.bundle.js');
 importScripts('/explore/us5/us5.config.js');
 
-function sanitizeResponseStatus(response) {
-    if (response instanceof Response) {
-        let status = response.status;
-        if (!status || status < 200 || status > 599) {
-            // Clone body and headers
-            let body = response.body || null;
-            let headers = response.headers ? Object.fromEntries(response.headers.entries()) : {};
-            let statusText = response.statusText || '';
-            return new Response(body, {
-                status: 502,
-                statusText,
-                headers
-            });
-        }
-    }
-    return response;
-}
-
 class us5ServiceWorker extends EventEmitter {     
     constructor(config = __us5$config) {
         super();
@@ -122,7 +104,7 @@ class us5ServiceWorker extends EventEmitter {
             const reqEvent = new HookEvent(requestCtx, null, null);
             this.emit('request', reqEvent);
 
-           if (reqEvent.intercepted) return sanitizeResponseStatus(reqEvent.returnValue);
+            if (reqEvent.intercepted) return reqEvent.returnValue;
 
             const response = await fetch(requestCtx.send);
 
@@ -134,7 +116,7 @@ class us5ServiceWorker extends EventEmitter {
             const resEvent = new HookEvent(responseCtx, null, null);
 
             this.emit('beforemod', resEvent);
-         if (resEvent.intercepted) return sanitizeResponseStatus(resEvent.returnValue);
+            if (resEvent.intercepted) return resEvent.returnValue;
 
             for (const name of this.headers.csp) {
                 if (responseCtx.headers[name]) delete responseCtx.headers[name];
@@ -196,16 +178,14 @@ class us5ServiceWorker extends EventEmitter {
                 responseCtx.headers['content-type'] = 'text/event-stream';
             };
 
-           this.emit('response', resEvent);
-if (resEvent.intercepted) return sanitizeResponseStatus(resEvent.returnValue);
-// Defensive status code fix!
-let safeStatus = responseCtx.status;
-if (!safeStatus || safeStatus < 200 || safeStatus > 599) safeStatus = 502;
-return new Response(responseCtx.body, {
-    headers: responseCtx.headers,
-    status: safeStatus,
-    statusText: responseCtx.statusText,
-});
+            this.emit('response', resEvent);
+            if (resEvent.intercepted) return resEvent.returnValue;
+
+            return new Response(responseCtx.body, {
+                headers: responseCtx.headers,
+                status: responseCtx.status,
+                statusText: responseCtx.statusText,
+            });
 
         } catch(err) {
             return new Response(err.toString(), {
@@ -213,25 +193,20 @@ return new Response(responseCtx.body, {
             });
         };
     };
-getBarerResponse(response) {
-    const headers = {};
-    const raw = JSON.parse(response.headers.get('x-bare-headers'));
+    getBarerResponse(response) {
+        const headers = {};
+        const raw = JSON.parse(response.headers.get('x-bare-headers'));
 
-    for (const key in raw) {
-        headers[key.toLowerCase()] = raw[key];
-    }
+        for (const key in raw) {
+            headers[key.toLowerCase()] = raw[key];
+        };
 
-    let status = +response.headers.get('x-bare-status');
-    // Set fallback status if out of range or invalid
-    if (!status || status < 200 || status > 599) status = 502;
-
-    return {
-        headers,
-        status,
-        statusText: response.headers.get('x-bare-status-text') || '',
-        body: !this.statusCode.empty.includes(status) ? response.body : null,
-    };
-}
+        return {
+            headers,
+            status: +response.headers.get('x-bare-status'),
+            statusText: response.headers.get('x-bare-status-text'),
+            body: !this.statusCode.empty.includes(+response.headers.get('x-bare-status')) ? response.body : null,
+        };
     };
     get address() {
         return this.addresses[Math.floor(Math.random() * this.addresses.length)];
