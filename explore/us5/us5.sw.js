@@ -178,14 +178,17 @@ class us5ServiceWorker extends EventEmitter {
                 responseCtx.headers['content-type'] = 'text/event-stream';
             };
 
-            this.emit('response', resEvent);
-            if (resEvent.intercepted) return resEvent.returnValue;
+           this.emit('response', resEvent);
+if (resEvent.intercepted) return resEvent.returnValue;
 
-            return new Response(responseCtx.body, {
-                headers: responseCtx.headers,
-                status: responseCtx.status,
-                statusText: responseCtx.statusText,
-            });
+// Defensive status code fix!
+let safeStatus = responseCtx.status;
+if (!safeStatus || safeStatus < 200 || safeStatus > 599) safeStatus = 502;
+return new Response(responseCtx.body, {
+    headers: responseCtx.headers,
+    status: safeStatus,
+    statusText: responseCtx.statusText,
+});
 
         } catch(err) {
             return new Response(err.toString(), {
@@ -193,20 +196,25 @@ class us5ServiceWorker extends EventEmitter {
             });
         };
     };
-    getBarerResponse(response) {
-        const headers = {};
-        const raw = JSON.parse(response.headers.get('x-bare-headers'));
+getBarerResponse(response) {
+    const headers = {};
+    const raw = JSON.parse(response.headers.get('x-bare-headers'));
 
-        for (const key in raw) {
-            headers[key.toLowerCase()] = raw[key];
-        };
+    for (const key in raw) {
+        headers[key.toLowerCase()] = raw[key];
+    }
 
-        return {
-            headers,
-            status: +response.headers.get('x-bare-status'),
-            statusText: response.headers.get('x-bare-status-text'),
-            body: !this.statusCode.empty.includes(+response.headers.get('x-bare-status')) ? response.body : null,
-        };
+    let status = +response.headers.get('x-bare-status');
+    // Set fallback status if out of range or invalid
+    if (!status || status < 200 || status > 599) status = 502;
+
+    return {
+        headers,
+        status,
+        statusText: response.headers.get('x-bare-status-text') || '',
+        body: !this.statusCode.empty.includes(status) ? response.body : null,
+    };
+}
     };
     get address() {
         return this.addresses[Math.floor(Math.random() * this.addresses.length)];
