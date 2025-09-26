@@ -1,6 +1,6 @@
 self.__us5$config = {
     prefix: '/explore/web/',
-    bare:'/spiders/',
+    bare:'wss://turbiumon.top/wisp/',
     encodeUrl: Ultraviolet.codec.xor.encode,
     decodeUrl: Ultraviolet.codec.xor.decode,
     handler: '/explore/us5/us5.handler.js',
