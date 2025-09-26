@@ -1,6 +1,24 @@
 importScripts('/explore/us5/us5.bundle.js');
 importScripts('/explore/us5/us5.config.js');
 
+function sanitizeResponseStatus(response) {
+    if (response instanceof Response) {
+        let status = response.status;
+        if (!status || status < 200 || status > 599) {
+            // Clone body and headers
+            let body = response.body || null;
+            let headers = response.headers ? Object.fromEntries(response.headers.entries()) : {};
+            let statusText = response.statusText || '';
+            return new Response(body, {
+                status: 502,
+                statusText,
+                headers
+            });
+        }
+    }
+    return response;
+}
+
 class us5ServiceWorker extends EventEmitter {     
     constructor(config = __us5$config) {
         super();
@@ -104,7 +122,7 @@ class us5ServiceWorker extends EventEmitter {
             const reqEvent = new HookEvent(requestCtx, null, null);
             this.emit('request', reqEvent);
 
-            if (reqEvent.intercepted) return reqEvent.returnValue;
+           if (reqEvent.intercepted) return sanitizeResponseStatus(reqEvent.returnValue);
 
             const response = await fetch(requestCtx.send);
 
@@ -116,7 +134,7 @@ class us5ServiceWorker extends EventEmitter {
             const resEvent = new HookEvent(responseCtx, null, null);
 
             this.emit('beforemod', resEvent);
-            if (resEvent.intercepted) return resEvent.returnValue;
+         if (resEvent.intercepted) return sanitizeResponseStatus(resEvent.returnValue);
 
             for (const name of this.headers.csp) {
                 if (responseCtx.headers[name]) delete responseCtx.headers[name];
@@ -179,8 +197,7 @@ class us5ServiceWorker extends EventEmitter {
             };
 
            this.emit('response', resEvent);
-if (resEvent.intercepted) return resEvent.returnValue;
-
+if (resEvent.intercepted) return sanitizeResponseStatus(resEvent.returnValue);
 // Defensive status code fix!
 let safeStatus = responseCtx.status;
 if (!safeStatus || safeStatus < 200 || safeStatus > 599) safeStatus = 502;
