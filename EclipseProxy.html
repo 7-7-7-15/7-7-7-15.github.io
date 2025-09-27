@@ -419,7 +419,7 @@
         tabsContainer.insertBefore(newTab, document.querySelector('.add-tab-button'));
         const iframe = document.createElement('iframe');
         iframe.classList.add('tab-iframe');
-        iframe.src = 'https://finance.v2202211188549209536.happysrv.de/pages/settings.html';
+        iframe.src = '/pages/settings.html';
         iframe.onload = function() {
           updateSearchBar(iframe);
           updateTabName(iframe);
@@ -446,34 +446,34 @@
         try {
           if (url.startsWith('Eclipse-Games://')) {
             const path = url.replace('Eclipse-games://', 'https://7-7-7-15.github.io/EclipseGames');
-            return () => setIframe(path + '/index.html', 'Games', 'https://finance.v2202211188549209536.happysrv.de/storage/images/controller.webp');
+            return () => setIframe(path + '/index.html', 'Games', '/storage/images/controller.webp');
           }
           if (url.startsWith('Eclipse-apps://')) {
             const path = url.replace('Eclipse-apps://', 'https://finance.v2202211188549209536.happysrv.de/pages/apps-frame.html?url=https://finance.v2202211188549209536.happysrv.de/pages/apps/');
-            return () => setIframe(path + '/index.html', 'Apps', 'https://finance.v2202211188549209536.happysrv.de/storage/images/apps.png');
+            return () => setIframe(path + '/index.html', 'Apps', '/storage/images/apps.png');
           }
          
           if (url.startsWith('Eclipse-media://')) {
             const path = url.replace('Eclipse-media://', 'https://7-7-7-15.github.io');
-            return () => setIframe(path, 'Media', 'https://finance.v2202211188549209536.happysrv.de/storage/images/media.png');
+            return () => setIframe(path, 'Media', '/storage/images/media.png');
           }
           switch (url) {
             case 'Eclipse://new-tab-page':
-              return () => setIframe('/explore/index.html', 'New Tab', 'https://finance.v2202211188549209536.happysrv.de/storage/images/browser.svg');
+              return () => setIframe('/explore/index.html', 'New Tab', '/storage/images/browser.svg');
             case 'Ecipse://settings':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/settings.html', 'Settings', 'https://finance.v2202211188549209536.happysrv.de/storage/images/settings.png');
+              return () => setIframe('/pages/settings.html', 'Settings', '/storage/images/settings.png');
             case 'Eclipse://games':
               return () => setIframe('https://7-7-7-15.github.io/EclipseGames/', 'Games', 'https://finance.v2202211188549209536.happysrv.de/storage/images/controller.webp');
             case 'Eclipse://apps':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/apps.html', 'Apps', 'https://finance.v2202211188549209536.happysrv.de/storage/images/apps.png');
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/apps.html', 'Apps', '/storage/images/apps.png');
             case 'Eclipse://partners':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/partners.html', 'Partners', 'https://finance.v2202211188549209536.happysrv.de/storage/images/partners.png');
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/partners.html', 'Partners', '/storage/images/partners.png');
             case 'Eclipse://credits':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/credits.html', 'Credits', 'https://finance.v2202211188549209536.happysrv.de/storage/images/credits.png');
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/credits.html', 'Credits', '/storage/images/credits.png');
             case 'Eclipse://extra':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/extra.html', 'Extra', 'https://finance.v2202211188549209536.happysrv.de/storage/images/extra.png');
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/extra.html', 'Extra', '/storage/images/extra.png');
             case 'Eclipse://data':
-              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/data.html', 'Data', 'https://finance.v2202211188549209536.happysrv.de/storage/images/data.png');
+              return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/data.html', 'Data', '/storage/images/data.png');
             case 'Eclipse://data-usage':
               return () => setIframe('https://finance.v2202211188549209536.happysrv.de/pages/extra/data-use.html', 'Data Usage', 'https://finance.v2202211188549209536.happysrv.de/storage/images/data.png');
             case 'Eclipse://secret':
