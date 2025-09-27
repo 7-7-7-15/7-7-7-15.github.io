@@ -520,7 +520,7 @@
               finalURL = `https://duckduckgo.com/?q=${encodeURIComponent(mapped)}`;
             }
           }
-          iframe.src = isInternal ? mapped : `/explore/embed.html?p=${finalURL}`;
+          iframe.src = isInternal ? mapped : `https://finance.v2202211188549209536.happysrv.de/explore/embed.html?p=${finalURL}`;
           iframe.onload = () => {
             updateSearchBar(iframe);
             updateTabName(iframe);
