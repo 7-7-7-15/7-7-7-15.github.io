@@ -1,7 +1,7 @@
 body {
     color: #fff;
-   /* background: url('/storage/images/bg.gif') center center fixed no-repeat; */
-    background-color: #070c24;
+    /* background: url('/storage/images/bg.gif') center center fixed no-repeat; */
+    background: radial-gradient(ellipse at 50% 38%, #222960 0%, #191e45 62%, #070c24 100%);
     background-size: cover;
     font-family: "Outfit", sans-serif;
     display: flex;
@@ -13,17 +13,19 @@ body {
     text-align: center;
     padding: 10px 20px;
     overflow: hidden;
-    text-shadow: 0 0 0.8px black;
+    text-shadow: 0 0 2px #000, 0 0 16px #12163b;
 }
 
 h1 {
     font-size: 3rem;
-    color: white;
+    color: #ffeea6;
     margin: 0;
     padding-top: 20px;
     font-weight: 700;
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+    text-shadow: 2px 2px 16px #181c38, 0 0 18px #ffd700;
     animation: fadeIn 1s ease-in-out;
+    filter: drop-shadow(0 0 2rem #ffd700);
+    letter-spacing: 1px;
 }
 
 @keyframes fadeIn {
@@ -39,16 +41,18 @@ h1 {
 
 #dynamicParagraph {
     font-size: 1.2rem;
-    color: #fff;
+    color: #e5e7ff;
     margin: 10px 0;
     font-weight: 300;
-    opacity: 0.8;
-    transition: opacity 0.3s ease;
+    opacity: 0.82;
+    transition: opacity 0.3s;
+    text-shadow: 0 0 6px #23286b;
 }
 
 #dynamicParagraph:hover {
     opacity: 1;
     cursor: pointer;
+    text-shadow: 0 0 15px #a5b4ff;
 }
 
 #search-container {
@@ -68,16 +72,16 @@ h1 {
 .search-bar-home {
     padding: 20px 30px;
     width: 350px;
-    border: 2px solid white;
-    background-color: rgba(0, 0, 0, 0.2);
+    border: 2px solid #cfbff4;
+    background: linear-gradient(90deg, rgba(123,117,223,0.16) 0%, rgba(22,19,46,1) 70%);
     border-radius: 50px 0 0 50px;
     font-family: "Outfit", sans-serif;
     outline: none;
     margin-right: 10px;
-    color: white;
+    color: #fff;
     font-size: 1.2rem;
     transition: 0.3s;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0px 4px 18px rgba(20, 22, 40, 0.4);
 }
 
 .search-bar-home::placeholder {
@@ -85,23 +89,22 @@ h1 {
 }
 
 .search-bar-home:focus {
-    border-color: rgba(255, 255, 255, 0.5);
-    background: rgba(255, 255, 255, 0.5);
+    border-color: #ffeea6;
+    background: rgba(40, 44, 92, 0.6);
 }
 
 #search-button {
     padding: 20px 40px;
-    border: none;
-    border: 2px solid white;
-    background-color: rgba(0, 0, 0, 0.2);
-    color: white;
+    border: 2px solid #cfbff4;
+    background: linear-gradient(90deg, rgba(66,75,120,0.45), rgba(35,28,72,0.88));
+    color: #ffeea6;
     border-radius: 0 50px 50px 0;
     cursor: pointer;
     font-family: "Outfit", sans-serif;
     font-size: 1.2rem;
     font-weight: 600;
-    transition: background-color 0.3s, transform 0.3s;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    transition: background 0.3s, transform 0.3s;
+    box-shadow: 0px 4px 18px rgba(22, 27, 51, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -116,17 +119,20 @@ h1 {
 }
 
 #search-button:hover {
-    border-color: rgba(255, 255, 255, 0.5);
-    background: rgba(255, 255, 255, 0.5);
+    border-color: #ffeea6;
+    background: #ffeea6;
+    color: #15203e;
     transform: translateY(-2px);
+    box-shadow: 0px 2px 12px #ffeea6;
 }
 
 .desc {
     margin-top: 10px;
-    color: #ccc;
+    color: #abbcee;
     font-size: 1rem;
     font-weight: 400;
     animation: fadeIn 1s ease-in-out;
+    text-shadow: 0 0 6px #191e45;
 }
 
 iframe {
@@ -134,13 +140,13 @@ iframe {
     height: calc(100vh - 7vh);
     border: none;
     display: block;
+    box-shadow: 0 0 40px 10px #191e45;
 }
 
 @media (max-width: 600px) {
     .search-bar-home {
         width: 80%;
     }
-
     #search-button {
         width: auto;
     }
