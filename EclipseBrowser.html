@@ -245,7 +245,7 @@
     <button onclick="goForward()">→</button>
     <button class="refresh" onclick="refresh()"></button>
     <button class="home" onclick="goHome()"></button>
-    <input type="text" id="url-input" placeholder="Enter URL or HTML content" onkeypress="if(event.key === 'Enter') loadContent()">
+    <input type="text" id="url-input" placeholder="Enter URL or search query" onkeypress="if(event.key === 'Enter') loadContent()">
     <button onclick="loadContent()">Go</button>
     <button id="fullscreen-btn" onclick="toggleFullscreen()"></button>
   </div>
@@ -262,6 +262,7 @@
     const urlInput = document.getElementById('url-input');
     const loadingIndicator = document.getElementById('loading-indicator');
     const homePageUrl = 'https://7-7-7-15.github.io/browser/EclipseBrowserHomepage.html';
+    const searchEmbedUrl = 'https://embeddr.rhw.one/embed#https://duckduckgo.com/';
 
     const settingsPageContent = `
       <div class="settings-container">
@@ -269,14 +270,14 @@
         <label>
           Theme:
           <select onchange="parent.changeTheme(this.value)">
-            <option value="eclipse" ${currentTheme === 'eclipse' ? 'selected' : ''}>Eclipse (Black & White)</option>
-            <option value="nebula" ${currentTheme === 'nebula' ? 'selected' : ''}>Nebula (Colorful)</option>
+            <option value="eclipse" selected>Eclipse (Black & White)</option>
+            <option value="nebula">Nebula (Colorful)</option>
           </select>
         </label>
         <label>
           Background Animation:
           <select onchange="parent.toggleAnimation(this.value)">
-            <option value="on">On</option>
+            <option value="on" selected>On</option>
             <option value="off">Off</option>
           </select>
         </label>
@@ -303,8 +304,7 @@
       };
       frame.onerror = (e) => {
         console.error(`Iframe ${tabId} error:`, e);
-        frame.src = 'about:blank';
-        frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Failed to load content: ${e.message || 'Unknown error'}</h1>`;
+        frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Failed to load content</h1>`;
         loadingIndicator.style.display = 'none';
       };
       contentContainer.appendChild(frame);
@@ -327,10 +327,6 @@
       urlInput.value = currentUrl;
       document.title = tabs[index].title + ' - Eclipse Browser Viewer';
       loadingIndicator.style.display = 'none';
-      if (currentUrl) {
-        console.log(`Reloading content for tab ${index}: ${currentUrl}`);
-        loadContent(currentUrl);
-      }
     }
 
     function addNewTab() {
@@ -362,21 +358,33 @@
       }
     }
 
+    function isSearchQuery(input) {
+      // Check if input doesn't contain dots (no domain), doesn't start with http/https, 
+      // doesn't contain HTML tags, and isn't an Eclipse:// URL
+      return !input.includes('.') && 
+             !input.toLowerCase().startsWith('http://') && 
+             !input.toLowerCase().startsWith('https://') &&
+             !input.includes('<') && 
+             !input.includes('>') &&
+             !input.toLowerCase().startsWith('eclipse://');
+    }
+
     function loadContent(url = urlInput.value.trim()) {
       if (activeTabIndex === -1) {
         console.error('No active tab');
         return;
       }
+      
       console.log(`Loading content for tab ${activeTabIndex}: ${url}`);
       const frame = tabs[activeTabIndex].frame;
       let title = 'New Tab';
+      let displayUrl = url;
       url = url.trim();
       loadingIndicator.style.display = 'block';
 
       if (!url) {
         console.warn('Empty URL input');
-        frame.src = 'about:blank';
-        frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Please enter a valid URL or HTML.</h1>`;
+        frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Please enter a valid URL or search query.</h1>`;
         title = 'Error';
         urlInput.value = '';
         updateTabTitle(activeTabIndex, title);
@@ -384,62 +392,90 @@
         return;
       }
 
-      try {
-        frame.src = 'about:blank';
-        frame.srcdoc = '';
-        console.log(`Iframe reset for tab ${activeTabIndex}`);
-
-        if (url.toLowerCase() === 'eclipse://home') {
-          console.log(`Loading homepage: ${homePageUrl}`);
-          frame.src = homePageUrl;
-          title = 'Home';
-          urlInput.value = 'Eclipse://Home';
-        } else if (url.toLowerCase() === 'eclipse://settings') {
-          console.log('Loading settings page');
-          frame.srcdoc = settingsPageContent;
-          title = 'Settings';
-          urlInput.value = 'Eclipse://Settings';
-        } else if (url.includes('<') && url.includes('>')) {
-          console.log('Loading custom HTML');
-          frame.srcdoc = url;
-          title = 'Custom HTML';
-          urlInput.value = 'Eclipse://Custom';
-        } else {
-          if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) {
-            url = 'https://' + url;
-            urlInput.value = url;
-            console.log(`Prepended HTTPS: ${url}`);
+      // Reset the frame
+      frame.src = 'about:blank';
+      
+      // Use setTimeout to ensure the frame is reset before loading new content
+      setTimeout(() => {
+        try {
+          if (url.toLowerCase() === 'eclipse://home') {
+            console.log(`Loading homepage: ${homePageUrl}`);
+            frame.src = homePageUrl;
+            title = 'Home';
+            displayUrl = 'Eclipse://Home';
+          } else if (url.toLowerCase() === 'eclipse://settings') {
+            console.log('Loading settings page');
+            frame.srcdoc = settingsPageContent;
+            title = 'Settings';
+            displayUrl = 'Eclipse://Settings';
+          } else if (url.toLowerCase().startsWith('eclipse://')) {
+            // Handle other eclipse:// URLs
+            frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Unknown Eclipse URL: ${url}</h1>`;
+            title = 'Unknown URL';
+            displayUrl = url;
+          } else if (url.includes('<') && url.includes('>')) {
+            console.log('Loading custom HTML');
+            frame.srcdoc = url;
+            title = 'Custom HTML';
+            displayUrl = 'Custom HTML';
+          } else if (isSearchQuery(url)) {
+            // Handle search queries
+            console.log('Performing search query:', url);
+            const searchUrl = searchEmbedUrl + encodeURIComponent(url);
+            frame.src = searchUrl;
+            title = `Search: ${url}`;
+            displayUrl = url; // Show only the search query in URL bar, not the full embed URL
+          } else {
+            // Handle regular URLs
+            let finalUrl = url;
+            if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) {
+              finalUrl = 'https://' + url;
+              console.log(`Prepended HTTPS: ${finalUrl}`);
+            }
+            
+            try {
+              new URL(finalUrl);
+              console.log(`Loading external URL: ${finalUrl}`);
+              frame.src = finalUrl;
+              title = new URL(finalUrl).hostname;
+              displayUrl = finalUrl;
+            } catch {
+              // If it's not a valid URL, treat it as a search query
+              console.log('Invalid URL, treating as search query:', url);
+              const searchUrl = searchEmbedUrl + encodeURIComponent(url);
+              frame.src = searchUrl;
+              title = `Search: ${url}`;
+              displayUrl = url;
+            }
           }
-          try {
-            new URL(url);
-            console.log(`Loading external URL: ${url}`);
-            frame.src = url;
-            title = new URL(url).hostname;
-            urlInput.value = url;
-          } catch {
-            throw new Error('Invalid URL format');
+          
+          // Update URL input with display URL (not the actual loaded URL for searches)
+          urlInput.value = displayUrl;
+          updateTabTitle(activeTabIndex, title);
+          
+          // Update history with display URL
+          const history = tabs[activeTabIndex].history;
+          if (history[tabs[activeTabIndex].currentHistoryIndex] !== displayUrl) {
+            history.splice(tabs[activeTabIndex].currentHistoryIndex + 1);
+            history.push(displayUrl);
+            tabs[activeTabIndex].currentHistoryIndex = history.length - 1;
+            console.log(`History updated for tab ${activeTabIndex}: ${displayUrl}`);
           }
-        }
-      } catch (e) {
-        console.error(`Error loading content: ${e.message}`);
-        frame.src = 'about:blank';
-        frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Failed to load content: ${e.message}</h1>`;
-        title = 'Error';
-        urlInput.value = url;
-      } finally {
-        setTimeout(() => {
+          
+          // Hide loading indicator after a short delay
+          setTimeout(() => {
+            loadingIndicator.style.display = 'none';
+          }, 1000);
+          
+        } catch (e) {
+          console.error(`Error loading content: ${e.message}`);
+          frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Failed to load content: ${e.message}</h1>`;
+          title = 'Error';
+          urlInput.value = url;
+          updateTabTitle(activeTabIndex, title);
           loadingIndicator.style.display = 'none';
-        }, 5000);
-      }
-
-      updateTabTitle(activeTabIndex, title);
-      const history = tabs[activeTabIndex].history;
-      if (history[tabs[activeTabIndex].currentHistoryIndex] !== url) {
-        history.splice(tabs[activeTabIndex].currentHistoryIndex + 1);
-        history.push(url);
-        tabs[activeTabIndex].currentHistoryIndex = history.length - 1;
-        console.log(`History updated for tab ${activeTabIndex}: ${url}`);
-      }
+        }
+      }, 100);
     }
 
     function goBack() {
@@ -498,9 +534,6 @@
       } else if (theme === 'nebula') {
         document.body.style.background = 'linear-gradient(135deg, #1a0033, #330066)';
         document.querySelector('.eclipse-effect').style.background = 'radial-gradient(circle at 50% 30%, rgba(200, 0, 255, 0.2) 0%, transparent 50%)';
-      }
-      if (tabs[activeTabIndex] && tabs[activeTabIndex].frame.contentWindow.document.body) {
-        tabs[activeTabIndex].frame.contentWindow.document.body.style.background = document.body.style.background;
       }
     }
 
