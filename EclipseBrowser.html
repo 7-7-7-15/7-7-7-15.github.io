@@ -20,10 +20,12 @@
     .tabs-container {
       background: #111111;
       display: flex;
+      flex-direction: row;
       align-items: center;
       padding: 5px 10px;
       box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
       overflow-x: auto;
+      justify-content: flex-start;
     }
     .tab {
       background: #222222;
@@ -40,17 +42,26 @@
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+      position: relative;
     }
     .tab.active {
       background: #333333;
       transform: translateY(-2px);
-      box-shadow: 0 2px 5px rgba(255, 255, 255, 0.2);
+    }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: #ffffff;
     }
     .tab:hover {
       background: #444444;
     }
     .tab-close {
-      margin-left: 10px;
+      margin-left: auto;
       color: #aaaaaa;
       cursor: pointer;
       font-size: 14px;
@@ -65,7 +76,7 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      margin-left: auto;
+      margin-left: 10px;
       font-size: 16px;
       line-height: 1;
       transition: background 0.3s, transform 0.2s;
@@ -147,10 +158,18 @@
       border: none;
       background: #000000;
       display: none;
-      box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05);
     }
     .content-frame.active {
       display: block;
+    }
+    .loading-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ffffff;
+      font-size: 18px;
+      display: none;
     }
     .eclipse-effect {
       position: absolute;
@@ -189,7 +208,6 @@
     .browser-toolbar button.home::before {
       content: '🏠';
     }
-    /* Settings Page Styles */
     .settings-container {
       padding: 20px;
       color: #ffffff;
@@ -231,7 +249,9 @@
     <button onclick="loadContent()">Go</button>
     <button id="fullscreen-btn" onclick="toggleFullscreen()"></button>
   </div>
-  <div class="content-container"></div>
+  <div class="content-container">
+    <div class="loading-indicator" id="loading-indicator">Loading...</div>
+  </div>
 
   <script>
     let tabs = [];
@@ -240,6 +260,7 @@
     const tabsContainer = document.querySelector('.tabs-container');
     const contentContainer = document.querySelector('.content-container');
     const urlInput = document.getElementById('url-input');
+    const loadingIndicator = document.getElementById('loading-indicator');
     const homePageUrl = 'https://7-7-7-15.github.io/browser/EclipseBrowserHomepage.html';
 
     const settingsPageContent = `
@@ -262,7 +283,8 @@
       </div>
     `;
 
-    function createTab(title = 'New Tab', content = '') {
+    function createTab(title = 'New Tab') {
+      console.log(`Creating tab ${tabs.length} with title: ${title}`);
       const tabId = tabs.length;
       const tabElement = document.createElement('div');
       tabElement.classList.add('tab');
@@ -275,13 +297,25 @@
       const frame = document.createElement('iframe');
       frame.classList.add('content-frame');
       frame.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms';
+      frame.onload = () => {
+        console.log(`Iframe ${tabId} loaded: ${frame.src || 'srcdoc'}`);
+        loadingIndicator.style.display = 'none';
+      };
+      frame.onerror = (e) => {
+        console.error(`Iframe ${tabId} error:`, e);
+        frame.src = 'about:blank';
+        frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Failed to load content: ${e.message || 'Unknown error'}</h1>`;
+        loadingIndicator.style.display = 'none';
+      };
       contentContainer.appendChild(frame);
 
       tabs.push({ tabElement, frame, title, history: [], currentHistoryIndex: -1 });
+      console.log(`Tab ${tabId} created with iframe`);
       return tabId;
     }
 
     function switchTab(index) {
+      console.log(`Switching to tab ${index}`);
       if (activeTabIndex !== -1) {
         tabs[activeTabIndex].tabElement.classList.remove('active');
         tabs[activeTabIndex].frame.classList.remove('active');
@@ -292,15 +326,22 @@
       const currentUrl = tabs[index].history[tabs[index].currentHistoryIndex] || '';
       urlInput.value = currentUrl;
       document.title = tabs[index].title + ' - Eclipse Browser Viewer';
+      loadingIndicator.style.display = 'none';
+      if (currentUrl) {
+        console.log(`Reloading content for tab ${index}: ${currentUrl}`);
+        loadContent(currentUrl);
+      }
     }
 
     function addNewTab() {
+      console.log('Adding new tab');
       const newTabId = createTab('Home');
       switchTab(newTabId);
       loadContent('Eclipse://Home');
     }
 
     function closeTab(index) {
+      console.log(`Closing tab ${index}`);
       if (tabs.length === 1) return;
       tabs[index].tabElement.remove();
       tabs[index].frame.remove();
@@ -313,6 +354,7 @@
     }
 
     function updateTabTitle(index, title) {
+      console.log(`Updating title for tab ${index}: ${title}`);
       tabs[index].title = title;
       tabs[index].tabElement.firstChild.textContent = title;
       if (index === activeTabIndex) {
@@ -321,50 +363,82 @@
     }
 
     function loadContent(url = urlInput.value.trim()) {
-      if (activeTabIndex === -1) return;
+      if (activeTabIndex === -1) {
+        console.error('No active tab');
+        return;
+      }
+      console.log(`Loading content for tab ${activeTabIndex}: ${url}`);
       const frame = tabs[activeTabIndex].frame;
       let title = 'New Tab';
-      // Add https:// to URLs without a protocol
-      if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://') && !url.toLowerCase().startsWith('eclipse://') && !url.includes('<')) {
-        url = 'https://' + url;
-        urlInput.value = url;
+      url = url.trim();
+      loadingIndicator.style.display = 'block';
+
+      if (!url) {
+        console.warn('Empty URL input');
+        frame.src = 'about:blank';
+        frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Please enter a valid URL or HTML.</h1>`;
+        title = 'Error';
+        urlInput.value = '';
+        updateTabTitle(activeTabIndex, title);
+        loadingIndicator.style.display = 'none';
+        return;
       }
-      if (url.toLowerCase() === 'eclipse://home') {
-        frame.src = homePageUrl;
+
+      try {
+        frame.src = 'about:blank';
         frame.srcdoc = '';
-        title = 'Home';
-        urlInput.value = 'Eclipse://Home';
-      } else if (url.toLowerCase() === 'eclipse://settings') {
-        frame.src = '';
-        frame.srcdoc = settingsPageContent;
-        title = 'Settings';
-        urlInput.value = 'Eclipse://Settings';
-      } else if (url.startsWith('http://') || url.startsWith('https://')) {
-        frame.src = url;
-        frame.srcdoc = '';
-        try {
-          title = new URL(url).hostname;
-        } catch {
-          title = 'External Site';
+        console.log(`Iframe reset for tab ${activeTabIndex}`);
+
+        if (url.toLowerCase() === 'eclipse://home') {
+          console.log(`Loading homepage: ${homePageUrl}`);
+          frame.src = homePageUrl;
+          title = 'Home';
+          urlInput.value = 'Eclipse://Home';
+        } else if (url.toLowerCase() === 'eclipse://settings') {
+          console.log('Loading settings page');
+          frame.srcdoc = settingsPageContent;
+          title = 'Settings';
+          urlInput.value = 'Eclipse://Settings';
+        } else if (url.includes('<') && url.includes('>')) {
+          console.log('Loading custom HTML');
+          frame.srcdoc = url;
+          title = 'Custom HTML';
+          urlInput.value = 'Eclipse://Custom';
+        } else {
+          if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) {
+            url = 'https://' + url;
+            urlInput.value = url;
+            console.log(`Prepended HTTPS: ${url}`);
+          }
+          try {
+            new URL(url);
+            console.log(`Loading external URL: ${url}`);
+            frame.src = url;
+            title = new URL(url).hostname;
+            urlInput.value = url;
+          } catch {
+            throw new Error('Invalid URL format');
+          }
         }
-        urlInput.value = url;
-      } else if (url.includes('<') && url.includes('>')) {
-        frame.src = '';
-        frame.srcdoc = url;
-        title = 'Custom HTML';
-        urlInput.value = 'Eclipse://Custom';
-      } else {
-        frame.src = '';
-        frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Invalid input. Enter a valid URL or HTML.</h1>`;
+      } catch (e) {
+        console.error(`Error loading content: ${e.message}`);
+        frame.src = 'about:blank';
+        frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Failed to load content: ${e.message}</h1>`;
         title = 'Error';
         urlInput.value = url;
+      } finally {
+        setTimeout(() => {
+          loadingIndicator.style.display = 'none';
+        }, 5000);
       }
+
       updateTabTitle(activeTabIndex, title);
       const history = tabs[activeTabIndex].history;
       if (history[tabs[activeTabIndex].currentHistoryIndex] !== url) {
         history.splice(tabs[activeTabIndex].currentHistoryIndex + 1);
         history.push(url);
         tabs[activeTabIndex].currentHistoryIndex = history.length - 1;
+        console.log(`History updated for tab ${activeTabIndex}: ${url}`);
       }
     }
 
@@ -374,6 +448,7 @@
       if (tab.currentHistoryIndex > 0) {
         tab.currentHistoryIndex--;
         urlInput.value = tab.history[tab.currentHistoryIndex];
+        console.log(`Going back to: ${tab.history[tab.currentHistoryIndex]}`);
         loadContent(tab.history[tab.currentHistoryIndex]);
       }
     }
@@ -384,6 +459,7 @@
       if (tab.currentHistoryIndex < tab.history.length - 1) {
         tab.currentHistoryIndex++;
         urlInput.value = tab.history[tab.currentHistoryIndex];
+        console.log(`Going forward to: ${tab.history[tab.currentHistoryIndex]}`);
         loadContent(tab.history[tab.currentHistoryIndex]);
       }
     }
@@ -392,15 +468,18 @@
       if (activeTabIndex === -1) return;
       const currentUrl = tabs[activeTabIndex].history[tabs[activeTabIndex].currentHistoryIndex];
       if (currentUrl) {
+        console.log(`Refreshing: ${currentUrl}`);
         loadContent(currentUrl);
       }
     }
 
     function goHome() {
+      console.log('Navigating to home');
       loadContent('Eclipse://Home');
     }
 
     function toggleFullscreen() {
+      console.log('Toggling fullscreen');
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
         document.body.classList.add('fullscreen');
@@ -411,6 +490,7 @@
     }
 
     function changeTheme(theme) {
+      console.log(`Changing theme to: ${theme}`);
       currentTheme = theme;
       if (theme === 'eclipse') {
         document.body.style.background = '#000000';
@@ -419,10 +499,13 @@
         document.body.style.background = 'linear-gradient(135deg, #1a0033, #330066)';
         document.querySelector('.eclipse-effect').style.background = 'radial-gradient(circle at 50% 30%, rgba(200, 0, 255, 0.2) 0%, transparent 50%)';
       }
-      tabs[activeTabIndex].frame.contentWindow.document.body.style.background = document.body.style.background;
+      if (tabs[activeTabIndex] && tabs[activeTabIndex].frame.contentWindow.document.body) {
+        tabs[activeTabIndex].frame.contentWindow.document.body.style.background = document.body.style.background;
+      }
     }
 
     function toggleAnimation(value) {
+      console.log(`Toggling animation: ${value}`);
       const eclipseEffect = document.querySelector('.eclipse-effect');
       const stars = document.querySelector('.stars');
       if (value === 'off') {
@@ -440,6 +523,7 @@
       }
     });
 
+    console.log('Initializing browser with new tab');
     addNewTab();
   </script>
 </body>
