@@ -3,11 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Eclipse Browser Viewer</title>
+  <title>Eclipse Browser</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
+    }
+
+    body {
       font-family: 'Roboto', sans-serif;
       background: #000000;
       color: #ffffff;
@@ -17,6 +23,7 @@
       flex-direction: column;
       position: relative;
     }
+
     .tabs-container {
       background: #111111;
       display: flex;
@@ -26,28 +33,38 @@
       box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
       overflow-x: auto;
       justify-content: flex-start;
+      gap: 5px;
     }
+
     .tab {
-      background: #222222;
+      background: linear-gradient(135deg, #222222, #333333);
       color: #ffffff;
-      padding: 8px 15px;
-      margin-right: 5px;
-      border-radius: 5px 5px 0 0;
+      padding: 8px 15px 8px 12px;
+      margin-right: 2px;
+      border-radius: 8px 8px 0 0;
       cursor: pointer;
       display: flex;
       align-items: center;
-      transition: background 0.3s, transform 0.2s;
-      min-width: 100px;
+      transition: all 0.3s ease;
+      min-width: 120px;
       max-width: 200px;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
       position: relative;
+      border: 1px solid #444444;
+      border-bottom: none;
+      box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.3);
     }
+
     .tab.active {
-      background: #333333;
+      background: linear-gradient(135deg, #333333, #444444);
       transform: translateY(-2px);
+      box-shadow: 0 -4px 8px rgba(255, 255, 255, 0.1);
+      border-color: #666666;
+      z-index: 10;
     }
+
     .tab.active::after {
       content: '';
       position: absolute;
@@ -56,19 +73,44 @@
       width: 100%;
       height: 3px;
       background: #ffffff;
+      border-radius: 0 0 3px 3px;
     }
+
     .tab:hover {
-      background: #444444;
+      background: linear-gradient(135deg, #3a3a3a, #4a4a4a);
+      transform: translateY(-1px);
     }
+
+    .tab-icon {
+      margin-right: 6px;
+      font-size: 12px;
+      color: #aaaaaa;
+    }
+
+    .tab.active .tab-icon {
+      color: #ffffff;
+    }
+
     .tab-close {
       margin-left: auto;
       color: #aaaaaa;
       cursor: pointer;
       font-size: 14px;
+      padding: 2px;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
     }
+
     .tab-close:hover {
       color: #ffffff;
+      background: rgba(255, 255, 255, 0.1);
     }
+
     .new-tab-btn {
       background: #222222;
       color: #ffffff;
@@ -76,15 +118,17 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      margin-left: 10px;
+      margin-left: auto;
       font-size: 16px;
       line-height: 1;
       transition: background 0.3s, transform 0.2s;
     }
+
     .new-tab-btn:hover {
       background: #444444;
       transform: scale(1.1);
     }
+
     .browser-toolbar {
       background: #111111;
       padding: 10px 15px;
@@ -92,7 +136,9 @@
       align-items: center;
       box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
       border-bottom: 1px solid #333333;
+      gap: 10px;
     }
+
     .browser-toolbar button {
       padding: 8px 12px;
       border: none;
@@ -100,19 +146,21 @@
       color: #ffffff;
       border-radius: 50px;
       cursor: pointer;
-      margin: 0 5px;
       font-weight: 500;
       transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
     }
+
     .browser-toolbar button:hover {
       background: #444444;
       transform: translateY(-2px);
       box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
     }
+
     .browser-toolbar button:active {
       transform: translateY(0);
       box-shadow: 0 2px 8px rgba(255, 255, 255, 0.05);
     }
+
     .browser-toolbar button#fullscreen-btn {
       padding: 6px;
       font-size: 14px;
@@ -122,33 +170,117 @@
       align-items: center;
       justify-content: center;
     }
+
+    .url-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
     .browser-toolbar input {
       flex: 1;
       padding: 10px 15px;
       font-size: 16px;
       border: none;
       border-radius: 50px;
-      margin: 0 10px;
       background: #222222;
       color: #ffffff;
       box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
       transition: box-shadow 0.3s, transform 0.2s;
     }
+
     .browser-toolbar input:focus {
       outline: none;
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
       transform: scale(1.01);
     }
+
+    .proxy-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .proxy-btn {
+      padding: 10px 15px;
+      background: #222222;
+      color: #ffffff;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s;
+    }
+
+    .proxy-btn:hover {
+      background: #444444;
+    }
+
+    .proxy-btn i {
+      font-size: 14px;
+    }
+
+    .proxy-dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background: #222222;
+      min-width: 220px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      z-index: 100;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .proxy-dropdown-content.show {
+      display: block;
+    }
+
+    .proxy-option {
+      color: #ffffff;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      cursor: pointer;
+      transition: background 0.3s;
+      border-bottom: 1px solid #333333;
+    }
+
+    .proxy-option:last-child {
+      border-bottom: none;
+    }
+
+    .proxy-option:hover {
+      background: #444444;
+    }
+
+    .proxy-option.active {
+      background: #555555;
+      position: relative;
+    }
+
+    .proxy-option.active::after {
+      content: '✓';
+      position: absolute;
+      right: 15px;
+    }
+
     #fullscreen-btn::before {
       content: '↕';
     }
+
     .fullscreen #fullscreen-btn::before {
       content: '↔';
     }
+
     .content-container {
       flex: 1;
       position: relative;
     }
+
     .content-frame {
       position: absolute;
       top: 0;
@@ -159,9 +291,11 @@
       background: #000000;
       display: none;
     }
+
     .content-frame.active {
       display: block;
     }
+
     .loading-indicator {
       position: absolute;
       top: 50%;
@@ -171,6 +305,7 @@
       font-size: 18px;
       display: none;
     }
+
     .eclipse-effect {
       position: absolute;
       top: 0;
@@ -182,6 +317,7 @@
       z-index: -1;
       animation: eclipse-pulse 12s infinite alternate;
     }
+
     .stars {
       position: absolute;
       top: 0;
@@ -193,21 +329,26 @@
       z-index: -1;
       animation: twinkle 3s infinite;
     }
+
     @keyframes eclipse-pulse {
       0% { opacity: 0.7; transform: scale(1); }
       100% { opacity: 1; transform: scale(1.1); }
     }
+
     @keyframes twinkle {
       0% { opacity: 0.4; }
       50% { opacity: 0.6; }
       100% { opacity: 0.4; }
     }
+
     .browser-toolbar button.refresh::before {
       content: '↻';
     }
+
     .browser-toolbar button.home::before {
       content: '🏠';
     }
+
     .settings-container {
       padding: 20px;
       color: #ffffff;
@@ -215,15 +356,18 @@
       height: 100%;
       overflow-y: auto;
     }
+
     .settings-container h1 {
       font-size: 32px;
       text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
     }
+
     .settings-container label {
       display: block;
       margin: 10px 0;
       font-size: 18px;
     }
+
     .settings-container select {
       padding: 8px;
       background: #222222;
@@ -237,18 +381,49 @@
 <body>
   <div class="eclipse-effect"></div>
   <div class="stars"></div>
+  
   <div class="tabs-container">
     <button class="new-tab-btn" onclick="addNewTab()">+</button>
   </div>
+  
   <div class="browser-toolbar">
     <button onclick="goBack()">←</button>
     <button onclick="goForward()">→</button>
     <button class="refresh" onclick="refresh()"></button>
     <button class="home" onclick="goHome()"></button>
-    <input type="text" id="url-input" placeholder="Enter URL or search query" onkeypress="if(event.key === 'Enter') loadContent()">
+    
+    <div class="url-container">
+      <input type="text" id="url-input" placeholder="Enter URL or search query" onkeypress="if(event.key === 'Enter') loadContent()">
+    </div>
+    
     <button onclick="loadContent()">Go</button>
+    
+    <div class="proxy-dropdown">
+      <button class="proxy-btn" onclick="toggleProxyDropdown()">
+        <i class="fas fa-server"></i> Proxy Off
+      </button>
+      <div class="proxy-dropdown-content" id="proxy-dropdown">
+        <div class="proxy-option active" onclick="selectProxy('Proxy Off', null)">
+          Proxy Off
+        </div>
+        <div class="proxy-option" onclick="selectProxy('Server A', 'https://embeddr.rhw.one/embed#')">
+          Server A
+        </div>
+        <div class="proxy-option" onclick="selectProxy('Server B', 'https://finance.v2202211188549209536.happysrv.de/explore/embed.html?p=')">
+          Server B
+        </div>
+        <div class="proxy-option" onclick="selectProxy('Server C', 'https://v2202211188549209536.happysrv.de/explore/embed.html?p=')">
+          Server C
+        </div>
+        <div class="proxy-option" onclick="selectProxy('Server D', 'https://www.v2202211188549209536.happysrv.de/explore/embed.html?p=')">
+          Server D
+        </div>
+      </div>
+    </div>
+    
     <button id="fullscreen-btn" onclick="toggleFullscreen()"></button>
   </div>
+  
   <div class="content-container">
     <div class="loading-indicator" id="loading-indicator">Loading...</div>
   </div>
@@ -257,12 +432,14 @@
     let tabs = [];
     let activeTabIndex = -1;
     let currentTheme = 'eclipse';
+    let currentProxy = 'Proxy Off';
+    let currentProxyUrl = null;
+    
     const tabsContainer = document.querySelector('.tabs-container');
     const contentContainer = document.querySelector('.content-container');
     const urlInput = document.getElementById('url-input');
     const loadingIndicator = document.getElementById('loading-indicator');
     const homePageUrl = 'https://7-7-7-15.github.io/browser/EclipseBrowserHomepage.html';
-    const searchEmbedUrl = 'https://embeddr.rhw.one/embed#https://duckduckgo.com/';
 
     const settingsPageContent = `
       <div class="settings-container">
@@ -289,11 +466,26 @@
       const tabId = tabs.length;
       const tabElement = document.createElement('div');
       tabElement.classList.add('tab');
-      tabElement.innerHTML = `${title}<span class="tab-close" onclick="closeTab(${tabId})">×</span>`;
+      
+      // Determine icon based on tab type
+      let icon = 'fa-file';
+      if (title === 'Home') icon = 'fa-home';
+      else if (title === 'Settings') icon = 'fa-cog';
+      else if (title.includes('Search')) icon = 'fa-search';
+      else if (title === 'Error') icon = 'fa-exclamation-triangle';
+      
+      tabElement.innerHTML = `
+        <i class="fas ${icon} tab-icon"></i>
+        ${title}
+        <span class="tab-close" onclick="closeTab(${tabId})">×</span>
+      `;
+      
       tabElement.onclick = (e) => {
         if (e.target !== tabElement.querySelector('.tab-close')) switchTab(tabId);
       };
-      tabsContainer.insertBefore(tabElement, tabsContainer.lastChild);
+      
+      // Insert before the new tab button (which is now on the right)
+      tabsContainer.insertBefore(tabElement, tabsContainer.querySelector('.new-tab-btn'));
 
       const frame = document.createElement('iframe');
       frame.classList.add('content-frame');
@@ -301,12 +493,33 @@
       frame.onload = () => {
         console.log(`Iframe ${tabId} loaded: ${frame.src || 'srcdoc'}`);
         loadingIndicator.style.display = 'none';
+        
+        // Intercept clicks in the iframe to proxy links if proxy is enabled
+        if (currentProxyUrl && frame.contentWindow) {
+          try {
+            const links = frame.contentWindow.document.getElementsByTagName('a');
+            for (let link of links) {
+              link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const href = this.getAttribute('href');
+                if (href && !href.startsWith('#')) {
+                  const proxiedUrl = currentProxyUrl + encodeURIComponent(href);
+                  frame.src = proxiedUrl;
+                }
+              });
+            }
+          } catch (e) {
+            console.log('Could not intercept links due to CORS');
+          }
+        }
       };
+      
       frame.onerror = (e) => {
         console.error(`Iframe ${tabId} error:`, e);
         frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Failed to load content</h1>`;
         loadingIndicator.style.display = 'none';
       };
+      
       contentContainer.appendChild(frame);
 
       tabs.push({ tabElement, frame, title, history: [], currentHistoryIndex: -1 });
@@ -352,7 +565,28 @@
     function updateTabTitle(index, title) {
       console.log(`Updating title for tab ${index}: ${title}`);
       tabs[index].title = title;
-      tabs[index].tabElement.firstChild.textContent = title;
+      
+      // Update icon based on new title
+      let icon = 'fa-file';
+      if (title === 'Home') icon = 'fa-home';
+      else if (title === 'Settings') icon = 'fa-cog';
+      else if (title.includes('Search')) icon = 'fa-search';
+      else if (title === 'Error') icon = 'fa-exclamation-triangle';
+      
+      tabs[index].tabElement.innerHTML = `
+        <i class="fas ${icon} tab-icon"></i>
+        ${title}
+        <span class="tab-close" onclick="closeTab(${index})">×</span>
+      `;
+      
+      // Reattach event listeners
+      const tabElement = tabs[index].tabElement;
+      const closeBtn = tabElement.querySelector('.tab-close');
+      closeBtn.onclick = () => closeTab(index);
+      tabElement.onclick = (e) => {
+        if (e.target !== closeBtn) switchTab(index);
+      };
+      
       if (index === activeTabIndex) {
         document.title = title + ' - Eclipse Browser Viewer';
       }
@@ -418,35 +652,60 @@
             frame.srcdoc = url;
             title = 'Custom HTML';
             displayUrl = 'Custom HTML';
-          } else if (isSearchQuery(url)) {
-            // Handle search queries
-            console.log('Performing search query:', url);
-            const searchUrl = searchEmbedUrl + encodeURIComponent(url);
-            frame.src = searchUrl;
-            title = `Search: ${url}`;
-            displayUrl = url; // Show only the search query in URL bar, not the full embed URL
           } else {
-            // Handle regular URLs
+            // Handle regular URLs and search queries
             let finalUrl = url;
-            if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) {
-              finalUrl = 'https://' + url;
-              console.log(`Prepended HTTPS: ${finalUrl}`);
-            }
             
-            try {
-              new URL(finalUrl);
-              console.log(`Loading external URL: ${finalUrl}`);
-              frame.src = finalUrl;
-              title = new URL(finalUrl).hostname;
-              displayUrl = finalUrl;
-            } catch {
-              // If it's not a valid URL, treat it as a search query
-              console.log('Invalid URL, treating as search query:', url);
-              const searchUrl = searchEmbedUrl + encodeURIComponent(url);
-              frame.src = searchUrl;
+            // If it's a search query and proxy is enabled, use the proxy for search
+            if (isSearchQuery(url) && currentProxyUrl) {
+              console.log('Performing search query with proxy:', url);
+              finalUrl = currentProxyUrl + encodeURIComponent('https://duckduckgo.com/?q=' + url);
+              title = `Search: ${url}`;
+              displayUrl = url;
+            } 
+            // If it's a search query and proxy is disabled, use direct search
+            else if (isSearchQuery(url) && !currentProxyUrl) {
+              console.log('Performing search query directly:', url);
+              finalUrl = 'https://duckduckgo.com/?q=' + encodeURIComponent(url);
               title = `Search: ${url}`;
               displayUrl = url;
             }
+            // If it's a URL and proxy is enabled, proxy the URL
+            else if (currentProxyUrl && !isSearchQuery(url)) {
+              if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) {
+                url = 'https://' + url;
+              }
+              console.log('Proxying URL:', url);
+              finalUrl = currentProxyUrl + encodeURIComponent(url);
+              title = new URL(url).hostname;
+              displayUrl = url;
+            }
+            // If it's a URL and proxy is disabled, load directly
+            else {
+              if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) {
+                finalUrl = 'https://' + url;
+                console.log(`Prepended HTTPS: ${finalUrl}`);
+              }
+              
+              try {
+                new URL(finalUrl);
+                console.log(`Loading external URL: ${finalUrl}`);
+                title = new URL(finalUrl).hostname;
+                displayUrl = finalUrl;
+              } catch {
+                // If it's not a valid URL, treat it as a search query
+                console.log('Invalid URL, treating as search query:', url);
+                if (currentProxyUrl) {
+                  finalUrl = currentProxyUrl + encodeURIComponent('https://duckduckgo.com/?q=' + url);
+                } else {
+                  finalUrl = 'https://duckduckgo.com/?q=' + encodeURIComponent(url);
+                }
+                title = `Search: ${url}`;
+                displayUrl = url;
+              }
+            }
+            
+            frame.src = finalUrl;
           }
           
           // Update URL input with display URL (not the actual loaded URL for searches)
@@ -525,6 +784,42 @@
       }
     }
 
+    function toggleProxyDropdown() {
+      const dropdown = document.getElementById('proxy-dropdown');
+      dropdown.classList.toggle('show');
+    }
+
+    function selectProxy(name, url) {
+      currentProxy = name;
+      currentProxyUrl = url;
+      
+      // Update the proxy button text
+      document.querySelector('.proxy-btn').innerHTML = `<i class="fas fa-server"></i> ${name}`;
+      
+      // Update active state in dropdown
+      const options = document.querySelectorAll('.proxy-option');
+      options.forEach(option => {
+        option.classList.remove('active');
+        if (option.textContent === name) {
+          option.classList.add('active');
+        }
+      });
+      
+      // Close the dropdown
+      document.getElementById('proxy-dropdown').classList.remove('show');
+      
+      console.log(`Proxy switched to: ${name}`);
+      
+      // If we're on a page and proxy settings changed, reload with new proxy
+      if (activeTabIndex !== -1) {
+        const currentUrl = tabs[activeTabIndex].history[tabs[activeTabIndex].currentHistoryIndex];
+        if (currentUrl && !currentUrl.startsWith('Eclipse://') && currentUrl !== 'Custom HTML') {
+          console.log('Reloading current page with new proxy settings');
+          loadContent(currentUrl);
+        }
+      }
+    }
+
     function changeTheme(theme) {
       console.log(`Changing theme to: ${theme}`);
       currentTheme = theme;
@@ -547,6 +842,19 @@
       } else {
         eclipseEffect.style.animation = 'eclipse-pulse 12s infinite alternate';
         stars.style.animation = 'twinkle 3s infinite';
+      }
+    }
+
+    // Close dropdown when clicking outside
+    window.onclick = function(event) {
+      if (!event.target.matches('.proxy-btn')) {
+        const dropdowns = document.getElementsByClassName('proxy-dropdown-content');
+        for (let i = 0; i < dropdowns.length; i++) {
+          const openDropdown = dropdowns[i];
+          if (openDropdown.classList.contains('show')) {
+            openDropdown.classList.remove('show');
+          }
+        }
       }
     }
 
