@@ -493,25 +493,6 @@
       frame.onload = () => {
         console.log(`Iframe ${tabId} loaded: ${frame.src || 'srcdoc'}`);
         loadingIndicator.style.display = 'none';
-        
-        // Intercept clicks in the iframe to proxy links if proxy is enabled
-        if (currentProxyUrl && frame.contentWindow) {
-          try {
-            const links = frame.contentWindow.document.getElementsByTagName('a');
-            for (let link of links) {
-              link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const href = this.getAttribute('href');
-                if (href && !href.startsWith('#')) {
-                  const proxiedUrl = currentProxyUrl + encodeURIComponent(href);
-                  frame.src = proxiedUrl;
-                }
-              });
-            }
-          } catch (e) {
-            console.log('Could not intercept links due to CORS');
-          }
-        }
       };
       
       frame.onerror = (e) => {
@@ -659,14 +640,16 @@
             // If it's a search query and proxy is enabled, use the proxy for search
             if (isSearchQuery(url) && currentProxyUrl) {
               console.log('Performing search query with proxy:', url);
-              finalUrl = currentProxyUrl + encodeURIComponent('https://duckduckgo.com/?q=' + url);
+              // NO ENCODING - just append the search query directly
+              finalUrl = currentProxyUrl + 'https://duckduckgo.com/?q=' + url;
               title = `Search: ${url}`;
               displayUrl = url;
             } 
             // If it's a search query and proxy is disabled, use direct search
             else if (isSearchQuery(url) && !currentProxyUrl) {
               console.log('Performing search query directly:', url);
-              finalUrl = 'https://duckduckgo.com/?q=' + encodeURIComponent(url);
+              // NO ENCODING - just append the search query directly
+              finalUrl = 'https://duckduckgo.com/?q=' + url;
               title = `Search: ${url}`;
               displayUrl = url;
             }
@@ -676,7 +659,8 @@
                 url = 'https://' + url;
               }
               console.log('Proxying URL:', url);
-              finalUrl = currentProxyUrl + encodeURIComponent(url);
+              // NO ENCODING - just append the URL directly
+              finalUrl = currentProxyUrl + url;
               title = new URL(url).hostname;
               displayUrl = url;
             }
@@ -696,9 +680,11 @@
                 // If it's not a valid URL, treat it as a search query
                 console.log('Invalid URL, treating as search query:', url);
                 if (currentProxyUrl) {
-                  finalUrl = currentProxyUrl + encodeURIComponent('https://duckduckgo.com/?q=' + url);
+                  // NO ENCODING - just append the search query directly
+                  finalUrl = currentProxyUrl + 'https://duckduckgo.com/?q=' + url;
                 } else {
-                  finalUrl = 'https://duckduckgo.com/?q=' + encodeURIComponent(url);
+                  // NO ENCODING - just append the search query directly
+                  finalUrl = 'https://duckduckgo.com/?q=' + url;
                 }
                 title = `Search: ${url}`;
                 displayUrl = url;
