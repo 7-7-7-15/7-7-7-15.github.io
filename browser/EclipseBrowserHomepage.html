@@ -94,6 +94,16 @@
             letter-spacing: 2px;
         }
 
+        .proxy-status {
+            color: #ffffff;
+            font-size: 14px;
+            margin-top: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
         .particles {
             position: absolute;
             top: 0;
@@ -118,14 +128,15 @@
     <canvas class="particles" id="particles"></canvas>
     <div class="search-container">
         <h1 class="title">Eclipse Search</h1>
-        <form class="search-bar" action="https://www.google.com/search" method="GET">
-            <input type="text" name="q" placeholder="Search the Cosmos..." required>
+        <form class="search-bar" id="search-form">
+            <input type="text" id="search-input" placeholder="Search the Cosmos..." required>
             <button type="submit">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
                 </svg>
             </button>
         </form>
+        <div class="proxy-status" id="proxy-status">Proxy: Checking...</div>
     </div>
 
     <script>
@@ -165,6 +176,102 @@
         }
 
         animate();
+
+        // Proxy Integration
+        let currentProxy = 'Proxy Off';
+        let currentProxyUrl = null;
+        
+        // Try to get proxy settings from parent browser
+        function getProxySettings() {
+            try {
+                if (window.parent && window.parent.currentProxy) {
+                    currentProxy = window.parent.currentProxy;
+                    currentProxyUrl = window.parent.currentProxyUrl;
+                    updateProxyStatus();
+                } else {
+                    // Fallback: Check URL parameters or localStorage
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const proxyFromUrl = urlParams.get('proxy');
+                    
+                    if (proxyFromUrl) {
+                        currentProxy = proxyFromUrl;
+                        updateProxyStatus();
+                    } else {
+                        // Check localStorage as last resort
+                        const savedProxy = localStorage.getItem('eclipseProxy');
+                        if (savedProxy) {
+                            currentProxy = savedProxy;
+                            updateProxyStatus();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log('Could not access parent proxy settings:', e);
+                updateProxyStatus();
+            }
+        }
+        
+        function updateProxyStatus() {
+            const statusElement = document.getElementById('proxy-status');
+            statusElement.textContent = `Proxy: ${currentProxy}`;
+            
+            // Color code based on proxy status
+            if (currentProxy === 'Proxy Off') {
+                statusElement.style.background = 'rgba(255, 0, 0, 0.5)';
+            } else {
+                statusElement.style.background = 'rgba(0, 255, 0, 0.5)';
+            }
+        }
+        
+        // Handle search form submission
+        document.getElementById('search-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const searchQuery = document.getElementById('search-input').value.trim();
+            
+            if (!searchQuery) return;
+            
+            let searchUrl;
+            
+            if (currentProxyUrl) {
+                // Use proxy for search
+                if (currentProxy === 'Server A') {
+                    searchUrl = currentProxyUrl + 'https://duckduckgo.com/?q=' + searchQuery;
+                } else {
+                    searchUrl = currentProxyUrl + 'https://duckduckgo.com/?q=' + searchQuery;
+                }
+            } else {
+                // Direct search
+                searchUrl = 'https://duckduckgo.com/?q=' + searchQuery;
+            }
+            
+            // Navigate to search results
+            if (window.parent && window.parent.loadContent) {
+                // If we're in the browser, use its navigation
+                window.parent.loadContent(searchUrl);
+            } else {
+                // Otherwise, navigate directly
+                window.location.href = searchUrl;
+            }
+        });
+        
+        // Listen for proxy changes from parent
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'PROXY_UPDATE') {
+                currentProxy = event.data.proxy;
+                currentProxyUrl = event.data.proxyUrl;
+                updateProxyStatus();
+            }
+        });
+        
+        // Initialize
+        window.addEventListener('load', function() {
+            getProxySettings();
+            
+            // If we're in an iframe, request proxy settings from parent
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'REQUEST_PROXY_SETTINGS' }, '*');
+            }
+        });
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
