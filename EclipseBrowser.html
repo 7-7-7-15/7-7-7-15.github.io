@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eclipse Browser Viewer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background: #000000;
+      color: #ffffff;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .tabs-container {
+      background: #111111;
+      display: flex;
+      align-items: center;
+      padding: 5px 10px;
+      box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+      overflow-x: auto;
+    }
+    .tab {
+      background: #222222;
+      color: #ffffff;
+      padding: 8px 15px;
+      margin-right: 5px;
+      border-radius: 5px 5px 0 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: background 0.3s, transform 0.2s;
+      min-width: 100px;
+      max-width: 200px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .tab.active {
+      background: #333333;
+      transform: translateY(-2px);
+      box-shadow: 0 2px 5px rgba(255, 255, 255, 0.2);
+    }
+    .tab:hover {
+      background: #444444;
+    }
+    .tab-close {
+      margin-left: 10px;
+      color: #aaaaaa;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .tab-close:hover {
+      color: #ffffff;
+    }
+    .new-tab-btn {
+      background: #222222;
+      color: #ffffff;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: auto;
+      font-size: 16px;
+      line-height: 1;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .new-tab-btn:hover {
+      background: #444444;
+      transform: scale(1.1);
+    }
+    .browser-toolbar {
+      background: #111111;
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid #333333;
+    }
+    .browser-toolbar button {
+      padding: 8px 12px;
+      border: none;
+      background: #222222;
+      color: #ffffff;
+      border-radius: 50px;
+      cursor: pointer;
+      margin: 0 5px;
+      font-weight: 500;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+    }
+    .browser-toolbar button:hover {
+      background: #444444;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+    }
+    .browser-toolbar button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(255, 255, 255, 0.05);
+    }
+    .browser-toolbar button#fullscreen-btn {
+      padding: 6px;
+      font-size: 14px;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .browser-toolbar input {
+      flex: 1;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 50px;
+      margin: 0 10px;
+      background: #222222;
+      color: #ffffff;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+      transition: box-shadow 0.3s, transform 0.2s;
+    }
+    .browser-toolbar input:focus {
+      outline: none;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+      transform: scale(1.01);
+    }
+    #fullscreen-btn::before {
+      content: '↕';
+    }
+    .fullscreen #fullscreen-btn::before {
+      content: '↔';
+    }
+    .content-container {
+      flex: 1;
+      position: relative;
+    }
+    .content-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000000;
+      display: none;
+      box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05);
+    }
+    .content-frame.active {
+      display: block;
+    }
+    .eclipse-effect {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
+      z-index: -1;
+      animation: eclipse-pulse 12s infinite alternate;
+    }
+    .stars {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1" fill="white" opacity="0.3"/></svg>') repeat;
+      opacity: 0.4;
+      z-index: -1;
+      animation: twinkle 3s infinite;
+    }
+    @keyframes eclipse-pulse {
+      0% { opacity: 0.7; transform: scale(1); }
+      100% { opacity: 1; transform: scale(1.1); }
+    }
+    @keyframes twinkle {
+      0% { opacity: 0.4; }
+      50% { opacity: 0.6; }
+      100% { opacity: 0.4; }
+    }
+    .browser-toolbar button.refresh::before {
+      content: '↻';
+    }
+    .browser-toolbar button.home::before {
+      content: '🏠';
+    }
+    /* Settings Page Styles */
+    .settings-container {
+      padding: 20px;
+      color: #ffffff;
+      background: #111111;
+      height: 100%;
+      overflow-y: auto;
+    }
+    .settings-container h1 {
+      font-size: 32px;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+    }
+    .settings-container label {
+      display: block;
+      margin: 10px 0;
+      font-size: 18px;
+    }
+    .settings-container select {
+      padding: 8px;
+      background: #222222;
+      color: #ffffff;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="eclipse-effect"></div>
+  <div class="stars"></div>
+  <div class="tabs-container">
+    <button class="new-tab-btn" onclick="addNewTab()">+</button>
+  </div>
+  <div class="browser-toolbar">
+    <button onclick="goBack()">←</button>
+    <button onclick="goForward()">→</button>
+    <button class="refresh" onclick="refresh()"></button>
+    <button class="home" onclick="goHome()"></button>
+    <input type="text" id="url-input" placeholder="Enter URL or HTML content" onkeypress="if(event.key === 'Enter') loadContent()">
+    <button onclick="loadContent()">Go</button>
+    <button id="fullscreen-btn" onclick="toggleFullscreen()"></button>
+  </div>
+  <div class="content-container"></div>
+
+  <script>
+    let tabs = [];
+    let activeTabIndex = -1;
+    let currentTheme = 'eclipse';
+    const tabsContainer = document.querySelector('.tabs-container');
+    const contentContainer = document.querySelector('.content-container');
+    const urlInput = document.getElementById('url-input');
+    const homePageUrl = 'https://7-7-7-15.github.io/browser/EclipseBrowserHomepage.html';
+
+    const settingsPageContent = `
+      <div class="settings-container">
+        <h1>Settings</h1>
+        <label>
+          Theme:
+          <select onchange="parent.changeTheme(this.value)">
+            <option value="eclipse" ${currentTheme === 'eclipse' ? 'selected' : ''}>Eclipse (Black & White)</option>
+            <option value="nebula" ${currentTheme === 'nebula' ? 'selected' : ''}>Nebula (Colorful)</option>
+          </select>
+        </label>
+        <label>
+          Background Animation:
+          <select onchange="parent.toggleAnimation(this.value)">
+            <option value="on">On</option>
+            <option value="off">Off</option>
+          </select>
+        </label>
+      </div>
+    `;
+
+    function createTab(title = 'New Tab', content = '') {
+      const tabId = tabs.length;
+      const tabElement = document.createElement('div');
+      tabElement.classList.add('tab');
+      tabElement.innerHTML = `${title}<span class="tab-close" onclick="closeTab(${tabId})">×</span>`;
+      tabElement.onclick = (e) => {
+        if (e.target !== tabElement.querySelector('.tab-close')) switchTab(tabId);
+      };
+      tabsContainer.insertBefore(tabElement, tabsContainer.lastChild);
+
+      const frame = document.createElement('iframe');
+      frame.classList.add('content-frame');
+      frame.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms';
+      contentContainer.appendChild(frame);
+
+      tabs.push({ tabElement, frame, title, history: [], currentHistoryIndex: -1 });
+      return tabId;
+    }
+
+    function switchTab(index) {
+      if (activeTabIndex !== -1) {
+        tabs[activeTabIndex].tabElement.classList.remove('active');
+        tabs[activeTabIndex].frame.classList.remove('active');
+      }
+      activeTabIndex = index;
+      tabs[index].tabElement.classList.add('active');
+      tabs[index].frame.classList.add('active');
+      const currentUrl = tabs[index].history[tabs[index].currentHistoryIndex] || '';
+      urlInput.value = currentUrl;
+      document.title = tabs[index].title + ' - Eclipse Browser Viewer';
+    }
+
+    function addNewTab() {
+      const newTabId = createTab('Home');
+      switchTab(newTabId);
+      loadContent('Eclipse://Home');
+    }
+
+    function closeTab(index) {
+      if (tabs.length === 1) return;
+      tabs[index].tabElement.remove();
+      tabs[index].frame.remove();
+      tabs.splice(index, 1);
+      if (activeTabIndex === index) {
+        switchTab(Math.max(0, index - 1));
+      } else if (activeTabIndex > index) {
+        activeTabIndex--;
+      }
+    }
+
+    function updateTabTitle(index, title) {
+      tabs[index].title = title;
+      tabs[index].tabElement.firstChild.textContent = title;
+      if (index === activeTabIndex) {
+        document.title = title + ' - Eclipse Browser Viewer';
+      }
+    }
+
+    function loadContent(url = urlInput.value.trim()) {
+      if (activeTabIndex === -1) return;
+      const frame = tabs[activeTabIndex].frame;
+      let title = 'New Tab';
+      // Add https:// to URLs without a protocol
+      if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://') && !url.toLowerCase().startsWith('eclipse://') && !url.includes('<')) {
+        url = 'https://' + url;
+        urlInput.value = url;
+      }
+      if (url.toLowerCase() === 'eclipse://home') {
+        frame.src = homePageUrl;
+        frame.srcdoc = '';
+        title = 'Home';
+        urlInput.value = 'Eclipse://Home';
+      } else if (url.toLowerCase() === 'eclipse://settings') {
+        frame.src = '';
+        frame.srcdoc = settingsPageContent;
+        title = 'Settings';
+        urlInput.value = 'Eclipse://Settings';
+      } else if (url.startsWith('http://') || url.startsWith('https://')) {
+        frame.src = url;
+        frame.srcdoc = '';
+        try {
+          title = new URL(url).hostname;
+        } catch {
+          title = 'External Site';
+        }
+        urlInput.value = url;
+      } else if (url.includes('<') && url.includes('>')) {
+        frame.src = '';
+        frame.srcdoc = url;
+        title = 'Custom HTML';
+        urlInput.value = 'Eclipse://Custom';
+      } else {
+        frame.src = '';
+        frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Invalid input. Enter a valid URL or HTML.</h1>`;
+        title = 'Error';
+        urlInput.value = url;
+      }
+      updateTabTitle(activeTabIndex, title);
+      const history = tabs[activeTabIndex].history;
+      if (history[tabs[activeTabIndex].currentHistoryIndex] !== url) {
+        history.splice(tabs[activeTabIndex].currentHistoryIndex + 1);
+        history.push(url);
+        tabs[activeTabIndex].currentHistoryIndex = history.length - 1;
+      }
+    }
+
+    function goBack() {
+      if (activeTabIndex === -1) return;
+      const tab = tabs[activeTabIndex];
+      if (tab.currentHistoryIndex > 0) {
+        tab.currentHistoryIndex--;
+        urlInput.value = tab.history[tab.currentHistoryIndex];
+        loadContent(tab.history[tab.currentHistoryIndex]);
+      }
+    }
+
+    function goForward() {
+      if (activeTabIndex === -1) return;
+      const tab = tabs[activeTabIndex];
+      if (tab.currentHistoryIndex < tab.history.length - 1) {
+        tab.currentHistoryIndex++;
+        urlInput.value = tab.history[tab.currentHistoryIndex];
+        loadContent(tab.history[tab.currentHistoryIndex]);
+      }
+    }
+
+    function refresh() {
+      if (activeTabIndex === -1) return;
+      const currentUrl = tabs[activeTabIndex].history[tabs[activeTabIndex].currentHistoryIndex];
+      if (currentUrl) {
+        loadContent(currentUrl);
+      }
+    }
+
+    function goHome() {
+      loadContent('Eclipse://Home');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+        document.body.classList.add('fullscreen');
+      } else {
+        document.exitFullscreen();
+        document.body.classList.remove('fullscreen');
+      }
+    }
+
+    function changeTheme(theme) {
+      currentTheme = theme;
+      if (theme === 'eclipse') {
+        document.body.style.background = '#000000';
+        document.querySelector('.eclipse-effect').style.background = 'radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)';
+      } else if (theme === 'nebula') {
+        document.body.style.background = 'linear-gradient(135deg, #1a0033, #330066)';
+        document.querySelector('.eclipse-effect').style.background = 'radial-gradient(circle at 50% 30%, rgba(200, 0, 255, 0.2) 0%, transparent 50%)';
+      }
+      tabs[activeTabIndex].frame.contentWindow.document.body.style.background = document.body.style.background;
+    }
+
+    function toggleAnimation(value) {
+      const eclipseEffect = document.querySelector('.eclipse-effect');
+      const stars = document.querySelector('.stars');
+      if (value === 'off') {
+        eclipseEffect.style.animation = 'none';
+        stars.style.animation = 'none';
+      } else {
+        eclipseEffect.style.animation = 'eclipse-pulse 12s infinite alternate';
+        stars.style.animation = 'twinkle 3s infinite';
+      }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        document.body.classList.remove('fullscreen');
+      }
+    });
+
+    addNewTab();
+  </script>
+</body>
+</html>
