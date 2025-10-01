@@ -6,6 +6,8 @@
   <title>Eclipse Browser</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.21/dist/vanta.tris.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -22,6 +24,7 @@
       display: flex;
       flex-direction: column;
       position: relative;
+      transition: background 0.5s;
     }
 
     .tabs-container {
@@ -34,6 +37,8 @@
       overflow-x: auto;
       justify-content: flex-start;
       gap: 5px;
+      order: 1; /* Move tabs to top */
+      z-index: 100;
     }
 
     .tab {
@@ -137,6 +142,7 @@
       box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
       border-bottom: 1px solid #333333;
       gap: 10px;
+      order: 2;
     }
 
     .browser-toolbar button {
@@ -279,6 +285,7 @@
     .content-container {
       flex: 1;
       position: relative;
+      order: 3;
     }
 
     .content-frame {
@@ -345,8 +352,8 @@
       content: '↻';
     }
 
-    .browser-toolbar button.home::before {
-      content: '🏠';
+    .browser-toolbar button.home i {
+      font-size: 14px;
     }
 
     .settings-container {
@@ -355,49 +362,119 @@
       background: #111111;
       height: 100%;
       overflow-y: auto;
+      border-radius: 10px;
+      margin: 10px;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
     }
 
     .settings-container h1 {
       font-size: 32px;
       text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .settings-container h2 {
+      font-size: 24px;
+      margin: 30px 0 15px;
+      border-bottom: 1px solid #444444;
+      padding-bottom: 10px;
     }
 
     .settings-container label {
       display: block;
-      margin: 10px 0;
+      margin: 15px 0;
       font-size: 18px;
+      font-weight: 500;
     }
 
-    .settings-container select {
-      padding: 8px;
+    .settings-container select,
+    .settings-container input[type="text"],
+    .settings-container input[type="number"] {
+      padding: 10px;
       background: #222222;
       color: #ffffff;
-      border: none;
-      border-radius: 5px;
+      border: 1px solid #444444;
+      border-radius: 8px;
       font-size: 16px;
+      width: 100%;
+      max-width: 300px;
+      transition: all 0.3s;
+    }
+
+    .settings-container select:focus,
+    .settings-container input:focus {
+      outline: none;
+      border-color: #666666;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+    }
+
+    .settings-container button {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #222222, #333333);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px 5px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+
+    .settings-container button:hover {
+      background: linear-gradient(135deg, #3a3a3a, #4a4a4a);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+    }
+
+    .settings-container .tab-list {
+      list-style: none;
+      margin: 15px 0;
+      padding: 0;
+    }
+
+    .settings-container .tab-list li {
+      padding: 12px;
+      background: #222222;
+      margin: 8px 0;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #444444;
+      transition: all 0.3s;
+    }
+
+    .settings-container .tab-list li:hover {
+      background: #333333;
+      transform: translateY(-1px);
+    }
+
+    .settings-container .tab-list li button {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+
+    .custom-cursor {
+      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M0 0l12 24 12-24H0z" fill="white"/></svg>') 0 24, auto;
     }
   </style>
 </head>
 <body>
   <div class="eclipse-effect"></div>
   <div class="stars"></div>
-  
   <div class="tabs-container">
     <button class="new-tab-btn" onclick="addNewTab()">+</button>
   </div>
-  
   <div class="browser-toolbar">
     <button onclick="goBack()">←</button>
     <button onclick="goForward()">→</button>
     <button class="refresh" onclick="refresh()"></button>
-    <button class="home" onclick="goHome()"></button>
-    
+    <button class="home" onclick="goHome()"><i class="fas fa-home"></i></button>
     <div class="url-container">
       <input type="text" id="url-input" placeholder="Enter URL or search query" onkeypress="if(event.key === 'Enter') loadContent()">
     </div>
-    
     <button onclick="loadContent()">Go</button>
-    
     <div class="proxy-dropdown">
       <button class="proxy-btn" onclick="toggleProxyDropdown()">
         <i class="fas fa-server"></i> Proxy Off
@@ -412,7 +489,7 @@
         <div class="proxy-option" onclick="selectProxy('Server B', 'https://finance.v2202211188549209536.happysrv.de/explore/embed.html?p=')">
           Server B
         </div>
-        <div class="proxy-option" onclick="selectProxy('Server C', 'https://v2202211188549209536.happysrv.de/explore/embed.html?p=')">
+        <div class="proxy-option" onclick="selectProxy('Server C', 'https://supergisfire.com/scramjet/')">
           Server C
         </div>
         <div class="proxy-option" onclick="selectProxy('Server D', 'https://www.v2202211188549209536.happysrv.de/explore/embed.html?p=')">
@@ -420,10 +497,8 @@
         </div>
       </div>
     </div>
-    
     <button id="fullscreen-btn" onclick="toggleFullscreen()"></button>
   </div>
-  
   <div class="content-container">
     <div class="loading-indicator" id="loading-indicator">Loading...</div>
   </div>
@@ -434,7 +509,11 @@
     let currentTheme = 'eclipse';
     let currentProxy = 'Proxy Off';
     let currentProxyUrl = null;
-    
+    let vantaEffect = null;
+    let cloakSettings = { title: 'Eclipse Browser', favicon: null };
+    let adBlockEnabled = false;
+    let customCursorEnabled = false;
+
     const tabsContainer = document.querySelector('.tabs-container');
     const contentContainer = document.querySelector('.content-container');
     const urlInput = document.getElementById('url-input');
@@ -444,19 +523,118 @@
     const settingsPageContent = `
       <div class="settings-container">
         <h1>Settings</h1>
+        <h2>Appearance</h2>
         <label>
           Theme:
-          <select onchange="parent.changeTheme(this.value)">
-            <option value="eclipse" selected>Eclipse (Black & White)</option>
-            <option value="nebula">Nebula (Colorful)</option>
+          <select id="theme-select" onchange="parent.changeTheme(this.value)">
+            <option value="eclipse" ${currentTheme === 'eclipse' ? 'selected' : ''}>Eclipse (Black & White)</option>
+            <option value="nebula" ${currentTheme === 'nebula' ? 'selected' : ''}>Nebula (Colorful)</option>
+            <option value="light" ${currentTheme === 'light' ? 'selected' : ''}>Light Mode</option>
           </select>
         </label>
         <label>
           Background Animation:
-          <select onchange="parent.toggleAnimation(this.value)">
+          <select id="animation-select" onchange="parent.toggleAnimation(this.value)">
             <option value="on" selected>On</option>
             <option value="off">Off</option>
           </select>
+        </label>
+        <label>
+          Preset Background:
+          <select id="preset-bg-select" onchange="parent.setPresetBackground(this.value)">
+            <option value="default">Default (Dark Space)</option>
+            <option value="nebula">Nebula Glow</option>
+            <option value="cosmic">Cosmic Dust</option>
+          </select>
+        </label>
+        <label>
+          Custom Background URL:
+          <input type="text" id="custom-bg-url" placeholder="Enter image URL" oninput="parent.setCustomBackground(this.value)">
+        </label>
+        <label>
+          Vanta.js Triangle Background:
+          <select id="vanta-bg-select" onchange="parent.toggleVantaBackground(this.value)">
+            <option value="off" selected>Off</option>
+            <option value="on">On</option>
+          </select>
+        </label>
+        <label>
+          Custom Cursor:
+          <select id="cursor-select" onchange="parent.toggleCustomCursor(this.value)">
+            <option value="off" ${!customCursorEnabled ? 'selected' : ''}>Off</option>
+            <option value="on" ${customCursorEnabled ? 'selected' : ''}>On</option>
+          </select>
+        </label>
+        <h2>Tab Management</h2>
+        <label>
+          Tab Cloaking:
+          <input type="text" id="cloak-title" placeholder="Custom Tab Title" value="${cloakSettings.title}" oninput="parent.setCloakTitle(this.value)">
+          <input type="text" id="cloak-favicon" placeholder="Favicon URL" value="${cloakSettings.favicon || ''}" oninput="parent.setCloakFavicon(this.value)">
+        </label>
+        <label>
+          Auto-Close Tabs After (seconds):
+          <input type="number" id="auto-close-timer" min="0" placeholder="0 (disabled)" oninput="parent.setAutoCloseTimer(this.value)">
+        </label>
+        <label>
+          Manage Tabs:
+          <ul class="tab-list" id="tab-list"></ul>
+          <button onclick="parent.closeAllTabs()">Close All Tabs</button>
+        </label>
+        <h2>Browser Settings</h2>
+        <label>
+          Default Proxy:
+          <select id="proxy-select" onchange="parent.setDefaultProxy(this.value)">
+            <option value="Proxy Off" ${currentProxy === 'Proxy Off' ? 'selected' : ''}>Proxy Off</option>
+            <option value="Server A" ${currentProxy === 'Server A' ? 'selected' : ''}>Server A</option>
+            <option value="Server B" ${currentProxy === 'Server B' ? 'selected' : ''}>Server B</option>
+            <option value="Server C" ${currentProxy === 'Server C' ? 'selected' : ''}>Server C</option>
+            <option value="Server D" ${currentProxy === 'Server D' ? 'selected' : ''}>Server D</option>
+          </select>
+        </label>
+        <label>
+          Zoom Level:
+          <select id="zoom-select" onchange="parent.setZoomLevel(this.value)">
+            <option value="1" selected>100%</option>
+            <option value="0.8">80%</option>
+            <option value="1.2">120%</option>
+            <option value="1.5">150%</option>
+          </select>
+        </label>
+        <label>
+          Ad Blocker:
+          <select id="adblock-select" onchange="parent.toggleAdBlocker(this.value)">
+            <option value="off" ${!adBlockEnabled ? 'selected' : ''}>Off</option>
+            <option value="on" ${adBlockEnabled ? 'selected' : ''}>On</option>
+          </select>
+        </label>
+        <h2>History & Sessions</h2>
+        <label>
+          History:
+          <ul class="tab-list" id="history-list"></ul>
+          <button onclick="parent.clearHistory()">Clear History</button>
+        </label>
+        <label>
+          Save Session:
+          <button onclick="parent.saveSession()">Save Current Session</button>
+        </label>
+        <label>
+          Load Session:
+          <select id="saved-sessions" onchange="parent.loadSession(this.value)">
+            <option value="">Select a session</option>
+          </select>
+        </label>
+        <h2>Accessibility</h2>
+        <label>
+          Keyboard Shortcuts:
+          <select id="shortcuts-select" onchange="parent.toggleShortcuts(this.value)">
+            <option value="on" selected>On</option>
+            <option value="off">Off</option>
+          </select>
+        </label>
+        <h2>Downloads</h2>
+        <label>
+          Download Manager:
+          <button onclick="parent.showDownloads()">Show Downloads</button>
         </label>
       </div>
     `;
@@ -466,25 +644,23 @@
       const tabId = tabs.length;
       const tabElement = document.createElement('div');
       tabElement.classList.add('tab');
-      
-      // Determine icon based on tab type
+
       let icon = 'fa-file';
       if (title === 'Home') icon = 'fa-home';
       else if (title === 'Settings') icon = 'fa-cog';
       else if (title.includes('Search')) icon = 'fa-search';
       else if (title === 'Error') icon = 'fa-exclamation-triangle';
-      
+
       tabElement.innerHTML = `
         <i class="fas ${icon} tab-icon"></i>
         ${title}
         <span class="tab-close" onclick="closeTab(${tabId})">×</span>
       `;
-      
+
       tabElement.onclick = (e) => {
         if (e.target !== tabElement.querySelector('.tab-close')) switchTab(tabId);
       };
-      
-      // Insert before the new tab button (which is now on the right)
+
       tabsContainer.insertBefore(tabElement, tabsContainer.querySelector('.new-tab-btn'));
 
       const frame = document.createElement('iframe');
@@ -493,18 +669,20 @@
       frame.onload = () => {
         console.log(`Iframe ${tabId} loaded: ${frame.src || 'srcdoc'}`);
         loadingIndicator.style.display = 'none';
+        updateSettingsValues();
       };
-      
+
       frame.onerror = (e) => {
         console.error(`Iframe ${tabId} error:`, e);
         frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Failed to load content</h1>`;
         loadingIndicator.style.display = 'none';
       };
-      
+
       contentContainer.appendChild(frame);
 
       tabs.push({ tabElement, frame, title, history: [], currentHistoryIndex: -1 });
       console.log(`Tab ${tabId} created with iframe`);
+      updateTabList();
       return tabId;
     }
 
@@ -519,8 +697,10 @@
       tabs[index].frame.classList.add('active');
       const currentUrl = tabs[index].history[tabs[index].currentHistoryIndex] || '';
       urlInput.value = currentUrl;
-      document.title = tabs[index].title + ' - Eclipse Browser Viewer';
+      applyCloakSettings();
+      applyZoomLevel();
       loadingIndicator.style.display = 'none';
+      updateSettingsValues();
     }
 
     function addNewTab() {
@@ -541,45 +721,42 @@
       } else if (activeTabIndex > index) {
         activeTabIndex--;
       }
+      updateTabList();
     }
 
     function updateTabTitle(index, title) {
       console.log(`Updating title for tab ${index}: ${title}`);
       tabs[index].title = title;
-      
-      // Update icon based on new title
+
       let icon = 'fa-file';
       if (title === 'Home') icon = 'fa-home';
       else if (title === 'Settings') icon = 'fa-cog';
       else if (title.includes('Search')) icon = 'fa-search';
       else if (title === 'Error') icon = 'fa-exclamation-triangle';
-      
+
       tabs[index].tabElement.innerHTML = `
         <i class="fas ${icon} tab-icon"></i>
         ${title}
         <span class="tab-close" onclick="closeTab(${index})">×</span>
       `;
-      
-      // Reattach event listeners
+
       const tabElement = tabs[index].tabElement;
       const closeBtn = tabElement.querySelector('.tab-close');
       closeBtn.onclick = () => closeTab(index);
       tabElement.onclick = (e) => {
         if (e.target !== closeBtn) switchTab(index);
       };
-      
+
       if (index === activeTabIndex) {
-        document.title = title + ' - Eclipse Browser Viewer';
+        applyCloakSettings();
       }
     }
 
     function isSearchQuery(input) {
-      // Check if input doesn't contain dots (no domain), doesn't start with http/https, 
-      // doesn't contain HTML tags, and isn't an Eclipse:// URL
-      return !input.includes('.') && 
-             !input.toLowerCase().startsWith('http://') && 
+      return !input.includes('.') &&
+             !input.toLowerCase().startsWith('http://') &&
              !input.toLowerCase().startsWith('https://') &&
-             !input.includes('<') && 
+             !input.includes('<') &&
              !input.includes('>') &&
              !input.toLowerCase().startsWith('eclipse://');
     }
@@ -589,7 +766,7 @@
         console.error('No active tab');
         return;
       }
-      
+
       console.log(`Loading content for tab ${activeTabIndex}: ${url}`);
       const frame = tabs[activeTabIndex].frame;
       let title = 'New Tab';
@@ -607,10 +784,8 @@
         return;
       }
 
-      // Reset the frame
       frame.src = 'about:blank';
-      
-      // Use setTimeout to ensure the frame is reset before loading new content
+
       setTimeout(() => {
         try {
           if (url.toLowerCase() === 'eclipse://home') {
@@ -623,8 +798,11 @@
             frame.srcdoc = settingsPageContent;
             title = 'Settings';
             displayUrl = 'Eclipse://Settings';
+            updateTabList();
+            updateHistoryList();
+            updateSessionList();
+            updateSettingsValues();
           } else if (url.toLowerCase().startsWith('eclipse://')) {
-            // Handle other eclipse:// URLs
             frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Unknown Eclipse URL: ${url}</h1>`;
             title = 'Unknown URL';
             displayUrl = url;
@@ -634,84 +812,72 @@
             title = 'Custom HTML';
             displayUrl = 'Custom HTML';
           } else {
-            // Handle regular URLs and search queries
             let finalUrl = url;
-            
-            // If it's a search query and proxy is enabled, use the proxy for search
+
             if (isSearchQuery(url) && currentProxyUrl) {
               console.log('Performing search query with proxy:', url);
-              // NO ENCODING - just append the search query directly
-              finalUrl = currentProxyUrl + 'https://duckduckgo.com/?q=' + url;
+              finalUrl = currentProxyUrl + 'https://duckduckgo.com/?q=' + encodeURIComponent(url);
               title = `Search: ${url}`;
               displayUrl = url;
-            } 
-            // If it's a search query and proxy is disabled, use direct search
-            else if (isSearchQuery(url) && !currentProxyUrl) {
+            } else if (isSearchQuery(url) && !currentProxyUrl) {
               console.log('Performing search query directly:', url);
-              // NO ENCODING - just append the search query directly
-              finalUrl = 'https://duckduckgo.com/?q=' + url;
+              finalUrl = 'https://duckduckgo.com/?q=' + encodeURIComponent(url);
               title = `Search: ${url}`;
               displayUrl = url;
-            }
-            // If it's a URL and proxy is enabled, proxy the URL
-            else if (currentProxyUrl && !isSearchQuery(url)) {
+            } else if (currentProxyUrl && !isSearchQuery(url)) {
               if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) {
                 url = 'https://' + url;
               }
               console.log('Proxying URL:', url);
-              // NO ENCODING - just append the URL directly
               finalUrl = currentProxyUrl + url;
               title = new URL(url).hostname;
               displayUrl = url;
-            }
-            // If it's a URL and proxy is disabled, load directly
-            else {
+            } else {
               if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) {
                 finalUrl = 'https://' + url;
                 console.log(`Prepended HTTPS: ${finalUrl}`);
               }
-              
+
               try {
                 new URL(finalUrl);
                 console.log(`Loading external URL: ${finalUrl}`);
                 title = new URL(finalUrl).hostname;
                 displayUrl = finalUrl;
               } catch {
-                // If it's not a valid URL, treat it as a search query
                 console.log('Invalid URL, treating as search query:', url);
                 if (currentProxyUrl) {
-                  // NO ENCODING - just append the search query directly
-                  finalUrl = currentProxyUrl + 'https://duckduckgo.com/?q=' + url;
+                  finalUrl = currentProxyUrl + 'https://duckduckgo.com/?q=' + encodeURIComponent(url);
                 } else {
-                  // NO ENCODING - just append the search query directly
-                  finalUrl = 'https://duckduckgo.com/?q=' + url;
+                  finalUrl = 'https://duckduckgo.com/?q=' + encodeURIComponent(url);
                 }
                 title = `Search: ${url}`;
                 displayUrl = url;
               }
             }
-            
+
+            if (adBlockEnabled) {
+              console.log('Ad blocker enabled for:', finalUrl);
+            }
+
             frame.src = finalUrl;
           }
-          
-          // Update URL input with display URL (not the actual loaded URL for searches)
+
           urlInput.value = displayUrl;
           updateTabTitle(activeTabIndex, title);
-          
-          // Update history with display URL
+
           const history = tabs[activeTabIndex].history;
           if (history[tabs[activeTabIndex].currentHistoryIndex] !== displayUrl) {
             history.splice(tabs[activeTabIndex].currentHistoryIndex + 1);
             history.push(displayUrl);
             tabs[activeTabIndex].currentHistoryIndex = history.length - 1;
             console.log(`History updated for tab ${activeTabIndex}: ${displayUrl}`);
+            updateHistoryList();
           }
-          
-          // Hide loading indicator after a short delay
+
           setTimeout(() => {
             loadingIndicator.style.display = 'none';
           }, 1000);
-          
+
         } catch (e) {
           console.error(`Error loading content: ${e.message}`);
           frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Failed to load content: ${e.message}</h1>`;
@@ -778,11 +944,9 @@
     function selectProxy(name, url) {
       currentProxy = name;
       currentProxyUrl = url;
-      
-      // Update the proxy button text
+
       document.querySelector('.proxy-btn').innerHTML = `<i class="fas fa-server"></i> ${name}`;
-      
-      // Update active state in dropdown
+
       const options = document.querySelectorAll('.proxy-option');
       options.forEach(option => {
         option.classList.remove('active');
@@ -790,13 +954,11 @@
           option.classList.add('active');
         }
       });
-      
-      // Close the dropdown
+
       document.getElementById('proxy-dropdown').classList.remove('show');
-      
+
       console.log(`Proxy switched to: ${name}`);
-      
-      // If we're on a page and proxy settings changed, reload with new proxy
+
       if (activeTabIndex !== -1) {
         const currentUrl = tabs[activeTabIndex].history[tabs[activeTabIndex].currentHistoryIndex];
         if (currentUrl && !currentUrl.startsWith('Eclipse://') && currentUrl !== 'Custom HTML') {
@@ -804,6 +966,7 @@
           loadContent(currentUrl);
         }
       }
+      updateSettingsValues();
     }
 
     function changeTheme(theme) {
@@ -812,10 +975,50 @@
       if (theme === 'eclipse') {
         document.body.style.background = '#000000';
         document.querySelector('.eclipse-effect').style.background = 'radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)';
+        document.querySelectorAll('.settings-container, .tabs-container, .browser-toolbar').forEach(el => {
+          el.style.background = '#111111';
+          el.style.color = '#ffffff';
+        });
+        document.querySelectorAll('.tab, .browser-toolbar button, .browser-toolbar input, .settings-container select, .settings-container input, .settings-container button').forEach(el => {
+          el.style.background = '';
+          el.style.color = '#ffffff';
+          if (el.tagName === 'INPUT' || el.tagName === 'SELECT') {
+            el.style.background = '#222222';
+          }
+          if (el.classList.contains('tab')) {
+            el.style.background = 'linear-gradient(135deg, #222222, #333333)';
+          }
+        });
       } else if (theme === 'nebula') {
         document.body.style.background = 'linear-gradient(135deg, #1a0033, #330066)';
         document.querySelector('.eclipse-effect').style.background = 'radial-gradient(circle at 50% 30%, rgba(200, 0, 255, 0.2) 0%, transparent 50%)';
+        document.querySelectorAll('.settings-container, .tabs-container, .browser-toolbar').forEach(el => {
+          el.style.background = 'linear-gradient(135deg, #2a0044, #440088)';
+          el.style.color = '#ffffff';
+        });
+        document.querySelectorAll('.tab, .browser-toolbar button, .browser-toolbar input, .settings-container select, .settings-container input, .settings-container button').forEach(el => {
+          el.style.background = '';
+          el.style.color = '#ffffff';
+          if (el.tagName === 'INPUT' || el.tagName === 'SELECT') {
+            el.style.background = '#222222';
+          }
+          if (el.classList.contains('tab')) {
+            el.style.background = 'linear-gradient(135deg, #222222, #333333)';
+          }
+        });
+      } else if (theme === 'light') {
+        document.body.style.background = '#ffffff';
+        document.querySelector('.eclipse-effect').style.background = 'radial-gradient(circle at 50% 30%, rgba(0, 0, 0, 0.1) 0%, transparent 50%)';
+        document.querySelectorAll('.settings-container, .tabs-container, .browser-toolbar').forEach(el => {
+          el.style.background = '#f0f0f0';
+          el.style.color = '#000000';
+        });
+        document.querySelectorAll('.tab, .browser-toolbar button, .browser-toolbar input, .settings-container select, .settings-container input, .settings-container button').forEach(el => {
+          el.style.background = '#e0e0e0';
+          el.style.color = '#000000';
+        });
       }
+      updateSettingsValues();
     }
 
     function toggleAnimation(value) {
@@ -829,9 +1032,290 @@
         eclipseEffect.style.animation = 'eclipse-pulse 12s infinite alternate';
         stars.style.animation = 'twinkle 3s infinite';
       }
+      updateSettingsValues();
     }
 
-    // Close dropdown when clicking outside
+    function setPresetBackground(value) {
+      console.log(`Setting preset background: ${value}`);
+      if (value === 'default') {
+        document.body.style.background = '#000000';
+        document.querySelector('.stars').style.display = 'block';
+      } else if (value === 'nebula') {
+        document.body.style.background = 'url("https://images.unsplash.com/photo-1447433693259-c8549e352d5d?fit=crop&w=1920&q=80") no-repeat center/cover';
+        document.querySelector('.stars').style.display = 'none';
+      } else if (value === 'cosmic') {
+        document.body.style.background = 'url("https://images.unsplash.com/photo-1538370965046-9667c50b88c0?fit=crop&w=1920&q=80") no-repeat center/cover';
+        document.querySelector('.stars').style.display = 'none';
+      }
+      if (vantaEffect) {
+        vantaEffect.destroy();
+        vantaEffect = null;
+      }
+      updateSettingsValues();
+    }
+
+    function setCustomBackground(url) {
+      console.log(`Setting custom background: ${url}`);
+      if (url) {
+        try {
+          new URL(url);
+          document.body.style.background = `url("${url}") no-repeat center/cover`;
+          document.querySelector('.stars').style.display = 'none';
+          if (vantaEffect) {
+            vantaEffect.destroy();
+            vantaEffect = null;
+          }
+        } catch {
+          console.warn('Invalid background URL');
+        }
+      }
+      updateSettingsValues();
+    }
+
+    function toggleVantaBackground(value) {
+      console.log(`Toggling Vanta background: ${value}`);
+      if (value === 'on') {
+        if (!vantaEffect) {
+          vantaEffect = VANTA.TRIS({
+            el: document.body,
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: currentTheme === 'nebula' ? 0x550088 : 0x222222,
+            backgroundColor: currentTheme === 'light' ? 0xffffff : 0x000000
+          });
+          document.querySelector('.stars').style.display = 'none';
+          document.querySelector('.eclipse-effect').style.display = 'none';
+        }
+      } else {
+        if (vantaEffect) {
+          vantaEffect.destroy();
+          vantaEffect = null;
+        }
+        document.querySelector('.stars').style.display = 'block';
+        document.querySelector('.eclipse-effect').style.display = 'block';
+        setPresetBackground(document.querySelector('#preset-bg-select')?.value || 'default');
+      }
+      updateSettingsValues();
+    }
+
+    function setCloakTitle(title) {
+      console.log(`Setting cloak title: ${title}`);
+      cloakSettings.title = title || 'Eclipse Browser';
+      applyCloakSettings();
+      updateSettingsValues();
+    }
+
+    function setCloakFavicon(url) {
+      console.log(`Setting cloak favicon: ${url}`);
+      cloakSettings.favicon = url;
+      applyCloakSettings();
+      updateSettingsValues();
+    }
+
+    function applyCloakSettings() {
+      document.title = tabs[activeTabIndex]?.title ? `${tabs[activeTabIndex].title} - ${cloakSettings.title}` : cloakSettings.title;
+      const favicon = document.querySelector('link[rel="icon"]');
+      if (favicon) favicon.remove();
+      if (cloakSettings.favicon) {
+        const newFavicon = document.createElement('link');
+        newFavicon.rel = 'icon';
+        newFavicon.href = cloakSettings.favicon;
+        document.head.appendChild(newFavicon);
+      }
+    }
+
+    function setAutoCloseTimer(seconds) {
+      console.log(`Setting auto-close timer: ${seconds} seconds`);
+      clearTimeout(window.autoCloseTimer);
+      if (seconds > 0) {
+        window.autoCloseTimer = setTimeout(() => {
+          if (tabs.length > 1) closeTab(activeTabIndex);
+        }, seconds * 1000);
+      }
+      updateSettingsValues();
+    }
+
+    function updateTabList() {
+      if (activeTabIndex !== -1 && tabs[activeTabIndex].title === 'Settings') {
+        const tabList = tabs[activeTabIndex].frame.contentDocument.getElementById('tab-list');
+        if (tabList) {
+          tabList.innerHTML = tabs.map((tab, index) => `
+            <li>${tab.title} <button onclick="parent.closeTab(${index})">Close</button></li>
+          `).join('');
+        }
+      }
+    }
+
+    function closeAllTabs() {
+      console.log('Closing all tabs except one');
+      while (tabs.length > 1) {
+        closeTab(tabs.length - 1);
+      }
+    }
+
+    function setDefaultProxy(name) {
+      console.log(`Setting default proxy: ${name}`);
+      const proxyUrls = {
+        'Proxy Off': null,
+        'Server A': 'https://embeddr.rhw.one/embed#',
+        'Server B': 'https://finance.v2202211188549209536.happysrv.de/explore/embed.html?p=',
+        'Server C': 'https://supergisfire.com/scramjet/',
+        'Server D': 'https://www.v2202211188549209536.happysrv.de/explore/embed.html?p='
+      };
+      selectProxy(name, proxyUrls[name]);
+      updateSettingsValues();
+    }
+
+    function setZoomLevel(level) {
+      console.log(`Setting zoom level: ${level}`);
+      if (activeTabIndex !== -1) {
+        tabs[activeTabIndex].frame.style.transform = `scale(${level})`;
+        tabs[activeTabIndex].frame.style.transformOrigin = 'top left';
+        tabs[activeTabIndex].frame.style.width = `${100 / level}%`;
+        tabs[activeTabIndex].frame.style.height = `${100 / level}%`;
+      }
+      updateSettingsValues();
+    }
+
+    function applyZoomLevel() {
+      const select = tabs[activeTabIndex]?.frame.contentDocument?.getElementById('zoom-select');
+      if (select) {
+        setZoomLevel(select.value);
+      }
+    }
+
+    function toggleAdBlocker(value) {
+      console.log(`Toggling ad blocker: ${value}`);
+      adBlockEnabled = value === 'on';
+      if (activeTabIndex !== -1) {
+        const currentUrl = tabs[activeTabIndex].history[tabs[activeTabIndex].currentHistoryIndex];
+        if (currentUrl && !currentUrl.startsWith('Eclipse://')) {
+          loadContent(currentUrl);
+        }
+      }
+      updateSettingsValues();
+    }
+
+    function updateHistoryList() {
+      if (activeTabIndex !== -1 && tabs[activeTabIndex].title === 'Settings') {
+        const historyList = tabs[activeTabIndex].frame.contentDocument.getElementById('history-list');
+        if (historyList) {
+          historyList.innerHTML = tabs.flatMap((tab, index) =>
+            tab.history.map(url => `
+              <li>${url} (Tab ${index + 1}) <button onclick="parent.loadContent('${url}')">Visit</button></li>
+            `)
+          ).join('');
+        }
+      }
+    }
+
+    function clearHistory() {
+      console.log('Clearing history');
+      tabs.forEach(tab => {
+        tab.history = [];
+        tab.currentHistoryIndex = -1;
+      });
+      updateHistoryList();
+    }
+
+    function saveSession() {
+      console.log('Saving session');
+      const session = tabs.map(tab => ({
+        title: tab.title,
+        history: tab.history,
+        currentHistoryIndex: tab.currentHistoryIndex
+      }));
+      const sessionName = `Session_${new Date().toISOString()}`;
+      localStorage.setItem(sessionName, JSON.stringify(session));
+      updateSessionList();
+    }
+
+    function loadSession(sessionName) {
+      console.log(`Loading session: ${sessionName}`);
+      if (sessionName) {
+        const session = JSON.parse(localStorage.getItem(sessionName));
+        if (session) {
+          while (tabs.length > 0) closeTab(0);
+          session.forEach(tabData => {
+            const tabId = createTab(tabData.title);
+            tabs[tabId].history = tabData.history;
+            tabs[tabId].currentHistoryIndex = tabData.currentHistoryIndex;
+            if (tabData.currentHistoryIndex >= 0) {
+              loadContent(tabData.history[tabData.currentHistoryIndex]);
+            }
+          });
+          switchTab(0);
+        }
+      }
+    }
+
+    function updateSessionList() {
+      if (activeTabIndex !== -1 && tabs[activeTabIndex].title === 'Settings') {
+        const sessionSelect = tabs[activeTabIndex].frame.contentDocument.getElementById('saved-sessions');
+        if (sessionSelect) {
+          sessionSelect.innerHTML = '<option value="">Select a session</option>' +
+            Object.keys(localStorage)
+              .filter(key => key.startsWith('Session_'))
+              .map(key => `<option value="${key}">${key}</option>`)
+              .join('');
+        }
+      }
+    }
+
+    function toggleCustomCursor(value) {
+      console.log(`Toggling custom cursor: ${value}`);
+      customCursorEnabled = value === 'on';
+      document.body.classList.toggle('custom-cursor', customCursorEnabled);
+      updateSettingsValues();
+    }
+
+    function toggleShortcuts(value) {
+      console.log(`Toggling keyboard shortcuts: ${value}`);
+      updateSettingsValues();
+    }
+
+    function showDownloads() {
+      console.log('Showing downloads');
+      if (activeTabIndex !== -1) {
+        tabs[activeTabIndex].frame.srcdoc = `<h1 style="color: white; text-align: center; font-family: Roboto, sans-serif;">Download Manager</h1>`;
+        updateTabTitle(activeTabIndex, 'Downloads');
+      }
+    }
+
+    function updateSettingsValues() {
+      if (activeTabIndex !== -1 && tabs[activeTabIndex].title === 'Settings') {
+        const doc = tabs[activeTabIndex].frame.contentDocument;
+        if (doc) {
+          const themeSelect = doc.getElementById('theme-select');
+          const animationSelect = doc.getElementById('animation-select');
+          const presetBgSelect = doc.getElementById('preset-bg-select');
+          const vantaBgSelect = doc.getElementById('vanta-bg-select');
+          const cursorSelect = doc.getElementById('cursor-select');
+          const proxySelect = doc.getElementById('proxy-select');
+          const zoomSelect = doc.getElementById('zoom-select');
+          const adblockSelect = doc.getElementById('adblock-select');
+          const cloakTitle = doc.getElementById('cloak-title');
+          const cloakFavicon = doc.getElementById('cloak-favicon');
+
+          if (themeSelect) themeSelect.value = currentTheme;
+          if (animationSelect) animationSelect.value = document.querySelector('.eclipse-effect').style.animation ? 'on' : 'off';
+          if (presetBgSelect) presetBgSelect.value = document.body.style.background.includes('url') ? (document.body.style.background.includes('1447433693259') ? 'nebula' : 'cosmic') : 'default';
+          if (vantaBgSelect) vantaBgSelect.value = vantaEffect ? 'on' : 'off';
+          if (cursorSelect) cursorSelect.value = customCursorEnabled ? 'on' : 'off';
+          if (proxySelect) proxySelect.value = currentProxy;
+          if (zoomSelect) zoomSelect.value = tabs[activeTabIndex]?.frame.style.transform ? tabs[activeTabIndex].frame.style.transform.replace('scale(', '').replace(')', '') : '1';
+          if (adblockSelect) adblockSelect.value = adBlockEnabled ? 'on' : 'off';
+          if (cloakTitle) cloakTitle.value = cloakSettings.title;
+          if (cloakFavicon) cloakFavicon.value = cloakSettings.favicon || '';
+        }
+      }
+    }
+
     window.onclick = function(event) {
       if (!event.target.matches('.proxy-btn')) {
         const dropdowns = document.getElementsByClassName('proxy-dropdown-content');
@@ -842,11 +1326,30 @@
           }
         }
       }
-    }
+    };
 
     document.addEventListener('fullscreenchange', () => {
       if (!document.fullscreenElement) {
         document.body.classList.remove('fullscreen');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 't') {
+        e.preventDefault();
+        addNewTab();
+      } else if (e.ctrlKey && e.key === 'w') {
+        e.preventDefault();
+        if (activeTabIndex !== -1) closeTab(activeTabIndex);
+      } else if (e.altKey && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goBack();
+      } else if (e.altKey && e.key === 'ArrowRight') {
+        e.preventDefault();
+        goForward();
+      } else if (e.ctrlKey && e.key === 'r') {
+        e.preventDefault();
+        refresh();
       }
     });
 
