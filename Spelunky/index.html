@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Full Width/Height iframe</title>
+  <style>
+    /* Remove default margin and padding to avoid white space */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden; /* Optional: prevent scrolling */
+    }
+    iframe {
+      display: block; /* removes inline spacing */
+      border: none;   /* removes border */
+      width: 100vw;   /* full viewport width */
+      height: 100vh;  /* full viewport height */
+    }
+  </style>
+</head>
+<body>
+  <iframe src="https://7-7-7-15.github.io/SpelunkyClassicHDhtml5/src/index.html"></iframe>
+</body>
+</html>
