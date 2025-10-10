@@ -1,66 +1,43 @@
-name: Clone and Increment Publish Hourly plus On Push
+name: Deploy Spelunky to GitHub Pages
 
 on:
   push:
-    branches: [main]     # Run immediately on push to main branch
+    branches: [main]
   schedule:
-    - cron: '0 * * * *'  # Run at the start of every hour
-  workflow_dispatch:      # Optional manual trigger
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
-  publish:
+  build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pages: write
-      id-token: write    # Add this line
+      id-token: write
+    
     steps:
-      - name: Checkout main branch
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Ensure gh-pages branch exists
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Create site structure
         run: |
-          if ! git ls-remote --exit-code --heads origin gh-pages; then
-            git config --global user.name "github-actions"
-            git config --global user.email "github-actions@github.com"
-            git checkout --orphan gh-pages
-            git rm -rf .
-            git commit --allow-empty -m "Initialize gh-pages branch"
-            git push origin gh-pages
-          fi
+          # Create public directory for Pages
+          mkdir -p public
+          
+          # Copy your Spelunky game files to the root
+          cp -r Spelunky/* public/ || echo "No Spelunky directory found"
+          
+          # If you want versioned deployments, uncomment below:
+          # mkdir -p "public/versions"
+          # cp -r Spelunky/* "public/versions/v1/" || echo "No Spelunky directory found"
 
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          ref: gh-pages
-          path: gh-pages
-
-      - name: Get and increment counter
-        id: counter
-        run: |
-          cd gh-pages
-          if [ -f .counter ]; then
-            num=$(cat .counter)
-            num=$((num + 1))
-          else
-            num=1
-          fi
-          echo $num > .counter
-          echo "num=$num" >> $GITHUB_ENV
-
-      - name: Copy Spelunky index.html with new number folder
-        run: |
-          mkdir -p "gh-pages/${num}"
-          cp Spelunky/index.html "gh-pages/${num}/index.html"
-
-      - name: Commit and push to gh-pages
-        run: |
-          cd gh-pages
-          git config user.name 'github-actions'
-          git config user.email 'github-actions@github.com'
-          git add .
-          git commit -m "Publish Spelunky as version ${num}" || echo "No changes to commit"
-          git push origin gh-pages
+          path: public/
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
