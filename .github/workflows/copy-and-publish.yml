@@ -1,0 +1,51 @@
+name: Clone and Increment Publish Hourly plus On Push
+
+on:
+  push:
+    branches: [main]     # Run immediately on push to main branch
+  schedule:
+    - cron: '0 * * * *'  # Run at the start of every hour
+  workflow_dispatch:      # Optional manual trigger
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Get and increment counter
+        id: counter
+        run: |
+          cd gh-pages
+          if [ -f .counter ]; then
+            num=$(cat .counter)
+            num=$((num + 1))
+          else
+            num=1
+          fi
+          echo $num > .counter
+          echo "num=$num" >> $GITHUB_ENV
+
+      - name: Copy Spelunky index.html with new number folder
+        run: |
+          mkdir -p "gh-pages/${num}"
+          cp Spelunky/index.html "gh-pages/${num}/index.html"
+
+      - name: Commit and push to gh-pages
+        run: |
+          cd gh-pages
+          git config user.name 'github-actions'
+          git config user.email 'github-actions@github.com'
+          git add .
+          git commit -m "Publish Spelunky as version ${num}" || echo "No changes to commit"
+          git push origin gh-pages
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
