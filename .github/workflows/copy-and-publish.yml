@@ -1,4 +1,4 @@
-name: Deploy Spelunky to GitHub Pages
+name: Clone and Increment Publish Hourly plus On Push
 
 on:
   push:
@@ -8,36 +8,47 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
     
     steps:
-      - name: Checkout
+      - name: Checkout main branch
         uses: actions/checkout@v4
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Create site structure
+      - name: Get and increment counter
+        id: counter
         run: |
-          # Create public directory for Pages
-          mkdir -p public
-          
-          # Copy your Spelunky game files to the root
-          cp -r Spelunky/* public/ || echo "No Spelunky directory found"
-          
-          # If you want versioned deployments, uncomment below:
-          # mkdir -p "public/versions"
-          # cp -r Spelunky/* "public/versions/v1/" || echo "No Spelunky directory found"
+          if [ -f .counter ]; then
+            num=$(cat .counter)
+            num=$((num + 1))
+          else
+            num=1
+          fi
+          echo $num > .counter
+          echo "num=$num" >> $GITHUB_ENV
+
+      - name: Build site structure
+        run: |
+          mkdir -p _site
+          mkdir -p "_site/Spelunky"
+          mkdir -p "_site/Spelunky/${num}"
+          cp Spelunky/index.html "_site/Spelunky/${num}/index.html"
+          # Also copy the counter file
+          cp .counter _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: public/
+          path: _site/
+          name: github-pages
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
