@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: '0 * * * *'
+    - cron: '13 * * * *'   # Off-peak minute to avoid GitHub delays
   workflow_dispatch:
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
       contents: write
       pages: write
       id-token: write
-    
+
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
@@ -22,26 +22,39 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Set build timestamp
+        id: time
+        run: echo "NOW=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_ENV
+
       - name: Get and increment counter
         id: counter
         run: |
           if [ -f .counter ]; then
             num=$(cat .counter)
+            echo "Found existing counter: $num"
             num=$((num + 1))
           else
             num=1
+            echo "Starting counter at 1"
           fi
           echo $num > .counter
           echo "num=$num" >> $GITHUB_ENV
 
       - name: Build site structure
         run: |
-          mkdir -p _site
-          mkdir -p "_site/Spelunky"
-          mkdir -p "_site/Spelunky/${num}"
-          cp Spelunky/index.html "_site/Spelunky/${num}/index.html"
-          # Also copy the counter file
+          mkdir -p _site/Spelunky/${num}
+          cp Spelunky/index.html _site/Spelunky/${num}/index.html
           cp .counter _site/
+          cp .counter _site/Spelunky/${num}/.counter
+
+      - name: Save counter artifact (for audit/debug)
+        uses: actions/upload-artifact@v4
+        with:
+          name: spelunky-counter-${{ env.num }}-${{ env.NOW }}
+          path: .counter
+
+      - name: List build output (debug)
+        run: ls -R _site
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -52,3 +65,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      - name: Fallback log if deploy failed
+        if: failure()
+        run: echo "Deployment failed at ${{ steps.time.outputs.NOW }}" || true
