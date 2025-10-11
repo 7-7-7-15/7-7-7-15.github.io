@@ -22,6 +22,13 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Download counter artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: spelunky-counter-*
+          path: .
+        continue-on-error: true
+
       - name: Set build timestamp
         id: time
         run: echo "NOW=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_ENV
