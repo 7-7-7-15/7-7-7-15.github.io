@@ -18,16 +18,11 @@ jobs:
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true  # Needed for pushing back to repo
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
-
-      - name: Download counter artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: spelunky-counter-*
-          path: .
-        continue-on-error: true
 
       - name: Set build timestamp
         id: time
@@ -54,16 +49,19 @@ jobs:
           cp .counter _site/
           cp .counter _site/Spelunky/${num}/.counter
 
-      - name: Save counter artifact (for audit/debug)
-        uses: actions/upload-artifact@v4
-        with:
-          name: spelunky-counter-${{ env.num }}-${{ env.NOW }}
-          path: .counter
+      - name: Commit updated counter back to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .counter
+          git commit -m "Increment counter to ${{ env.num }}"
+          git push
+        continue-on-error: true
 
       - name: List build output (debug)
         run: ls -R _site
 
-      - name: Upload artifact
+      - name: Upload artifact for pages
         uses: actions/upload-pages-artifact@v4
         with:
           path: _site/
