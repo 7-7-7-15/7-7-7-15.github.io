@@ -23,7 +23,7 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Download counter artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: spelunky-counter-*
           path: .
@@ -64,7 +64,7 @@ jobs:
         run: ls -R _site
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: _site/
           name: github-pages
