@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: '13 * * * *'   # Off-peak minute to avoid GitHub delays
+    - cron: '25 * * * *'   # Off-peak minute to avoid GitHub delays
   workflow_dispatch:
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          persist-credentials: true  # Needed for pushing back to repo
+          persist-credentials: true      # Ensures git can push using GITHUB_TOKEN
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -56,7 +56,7 @@ jobs:
           git add .counter
           git commit -m "Increment counter to ${{ env.num }}"
           git push
-        continue-on-error: true
+        continue-on-error: false         # Fail if cannot commit (for guaranteed fix)
 
       - name: List build output (debug)
         run: ls -R _site
