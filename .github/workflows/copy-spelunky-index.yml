@@ -1,78 +1,43 @@
-name: Clone and Increment Publish Hourly plus On Push
+name: Copy Spelunky Index to Subfolders
 
 on:
-  push:
-    branches: [main]
   schedule:
-    - cron: '15 * * * *'   # Off-peak minute to avoid GitHub delays
+    - cron: '20 * * * *' # Runs every hour, on the hour
   workflow_dispatch:
+    inputs:
+      count:
+        description: 'Number of Spelunky folders to create'
+        required: true
+        default: "10"
 
 jobs:
-  publish:
+  copy-and-publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-
     steps:
-      - name: Checkout main branch
+      - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true      # Ensures git can push using GITHUB_TOKEN
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Set build timestamp
-        id: time
-        run: echo "NOW=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_ENV
-
-      - name: Get and increment counter
-        id: counter
+      - name: Set number of folders
+        id: vars
         run: |
-          if [ -f .counter ]; then
-            num=$(cat .counter)
-            echo "Found existing counter: $num"
-            num=$((num + 1))
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "count=10" >> $GITHUB_OUTPUT
           else
-            num=1
-            echo "Starting counter at 1"
+            echo "count=${{ github.event.inputs.count }}" >> $GITHUB_OUTPUT
           fi
-          echo $num > .counter
-          echo "num=$num" >> $GITHUB_ENV
 
-      - name: Build site structure
+      - name: Clone index.html to subfolders
         run: |
-          mkdir -p _site/Spelunky/${num}
-          cp Spelunky/index.html _site/Spelunky/${num}/index.html
-          cp .counter _site/
-          cp .counter _site/Spelunky/${num}/.counter
+          COUNT=${{ steps.vars.outputs.count }}
+          for i in $(seq 1 $COUNT); do
+            mkdir -p Spelunky/$i
+            cp Spelunky/index.html Spelunky/$i/index.html
+          done
 
-      - name: Commit updated counter back to repo
+      - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .counter
-          git commit -m "Increment counter to ${{ env.num }}"
+          git add Spelunky/
+          git commit -m "Automated: Clone Spelunky/index.html to subfolders" || echo "No changes to commit"
           git push
-        continue-on-error: false         # Fail if cannot commit (for guaranteed fix)
-
-      - name: List build output (debug)
-        run: ls -R _site
-
-      - name: Upload artifact for pages
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: _site/
-          name: github-pages
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-        continue-on-error: true
-
-      - name: Fallback log if deploy failed
-        if: failure()
-        run: echo "Deployment failed at ${{ steps.time.outputs.NOW }}" || true
-
