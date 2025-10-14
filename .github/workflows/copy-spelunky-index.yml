@@ -1,45 +1,44 @@
-name: Copy Spelunky Index to Subfolders
+name: Add One Spelunky Folder Hourly
+
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '50 * * * *' # Runs every hour, on the hour
+    - cron: '0 * * * *' # Runs every hour, on the hour
   workflow_dispatch:
-    inputs:
-      count:
-        description: 'Number of Spelunky folders to create'
-        required: true
-        default: "200"
 
 jobs:
-  copy-and-publish:
+  add-spelunky-folder:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set number of folders
-        id: vars
+      - name: Find highest Spelunky folder number
+        id: findmax
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "count=10" >> $GITHUB_OUTPUT
-          else
-            echo "count=${{ github.event.inputs.count }}" >> $GITHUB_OUTPUT
+          max=0
+          if [ -d Spelunky ]; then
+            for d in Spelunky/*/ ; do
+              n=$(basename "$d")
+              if [[ $n =~ ^[0-9]+$ ]] && [ "$n" -gt "$max" ]; then
+                max=$n
+              fi
+            done
           fi
+          echo "max=$max" >> $GITHUB_OUTPUT
 
-      - name: Clone index.html to subfolders
+      - name: Add next folder and copy index.html
         run: |
-          COUNT=${{ steps.vars.outputs.count }}
-          for i in $(seq 1 $COUNT); do
-            mkdir -p Spelunky/$i
-            cp Spelunky/index.html Spelunky/$i/index.html
-          done
+          next=$(( ${{ steps.findmax.outputs.max }} + 1 ))
+          mkdir -p Spelunky/$next
+          cp Spelunky/index.html Spelunky/$next/index.html
 
       - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Spelunky/
-          git commit -m "Automated: Clone Spelunky/index.html to subfolders" || echo "No changes to commit"
+          git commit -m "Automated: Add Spelunky/$(( ${{ steps.findmax.outputs.max }} + 1 ))" || echo "No changes to commit"
           git push
