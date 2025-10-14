@@ -28,6 +28,15 @@ jobs:
         id: time
         run: echo "NOW=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_ENV
 
+      - name: Prepare _site directory (preserve history)
+        run: |
+          mkdir -p _site/Spelunky
+
+          # Copy previous published _site from last commit, if exists
+          if git show HEAD:_site &>/dev/null; then
+            git checkout HEAD -- _site
+          fi
+
       - name: Get and increment counter
         id: counter
         run: |
@@ -42,7 +51,7 @@ jobs:
           echo $num > .counter
           echo "num=$num" >> $GITHUB_ENV
 
-      - name: Build site structure
+      - name: Copy new Spelunky version into _site
         run: |
           mkdir -p _site/Spelunky/${num}
           cp Spelunky/index.html _site/Spelunky/${num}/index.html
