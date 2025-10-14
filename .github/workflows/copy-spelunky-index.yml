@@ -1,14 +1,16 @@
 name: Copy Spelunky Index to Subfolders
+permissions:
+  contents: write
 
 on:
   schedule:
-    - cron: '20 * * * *' # Runs every hour, on the hour
+    - cron: '50 * * * *' # Runs every hour, on the hour
   workflow_dispatch:
     inputs:
       count:
         description: 'Number of Spelunky folders to create'
         required: true
-        default: "10"
+        default: "200"
 
 jobs:
   copy-and-publish:
