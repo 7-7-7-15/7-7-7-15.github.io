@@ -41,3 +41,4 @@ jobs:
           git add Spelunky/
           git commit -m "Automated: Clone Spelunky/index.html to subfolders" || echo "No changes to commit"
           git push
+          
