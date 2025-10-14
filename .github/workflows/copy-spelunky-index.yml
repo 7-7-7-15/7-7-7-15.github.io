@@ -1,0 +1,43 @@
+name: Copy Spelunky Index to Subfolders
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Runs every hour, on the hour
+  workflow_dispatch:
+    inputs:
+      count:
+        description: 'Number of Spelunky folders to create'
+        required: true
+        default: "10"
+
+jobs:
+  copy-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set number of folders
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "count=10" >> $GITHUB_OUTPUT
+          else
+            echo "count=${{ github.event.inputs.count }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Clone index.html to subfolders
+        run: |
+          COUNT=${{ steps.vars.outputs.count }}
+          for i in $(seq 1 $COUNT); do
+            mkdir -p Spelunky/$i
+            cp Spelunky/index.html Spelunky/$i/index.html
+          done
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Spelunky/
+          git commit -m "Automated: Clone Spelunky/index.html to subfolders" || echo "No changes to commit"
+          git push
