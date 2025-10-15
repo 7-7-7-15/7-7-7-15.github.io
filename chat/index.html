@@ -2728,23 +2728,21 @@ function sendPrivateMessage(payload = null) {
             try{ recognition && recognition.stop(); }catch(e){}
         }
 
-        function joinRoom(){
-            const rawName = sanitizeName(usernameInput.value || 'EclipseUser');
-            if(!rawName){
-                alert('Please enter a username');
-                return;
-            }
-            userName = rawName;
-            roomCode = generateSiteRoomCode();
-            sidebarUserInfo.textContent = `${userName}@eclipse`;
-            joinModal.style.display = 'none';
-            
-            try{
-                localStorage.setItem('eclipse_chat_username', usernameInput.value);
-            }catch(e){}
-            
-            connectToRoom();
-        }
+       function joinRoom() {
+    const rawName = sanitizeName(usernameInput.value || 'EclipseUser');
+    if(!rawName){
+        alert('Please enter a username');
+        return;
+    }
+    userName = rawName;
+    roomCode = generateSiteRoomCode();
+    sidebarUserInfo.textContent = `${userName}@eclipse`;
+    joinModal.style.display = 'none';
+    try {
+        localStorage.setItem('eclipse_chat_username', userName);
+    } catch(e){}
+    connectToRoom();
+}
 
         // Private Rooms
         function generateRoomCode() { return 'ECL' + Math.random().toString(36).substr(2,6).toUpperCase(); }
@@ -2908,23 +2906,32 @@ document.addEventListener('keydown', requestNotificationPermission, { once: true
         });
 
         /***** Initialization *****/
-        window.addEventListener('load', ()=>{
-            try{
-                const stored = localStorage.getItem('eclipse_chat_username') || localStorage.getItem('ln-username');
-                if(stored) usernameInput.value = stored;
-                customBackgroundDataUrl = localStorage.getItem('eclipse_custom_messages_bg');
-            }catch(e){}
+      window.addEventListener('load', () => {
+    try {
+        const stored = localStorage.getItem('eclipse_chat_username') || localStorage.getItem('ln-username');
+        if (stored) {
+            usernameInput.value = stored;
+            userName = sanitizeName(stored);
+            roomCode = generateSiteRoomCode();
+            sidebarUserInfo.textContent = `${userName}@eclipse`;
+            joinModal.style.display = 'none';
+            connectToRoom();
+        } else {
+            joinModal.style.display = 'flex';
+        }
+        customBackgroundDataUrl = localStorage.getItem('eclipse_custom_messages_bg');
+    } catch (e) {}
 
-            initThemes();
-            
-            addMessageToDOM({
-                id: uid(),
-                name:'System',
-                text: 'Welcome to Eclipse Chat! Click users to start DMs. Right-click messages to react. Use theme toggle for messages backgrounds!',
-                timestamp: new Date().toISOString(),
-                type: 'system'
-            }, false);
-        });
+    initThemes();
+
+    addMessageToDOM({
+        id: uid(),
+        name:'System',
+        text: 'Welcome to Eclipse Chat! Click users to start DMs. Right-click messages to react. Use theme toggle for messages backgrounds!',
+        timestamp: new Date().toISOString(),
+        type: 'system'
+    }, false);
+});
 
         document.addEventListener('DOMContentLoaded', loadPrivateRooms);
     </script>
