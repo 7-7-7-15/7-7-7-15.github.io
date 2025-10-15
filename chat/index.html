@@ -962,10 +962,66 @@ body.custom-bg::before {
                 display: block;
             }
         }
+        /* Private Room Styles - ADD THESE */
+.private-room-controls {
+    position: fixed; top: 20px; right: 20px; z-index: 1000;
+    background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px;
+    border: 1px solid var(--eclipse-border); backdrop-filter: blur(10px);
+    max-width: 300px; max-height: 60vh; overflow-y: auto;
+}
+
+.private-room-item {
+    background: rgba(255,255,255,0.05); padding: 10px; margin: 5px 0;
+    border-radius: 6px; cursor: pointer; border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.private-room-item:hover { border-color: var(--eclipse-primary); }
+.private-room-item.active { background: rgba(107,92,231,0.2); border-color: var(--eclipse-primary); }
+
+.add-room-btn, .join-code-btn, .room-input-btn {
+    background: var(--eclipse-primary); color: white; border: none;
+    padding: 8px 12px; border-radius: 6px; cursor: pointer; margin: 5px 0;
+}
+
+.room-input-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none;
+    align-items: center; justify-content: center; z-index: 1001;
+}
+
+.room-input-modal.active { display: flex; }
+.room-input-container {
+    background: var(--eclipse-surface); padding: 20px; border-radius: 8px;
+    border: 2px solid var(--eclipse-primary); max-width: 400px;
+}
+
+.join-code-input { width: 100%; padding: 10px; margin: 5px 0; background: rgba(255,255,255,0.05); border: 1px solid var(--eclipse-border); border-radius: 4px; color: var(--eclipse-text); }
     </style>
 </head>
 
 <body class="theme-dark">
+    <!-- Private Room Controls - ADD THIS -->
+<div class="private-room-controls" id="privateRoomControls">
+    <div class="private-room-header">
+        <h4 class="private-room-title">🔒 Private Rooms</h4>
+        <button class="add-room-btn" id="addRoomBtn">➕</button>
+    </div>
+    <input type="text" class="join-code-input" id="joinCodeInput" placeholder="ECLxxxxx" style="display:none;">
+    <button class="join-code-btn" id="joinRoomBtn" style="display:none;">Join</button>
+    <div id="privateRoomsList"></div>
+</div>
+
+<!-- Room Modal - ADD THIS -->
+<div class="room-input-modal" id="roomInputModal">
+    <div class="room-input-container">
+        <h3 id="roomInputTitle">Create Room</h3>
+        <input type="text" id="roomInputField" class="room-input-field" placeholder="Room name">
+        <div class="room-input-actions">
+            <button class="room-input-btn secondary" id="cancelRoomBtn">Cancel</button>
+            <button class="room-input-btn primary" id="confirmRoomBtn">Create</button>
+        </div>
+    </div>
+</div>
     <div class="eclipse-container" id="app">
         <div class="chat-sidebar" id="chatSidebar">
             <div class="sidebar-header">
@@ -1909,6 +1965,135 @@ window.addEventListener('load', ()=>{
         type: 'system'
     }, false);
 });
+     // Private Rooms - ADD THESE FUNCTIONS
+let privateRooms = new Map();
+let currentPrivateRoom = null;
+
+function generateRoomCode() { return 'ECL' + Math.random().toString(36).substr(2,6).toUpperCase(); }
+
+function createPrivateRoom(name) {
+    const code = generateRoomCode();
+    privateRooms.set(code, { name, code, users: [userName], messages: [] });
+    currentPrivateRoom = code;
+    savePrivateRooms();
+    updatePrivateRoomsUI();
+    showRoomNotification(`Created ${name} (${code})`);
+    switchToPrivateRoom(code);
+}
+
+function joinPrivateRoom(code) {
+    const room = privateRooms.get(code);
+    if (room) {
+        if (!room.users.includes(userName)) room.users.push(userName);
+        currentPrivateRoom = code;
+        savePrivateRooms();
+        updatePrivateRoomsUI();
+        switchToPrivateRoom(code);
+        showRoomNotification(`Joined ${room.name}`);
+    }
+}
+
+function switchToPrivateRoom(code) {
+    const room = privateRooms.get(code);
+    if (!room) return;
+    
+    // Clear current messages
+    messagesEl.innerHTML = '';
+    
+    // Load private room messages
+    room.messages.forEach(msg => addMessageToDOM(msg, msg.name === userName));
+    
+    // Update display
+    currentChatDisplay.textContent = `#${room.name} (private)`;
+    
+    // Save current state
+    currentPrivateRoom = code;
+}
+
+function sendPrivateMessage() {
+    if (!currentPrivateRoom) return sendMessage(); // fallback to public
+    
+    const text = messageInput.value.trim();
+    if (!text) return;
+    
+    const msg = {
+        id: uid(),
+        text,
+        name: userName,
+        timestamp: new Date().toISOString(),
+        type: 'private'
+    };
+    
+    const room = privateRooms.get(currentPrivateRoom);
+    if (room) {
+        room.messages.push(msg);
+        addMessageToDOM(msg, true);
+        savePrivateRooms();
+    }
+    
+    messageInput.value = '';
+}
+
+function savePrivateRooms() {
+    localStorage.setItem('eclipse_private_rooms', JSON.stringify(Array.from(privateRooms)));
+}
+
+function loadPrivateRooms() {
+    const saved = localStorage.getItem('eclipse_private_rooms');
+    if (saved) privateRooms = new Map(JSON.parse(saved));
+    updatePrivateRoomsUI();
+}
+
+function updatePrivateRoomsUI() {
+    const list = document.getElementById('privateRoomsList');
+    list.innerHTML = Array.from(privateRooms.values()).map(room => `
+        <div class="private-room-item ${currentPrivateRoom === room.code ? 'active' : ''}" 
+             onclick="joinPrivateRoom('${room.code}')">
+            <strong>${room.name}</strong><br>
+            <small>${room.code} (${room.users.length} users)</small>
+        </div>
+    `).join('') || '<div style="opacity:0.5">No private rooms</div>';
+}
+
+function showRoomNotification(msg) {
+    // Use your existing notification system or add simple alert
+    const notif = document.createElement('div');
+    notif.textContent = msg;
+    notif.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--eclipse-primary);color:white;padding:10px;border-radius:5px;z-index:1002';
+    document.body.appendChild(notif);
+    setTimeout(() => notif.remove(), 3000);
+}
+
+// Event Listeners - ADD THESE
+document.addEventListener('DOMContentLoaded', () => {
+    loadPrivateRooms();
+    
+    // Override send button for private rooms
+    sendBtn.onclick = () => currentPrivateRoom ? sendPrivateMessage() : sendMessage();
+    
+    // Add room button
+    document.getElementById('addRoomBtn').onclick = () => {
+        document.getElementById('roomInputModal').classList.add('active');
+    };
+    
+    document.getElementById('confirmRoomBtn').onclick = () => {
+        const name = document.getElementById('roomInputField').value.trim();
+        if (name) createPrivateRoom(name);
+        document.getElementById('roomInputModal').classList.remove('active');
+    };
+    
+    document.getElementById('cancelRoomBtn').onclick = () => {
+        document.getElementById('roomInputModal').classList.remove('active');
+    };
+    
+    // Modal close on outside click
+    document.getElementById('roomInputModal').onclick = (e) => {
+        if (e.target.id === 'roomInputModal') e.target.classList.remove('active');
+    };
+});
+
+// Load on startup
+loadPrivateRooms();
 </script>
 </body>
 </html>
