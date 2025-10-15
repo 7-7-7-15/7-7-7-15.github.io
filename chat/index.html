@@ -1245,6 +1245,11 @@
     /* Don't blur on hover */
     filter: none;
 }
+        .theme-preview.active {
+    border-color: var(--eclipse-primary) !important;
+    opacity: 1 !important;
+    box-shadow: 0 0 0 2px rgba(107, 92, 231, 0.3);
+}
     </style>
 </head>
 
@@ -1383,12 +1388,12 @@
                 <div class="theme-option" data-theme="purple-haze">Purple Haze</div>
                 <div class="theme-option" data-theme="matrix">Matrix</div>
                 <div class="theme-option" data-theme="retro">Retro</div>
-                <div class="theme-option custom-theme-option" data-theme="custom">
-                    <button class="custom-upload-btn" id="customBgUploadBtn">Upload BG</button>
-                    <input type="file" class="custom-upload-input" id="customBgUpload" accept="image/*">
-                    <button class="remove-bg-btn" id="removeBgBtn" style="display:none;">Remove BG</button>
-                    <div class="theme-preview" id="bgPreview"></div>
-                </div>
+             <div class="theme-option custom-theme-option" data-theme="custom">
+    <button class="custom-upload-btn" id="customBgUploadBtn">Upload BG</button>
+    <input type="file" class="custom-upload-input" id="customBgUpload" accept="image/*">
+    <button class="remove-bg-btn" id="removeBgBtn" style="display:none;">Remove BG</button>
+    <div class="theme-preview" id="bgPreview"></div>
+</div>
             </div>
         </div>
     </div>
@@ -1554,22 +1559,30 @@
         reader.readAsDataURL(file);
     });
 }
-      async function applyCustomMessagesBackground(file) {
+     async function applyCustomMessagesBackground(file) {
     if (!file || !file.type.startsWith('image/')) {
         showTransient('Please select a valid image file', true);
         return;
     }
     
-    // Show processing indicator
+    isApplyingCustomTheme = true;
     const customOption = document.querySelector('[data-theme="custom"]');
-    if (customOption) {
-        customOption.innerHTML = '<div class="custom-loading"><div class="spinner"></div>Processing image...</div>';
+    const preview = document.getElementById('bgPreview');
+    const removeBtn = document.getElementById('removeBgBtn');
+    const uploadInput = document.getElementById('customBgUpload');
+    
+    // Show loading state without rebuilding DOM
+    if (customOption && preview) {
+        preview.innerHTML = '<div class="custom-loading"><div class="spinner"></div>Processing...</div>';
     }
     
     try {
         const result = await generateCustomThemeFromImage(file);
         
-        // Apply with higher quality settings
+        // Apply CSS (same as before)
+        const primaryRgb = result.themeColors.primary.match(/\d+/g).map(Number);
+        const primaryHex = rgbToHex(primaryRgb[0], primaryRgb[1], primaryRgb[2]);
+        
         const customCSS = `
             :root.custom-messages-theme {
                 --eclipse-bg: ${result.themeColors.bg};
@@ -1578,28 +1591,12 @@
                 --eclipse-primary: ${result.themeColors.primary};
                 --eclipse-accent: ${result.themeColors.accent};
                 --eclipse-text: ${result.themeColors.text};
-                --eclipse-text-dim: ${adjustColor(rgbToHex(
-                    parseInt(result.themeColors.primary.match(/\d+/g)[0]),
-                    parseInt(result.themeColors.primary.match(/\d+/g)[1]),
-                    parseInt(result.themeColors.primary.match(/\d+/g)[2])
-                ), -20)};
-                --eclipse-success: ${adjustColor(rgbToHex(
-                    parseInt(result.themeColors.primary.match(/\d+/g)[0]),
-                    parseInt(result.themeColors.primary.match(/\d+/g)[1]),
-                    parseInt(result.themeColors.primary.match(/\d+/g)[2])
-                ), -30)};
-                --eclipse-danger: ${adjustColor(rgbToHex(
-                    parseInt(result.themeColors.primary.match(/\d+/g)[0]),
-                    parseInt(result.themeColors.primary.match(/\d+/g)[1]),
-                    parseInt(result.themeColors.primary.match(/\d+/g)[2])
-                ), -50)};
+                --eclipse-text-dim: ${adjustColor(primaryHex, -20)};
+                --eclipse-success: ${adjustColor(primaryHex, -30)};
+                --eclipse-danger: ${adjustColor(primaryHex, -50)};
             }
             .messages-container.with-custom-bg {
                 --custom-messages-bg: ${result.bgImage} !important;
-                background-size: cover !important;
-                background-position: center !important;
-                background-repeat: no-repeat !important;
-                image-rendering: auto !important;
             }
         `;
         
@@ -1611,85 +1608,70 @@
         }
         style.textContent = customCSS;
         
+        // Apply to elements without recreating DOM
         messagesEl.classList.add('with-custom-bg');
+        messagesEl.style.setProperty('--custom-messages-bg', result.bgImage);
         customBackgroundDataUrl = result.imageData;
         localStorage.setItem('eclipse_custom_messages_bg', result.imageData);
         
-        // Update preview with canvas for sharp rendering
-        const preview = document.getElementById('bgPreview');
+        // Update preview without recreating elements
         if (preview) {
+            preview.innerHTML = ''; // Clear loading
             preview.style.backgroundImage = result.bgImage;
             preview.style.opacity = '1';
-            // Use canvas for preview if available
-            if (result.canvas) {
-                preview.style.backgroundImage = `url(${result.canvas.toDataURL('image/jpeg', 0.95)})`;
-            }
+            preview.classList.add('active'); // Add visual indicator
         }
         
-        // Show remove button
-        const removeBtn = document.getElementById('removeBgBtn');
-        if (removeBtn) removeBtn.style.display = 'block';
+        if (removeBtn) {
+            removeBtn.style.display = 'block';
+        }
         
-        // Rebuild custom option UI
+        // Mark custom theme as active
         if (customOption) {
             customOption.classList.add('active');
-            customOption.innerHTML = `
-                <button class="custom-upload-btn" id="customBgUploadBtn">Upload New BG</button>
-                <input type="file" class="custom-upload-input" id="customBgUpload" accept="image/*">
-                <button class="remove-bg-btn" id="removeBgBtn">Remove BG</button>
-                <div class="theme-preview" id="bgPreview" style="background-image: ${result.bgImage}; opacity: 1;"></div>
-            `;
-            
-            // Re-attach listeners
-            document.getElementById('customBgUploadBtn').onclick = () => {
-                document.getElementById('customBgUpload').click();
-            };
-            document.getElementById('removeBgBtn').onclick = removeCustomBackground;
         }
         
         applyTheme('custom');
-        showTransient('Custom background applied with high quality! 🎨');
+        showTransient('Custom background applied! 🎨');
         
     } catch (error) {
         console.error('Error processing custom background:', error);
-        showTransient(error.message || 'Failed to process image. Try a smaller file.', true);
+        showTransient(error.message || 'Failed to process image', true);
+        if (preview) {
+            preview.innerHTML = ''; // Clear loading on error
+        }
+    } finally {
+        isApplyingCustomTheme = false;
+        uploadInput.value = ''; // Clear file input
     }
 }
-
-        function removeCustomBackground() {
-            messagesEl.classList.remove('with-custom-bg');
-            messagesEl.style.removeProperty('--custom-messages-bg');
-            customBackgroundDataUrl = null;
-            localStorage.removeItem('eclipse_custom_messages_bg');
-            
-            const customStyle = document.getElementById('custom-messages-styles');
-            if (customStyle) customStyle.remove();
-            
-            const removeBtn = document.getElementById('removeBgBtn');
-            const preview = document.getElementById('bgPreview');
-            if (removeBtn) removeBtn.style.display = 'none';
-            if (preview) {
-                preview.style.backgroundImage = '';
-                preview.style.opacity = '0.7';
-            }
-            
-            const customOption = document.querySelector('[data-theme="custom"]');
-            if (customOption) {
-                customOption.innerHTML = `
-                    <button class="custom-upload-btn" id="customBgUploadBtn">Upload BG</button>
-                    <input type="file" class="custom-upload-input" id="customBgUpload" accept="image/*">
-                    <button class="remove-bg-btn" id="removeBgBtn" style="display:none;">Remove BG</button>
-                    <div class="theme-preview" id="bgPreview"></div>
-                `;
-                document.getElementById('customBgUploadBtn').addEventListener('click', () => {
-                    document.getElementById('customBgUpload').click();
-                });
-            }
-            
-            applyTheme(currentTheme);
-            showTransient('Custom background removed');
-        }
-
+       function removeCustomBackground() {
+    messagesEl.classList.remove('with-custom-bg');
+    messagesEl.style.removeProperty('--custom-messages-bg');
+    customBackgroundDataUrl = null;
+    localStorage.removeItem('eclipse_custom_messages_bg');
+    
+    const customStyle = document.getElementById('custom-messages-styles');
+    if (customStyle) customStyle.remove();
+    
+    const removeBtn = document.getElementById('removeBgBtn');
+    const preview = document.getElementById('bgPreview');
+    
+    if (removeBtn) removeBtn.style.display = 'none';
+    if (preview) {
+        preview.style.backgroundImage = '';
+        preview.style.opacity = '0.7';
+        preview.classList.remove('active');
+    }
+    
+    const customOption = document.querySelector('[data-theme="custom"]');
+    if (customOption) {
+        customOption.classList.remove('active');
+    }
+    
+    applyTheme(currentTheme === 'custom' ? 'dark' : currentTheme); // Fallback to dark if custom was active
+    showTransient('Custom background removed');
+}
         function applyTheme(theme) {
             if (theme !== 'custom') {
                 // Remove custom messages background when switching to other themes
@@ -1710,66 +1692,80 @@
                 messagesEl.classList.add('with-custom-bg');
             }
         }
-
-        function initThemes() {
-            if (customBackgroundDataUrl) {
-                messagesEl.classList.add('with-custom-bg');
-                messagesEl.style.setProperty('--custom-messages-bg', `url(${customBackgroundDataUrl})`);
-                
-                const customOption = document.querySelector('[data-theme="custom"]');
-                const preview = document.getElementById('bgPreview');
-                const removeBtn = document.getElementById('removeBgBtn');
-                
-                if (preview) {
-                    preview.style.backgroundImage = `url(${customBackgroundDataUrl})`;
-                    preview.style.opacity = '1';
-                }
-                if (removeBtn) removeBtn.style.display = 'block';
-                if (customOption) customOption.classList.add('active');
-            }
-            
-            applyTheme(currentTheme);
-            
-            document.getElementById('themeToggle').addEventListener('click', () => {
-                document.getElementById('themeModal').classList.add('active');
-            });
-
-            document.getElementById('closeTheme').addEventListener('click', () => {
-                document.getElementById('themeModal').classList.remove('active');
-            });
-
-            document.querySelectorAll('.theme-option').forEach(option => {
-                option.addEventListener('click', async () => {
-                    const theme = option.dataset.theme;
-                    if (theme === 'custom') {
-                        if (!isApplyingCustomTheme) {
-                            document.getElementById('customBgUpload').click();
-                        }
-                    } else {
-                        applyTheme(theme);
-                        document.getElementById('themeModal').classList.remove('active');
-                    }
-                });
-            });
-
-            const uploadInput = document.getElementById('customBgUpload');
-            const uploadBtn = document.getElementById('customBgUploadBtn');
-            uploadBtn.addEventListener('click', () => uploadInput.click());
-            
-            uploadInput.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    await applyCustomMessagesBackground(file);
-                    document.getElementById('themeModal').classList.remove('active');
-                }
-            });
-
-            document.getElementById('themeModal').addEventListener('click', (e) => {
-                if (e.target.id === 'themeModal') {
-                    e.target.classList.remove('active');
-                }
-            });
+function initThemes() {
+    // Load existing custom background
+    customBackgroundDataUrl = localStorage.getItem('eclipse_custom_messages_bg');
+    if (customBackgroundDataUrl) {
+        const preview = document.getElementById('bgPreview');
+        const removeBtn = document.getElementById('removeBgBtn');
+        const customOption = document.querySelector('[data-theme="custom"]');
+        
+        if (preview) {
+            preview.style.backgroundImage = `url(${customBackgroundDataUrl})`;
+            preview.style.opacity = '1';
         }
+        if (removeBtn) removeBtn.style.display = 'block';
+        if (customOption) customOption.classList.add('active');
+        messagesEl.classList.add('with-custom-bg');
+        messagesEl.style.setProperty('--custom-messages-bg', `url(${customBackgroundDataUrl})`);
+        applyTheme('custom');
+    } else {
+        applyTheme(currentTheme);
+    }
+    
+    // Theme modal setup
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        document.getElementById('themeModal').classList.add('active');
+    });
+
+    document.getElementById('closeTheme').addEventListener('click', () => {
+        document.getElementById('themeModal').classList.remove('active');
+    });
+
+    // Theme options - only handle non-custom themes
+    document.querySelectorAll('.theme-option:not(.custom-theme-option)').forEach(option => {
+        option.addEventListener('click', () => {
+            const theme = option.dataset.theme;
+            applyTheme(theme);
+            document.getElementById('themeModal').classList.remove('active');
+        });
+    });
+
+    // Custom theme handling - don't recreate DOM
+    const customOption = document.querySelector('[data-theme="custom"]');
+    const uploadInput = document.getElementById('customBgUpload');
+    const uploadBtn = document.getElementById('customBgUploadBtn');
+    const removeBtn = document.getElementById('removeBgBtn');
+    
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            uploadInput.click();
+        });
+    }
+    
+    if (removeBtn) {
+        removeBtn.addEventListener('click', removeCustomBackground);
+    }
+    
+    if (uploadInput) {
+        uploadInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file && !isApplyingCustomTheme) {
+                e.target.value = ''; // Clear input immediately to prevent re-trigger
+                await applyCustomMessagesBackground(file);
+                document.getElementById('themeModal').classList.remove('active');
+            }
+        });
+    }
+    
+    // Close modal on outside click
+    document.getElementById('themeModal').addEventListener('click', (e) => {
+        if (e.target.id === 'themeModal') {
+            e.target.classList.remove('active');
+        }
+    });
+}
 
         /***** Utility Functions *****/
         function generateSiteRoomCode(){
