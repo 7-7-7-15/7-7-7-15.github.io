@@ -1383,6 +1383,22 @@ body.theme-custom .eclipse-container {
     70% { box-shadow: 0 0 0 10px rgba(107, 92, 231, 0); }
     100% { box-shadow: 0 0 0 0 rgba(107, 92, 231, 0); }
 }
+        .reaction-button {
+    background: transparent;
+    border: 1px solid var(--eclipse-border);
+    color: var(--eclipse-accent);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: all 0.2s;
+}
+.reaction-button:hover {
+    background: rgba(107, 92, 231, 0.1);
+    color: var(--eclipse-primary);
+    border-color: var(--eclipse-primary);
+}
     </style>
 </head>
 
@@ -2266,20 +2282,23 @@ function attachReactionTriggers(msgEl) {
     }
 
     messageHTML += `
-        <div class="message-header">
-            <div class="message-user">
-                <span class="user-prompt">$</span>
-                <span class="user-name">${escapeHtml(data.name || 'Unknown')}</span>
-                ${data.isDM ? '<span class="dm-indicator">[DM]</span>' : ''}
-                <button class="reply-button" data-action="reply" title="Reply to this message">
-                    <i class="fas fa-reply"></i>
-                </button>
-            </div>
-            <div class="message-time">${formatTime(data.timestamp)}</div>
+    <div class="message-header">
+        <div class="message-user">
+            <span class="user-prompt">$</span>
+            <span class="user-name">${escapeHtml(data.name || 'Unknown')}</span>
+            ${data.isDM ? '<span class="dm-indicator">[DM]</span>' : ''}
+            <button class="reply-button" data-action="reply" title="Reply to this message">
+                <i class="fas fa-reply"></i>
+            </button>
+            <button class="reaction-button" data-action="react" title="React to this message">
+                <i class="fas fa-smile"></i>
+            </button>
         </div>
-        <div class="message-content">${formatLinks(data.text || '')}</div>
-        <div class="reactions" data-mid="${mid}"></div>
-    `;
+        <div class="message-time">${formatTime(data.timestamp)}</div>
+    </div>
+    <div class="message-content">${formatLinks(data.text || '')}</div>
+    <div class="reactions" data-mid="${mid}"></div>
+`;
 
     wrap.innerHTML = messageHTML;
 
@@ -2302,6 +2321,20 @@ function attachReactionTriggers(msgEl) {
             }
         });
     }
+        const reactBtn = wrap.querySelector('[data-action="react"]');
+if (reactBtn) {
+    reactBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Show reaction menu near the button (use .getBoundingClientRect for position)
+        const rect = reactBtn.getBoundingClientRect();
+        const mid = wrap.getAttribute('data-mid');
+        // Open menu at button position (adjust y as needed)
+        reactionMenu.style.display = 'flex';
+        reactionMenu.style.left = (rect.left + window.scrollX - 8) + 'px';
+        reactionMenu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+        reactionMenu.setAttribute('data-mid', mid);
+    });
+}
 
     attachReactionTriggers(wrap);
     messagesEl.appendChild(wrap);
