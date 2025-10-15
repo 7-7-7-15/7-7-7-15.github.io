@@ -1250,6 +1250,139 @@
     opacity: 1 !important;
     box-shadow: 0 0 0 2px rgba(107, 92, 231, 0.3);
 }
+        /* Custom theme body class */
+body.theme-custom {
+    /* Base custom theme styling */
+}
+
+/* Ensure custom theme CSS variables are applied globally */
+:root.custom-messages-theme {
+    /* These will override the theme-specific variables */
+    --eclipse-bg: #1a1a2e; /* Default fallback */
+    --eclipse-surface: #16213e;
+    --eclipse-border: #252525;
+    --eclipse-primary: #6b5ce7;
+    --eclipse-accent: #8c7ae6;
+    --eclipse-text: #cfcfcf;
+    --eclipse-text-dim: #888;
+    --eclipse-gradient: linear-gradient(135deg, var(--eclipse-bg) 0%, var(--eclipse-surface) 100%);
+}
+
+/* Make sure custom background persists */
+body.theme-custom .messages-container.with-custom-bg {
+    background: var(--custom-messages-bg) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: scroll !important;
+}
+
+/* Override regular theme backgrounds when custom is active */
+body.theme-custom {
+    background: var(--eclipse-gradient) !important;
+}
+
+body.theme-custom .eclipse-container {
+    background: var(--eclipse-surface) !important;
+}
+        /* Reply functionality */
+.reply-indicator {
+    background: rgba(107, 92, 231, 0.2);
+    border-left: 3px solid var(--eclipse-primary);
+    padding: 8px 12px;
+    margin: 8px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 12px;
+    color: var(--eclipse-text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reply-indicator::before {
+    content: '↳';
+    font-size: 14px;
+    color: var(--eclipse-primary);
+}
+
+.reply-button {
+    background: transparent;
+    border: 1px solid var(--eclipse-border);
+    color: var(--eclipse-text-dim);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: all 0.2s;
+}
+
+.reply-button:hover {
+    background: rgba(107, 92, 231, 0.1);
+    color: var(--eclipse-primary);
+    border-color: var(--eclipse-primary);
+}
+
+.replying-state {
+    position: relative;
+}
+
+.replying-state::after {
+    content: "↳ Replying to @" attr(data-reply-to);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: var(--eclipse-surface);
+    color: var(--eclipse-primary);
+    padding: 4px 8px;
+    border-radius: 4px 4px 0 0;
+    font-size: 12px;
+    border: 1px solid var(--eclipse-primary);
+    border-bottom: none;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.input-line.replying-state {
+    border-color: var(--eclipse-primary);
+    background: rgba(107, 92, 231, 0.05);
+}
+        /* ===== ADD TO CSS ===== */
+.input-line.replying-state {
+    border-color: var(--eclipse-primary);
+    background: rgba(107, 92, 231, 0.05);
+}
+
+.input-line.replying-state::after {
+    content: "↳ Replying to @" attr(data-reply-to);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: var(--eclipse-surface);
+    color: var(--eclipse-primary);
+    padding: 4px 8px;
+    border-radius: 4px 4px 0 0;
+    font-size: 12px;
+    border: 1px solid var(--eclipse-primary);
+    border-bottom: none;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.message.has-reply {
+    border-left: 4px solid var(--eclipse-primary);
+}
+
+.message.highlight {
+    background: rgba(107, 92, 231, 0.2) !important;
+    animation: highlightPulse 2s ease-out;
+}
+
+@keyframes highlightPulse {
+    0% { box-shadow: 0 0 0 0 rgba(107, 92, 231, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(107, 92, 231, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(107, 92, 231, 0); }
+}
     </style>
 </head>
 
@@ -1451,6 +1584,79 @@
         let customBackgroundDataUrl = null;
         let isApplyingCustomTheme = false;
 
+        // Notification permission state
+let notificationPermission = Notification.permission;
+
+// Request notification permission on first interaction
+function requestNotificationPermission() {
+    if (notificationPermission === 'granted') return;
+    
+    if ('Notification' in window) {
+        Notification.requestPermission().then(permission => {
+            notificationPermission = permission;
+            if (permission === 'granted') {
+                showTransient('Notifications enabled! 🔔');
+            }
+        });
+    }
+}
+
+// Send browser notification
+function sendBrowserNotification(title, body, options = {}) {
+    if (notificationPermission !== 'granted') return;
+    
+    const notification = new Notification(title, {
+        body,
+        icon: '/assets/logo/logo.png', // Use your favicon
+        badge: '/assets/logo/logo.png',
+        tag: 'eclipse-chat',
+        vibrate: [100, 50, 100], // Vibration pattern
+        ...options
+    });
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => notification.close(), 5000);
+    
+    // Click to focus window
+    notification.onclick = () => {
+        window.focus();
+        notification.close();
+    };
+}
+
+function notifyNewMessage(data, isSelf = false) {
+    if (isSelf || notificationPermission !== 'granted') return;
+    
+    let shouldNotify = false;
+    let title = '';
+    let body = '';
+    
+    if (data.isDM && data.target === userName) {
+        // Incoming DM
+        if (currentChatType === 'dm' && currentChatId === data.name) {
+            // Currently viewing this DM, don't notify
+            return;
+        }
+        shouldNotify = true;
+        title = `DM from ${data.name}`;
+        body = data.text.substring(0, 100);
+    } else if (currentChatType === 'public' && !data.isDM) {
+        // Public message when viewing public
+        if (document.hidden || !document.hasFocus()) {
+            shouldNotify = true;
+            title = 'New message in public';
+            body = `${data.name}: ${data.text.substring(0, 100)}`;
+        }
+    }
+    
+    if (shouldNotify) {
+        sendBrowserNotification(title, body, { 
+            tag: `eclipse-${data.id}`,
+            body: data.text
+        });
+    }
+}
+
         function rgbToHex(r, g, b) {
             return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
         }
@@ -1559,7 +1765,7 @@
         reader.readAsDataURL(file);
     });
 }
-     async function applyCustomMessagesBackground(file) {
+    async function applyCustomMessagesBackground(file) {
     if (!file || !file.type.startsWith('image/')) {
         showTransient('Please select a valid image file', true);
         return;
@@ -1569,20 +1775,19 @@
     const customOption = document.querySelector('[data-theme="custom"]');
     const preview = document.getElementById('bgPreview');
     const removeBtn = document.getElementById('removeBgBtn');
-    const uploadInput = document.getElementById('customBgUpload');
     
-    // Show loading state without rebuilding DOM
-    if (customOption && preview) {
+    // Show loading
+    if (preview) {
         preview.innerHTML = '<div class="custom-loading"><div class="spinner"></div>Processing...</div>';
     }
     
     try {
         const result = await generateCustomThemeFromImage(file);
         
-        // Apply CSS (same as before)
         const primaryRgb = result.themeColors.primary.match(/\d+/g).map(Number);
         const primaryHex = rgbToHex(primaryRgb[0], primaryRgb[1], primaryRgb[2]);
         
+        // Create comprehensive custom theme CSS
         const customCSS = `
             :root.custom-messages-theme {
                 --eclipse-bg: ${result.themeColors.bg};
@@ -1594,9 +1799,15 @@
                 --eclipse-text-dim: ${adjustColor(primaryHex, -20)};
                 --eclipse-success: ${adjustColor(primaryHex, -30)};
                 --eclipse-danger: ${adjustColor(primaryHex, -50)};
+                --eclipse-warning: ${adjustColor(primaryHex, -40)};
+                --eclipse-gradient: linear-gradient(135deg, ${result.themeColors.bg} 0%, ${result.themeColors.surface} 100%);
+            }
+            body.theme-custom {
+                background: var(--eclipse-gradient) !important;
             }
             .messages-container.with-custom-bg {
                 --custom-messages-bg: ${result.bgImage} !important;
+                background: var(--custom-messages-bg) !important;
             }
         `;
         
@@ -1608,51 +1819,50 @@
         }
         style.textContent = customCSS;
         
-        // Apply to elements without recreating DOM
-        messagesEl.classList.add('with-custom-bg');
-        messagesEl.style.setProperty('--custom-messages-bg', result.bgImage);
+        // Apply immediately
         customBackgroundDataUrl = result.imageData;
         localStorage.setItem('eclipse_custom_messages_bg', result.imageData);
         
-        // Update preview without recreating elements
+        // Update preview
         if (preview) {
-            preview.innerHTML = ''; // Clear loading
+            preview.innerHTML = '';
             preview.style.backgroundImage = result.bgImage;
             preview.style.opacity = '1';
-            preview.classList.add('active'); // Add visual indicator
         }
         
-        if (removeBtn) {
-            removeBtn.style.display = 'block';
-        }
+        if (removeBtn) removeBtn.style.display = 'block';
+        if (customOption) customOption.classList.add('active');
         
-        // Mark custom theme as active
-        if (customOption) {
-            customOption.classList.add('active');
-        }
-        
+        // Apply custom theme - this won't remove the background now
         applyTheme('custom');
-        showTransient('Custom background applied! 🎨');
+        showTransient('Custom theme applied! 🎨');
         
     } catch (error) {
-        console.error('Error processing custom background:', error);
+        console.error('Error:', error);
         showTransient(error.message || 'Failed to process image', true);
-        if (preview) {
-            preview.innerHTML = ''; // Clear loading on error
-        }
     } finally {
         isApplyingCustomTheme = false;
-        uploadInput.value = ''; // Clear file input
+        document.getElementById('customBgUpload').value = '';
+        if (preview) preview.innerHTML = ''; // Clear loading
     }
 }
-       function removeCustomBackground() {
+     function removeCustomBackground() {
+    // Remove custom background but keep the ability to re-apply
     messagesEl.classList.remove('with-custom-bg');
     messagesEl.style.removeProperty('--custom-messages-bg');
-    customBackgroundDataUrl = null;
-    localStorage.removeItem('eclipse_custom_messages_bg');
     
     const customStyle = document.getElementById('custom-messages-styles');
-    if (customStyle) customStyle.remove();
+    if (customStyle) {
+        // Keep the style element but remove custom background specific rules
+        const newCSS = customStyle.textContent.replace(
+            /--custom-messages-bg:.*!important;|\.messages-container\.with-custom-bg\{[^}]*\}/g, 
+            ''
+        );
+        customStyle.textContent = newCSS;
+    }
+    
+    customBackgroundDataUrl = null;
+    localStorage.removeItem('eclipse_custom_messages_bg');
     
     const removeBtn = document.getElementById('removeBgBtn');
     const preview = document.getElementById('bgPreview');
@@ -1661,41 +1871,63 @@
     if (preview) {
         preview.style.backgroundImage = '';
         preview.style.opacity = '0.7';
-        preview.classList.remove('active');
     }
     
     const customOption = document.querySelector('[data-theme="custom"]');
-    if (customOption) {
-        customOption.classList.remove('active');
-    }
+    if (customOption) customOption.classList.remove('active');
     
-    applyTheme(currentTheme === 'custom' ? 'dark' : currentTheme); // Fallback to dark if custom was active
+    // Switch to last non-custom theme or dark
+    const lastTheme = localStorage.getItem('eclipse_last_non_custom_theme') || 'dark';
+    applyTheme(lastTheme);
     showTransient('Custom background removed');
 }
         function applyTheme(theme) {
-            if (theme !== 'custom') {
-                // Remove custom messages background when switching to other themes
-                if (messagesEl.classList.contains('with-custom-bg')) {
-                    removeCustomBackground();
-                }
-            }
-            
-            document.body.className = `theme-${theme}`;
-            currentTheme = theme;
-            localStorage.setItem('eclipse_chat_theme', theme);
-            
-            document.querySelectorAll('.theme-option').forEach(opt => {
-                opt.classList.toggle('active', opt.dataset.theme === theme);
-            });
-            
-            if (theme === 'custom' && customBackgroundDataUrl) {
-                messagesEl.classList.add('with-custom-bg');
-            }
+    // Don't remove custom background when applying custom theme
+    const wasCustomActive = currentTheme === 'custom' && customBackgroundDataUrl;
+    
+    // Remove body theme class first
+    document.body.className = '';
+    
+    if (theme === 'custom' && customBackgroundDataUrl) {
+        // Apply custom theme CSS
+        document.body.classList.add('custom-messages-theme');
+        document.body.classList.add('theme-custom'); // Add custom class for body
+        
+        // Ensure messages container has custom background
+        messagesEl.classList.add('with-custom-bg');
+        messagesEl.style.setProperty('--custom-messages-bg', `url(${customBackgroundDataUrl})`);
+        
+        // Apply custom theme colors via CSS variables
+        const customStyle = document.getElementById('custom-messages-styles');
+        if (customStyle) {
+            // Make sure custom styles are always applied for custom theme
+            document.documentElement.classList.add('custom-messages-theme');
         }
+        
+    } else {
+        // Remove custom theme elements for non-custom themes
+        document.documentElement.classList.remove('custom-messages-theme');
+        messagesEl.classList.remove('with-custom-bg');
+        messagesEl.style.removeProperty('--custom-messages-bg');
+        
+        // Apply regular theme
+        document.body.classList.add(`theme-${theme}`);
+    }
+    
+    currentTheme = theme;
+    localStorage.setItem('eclipse_chat_theme', theme);
+    
+    // Update theme option active states
+    document.querySelectorAll('.theme-option').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.theme === theme);
+    });
+}
 function initThemes() {
-    // Load existing custom background
+    currentTheme = localStorage.getItem('eclipse_chat_theme') || 'dark';
     customBackgroundDataUrl = localStorage.getItem('eclipse_custom_messages_bg');
-    if (customBackgroundDataUrl) {
+    
+    // If we have custom background, apply custom theme
+    if (customBackgroundDataUrl && currentTheme === 'custom') {
         const preview = document.getElementById('bgPreview');
         const removeBtn = document.getElementById('removeBgBtn');
         const customOption = document.querySelector('[data-theme="custom"]');
@@ -1706,65 +1938,96 @@ function initThemes() {
         }
         if (removeBtn) removeBtn.style.display = 'block';
         if (customOption) customOption.classList.add('active');
+        
         messagesEl.classList.add('with-custom-bg');
         messagesEl.style.setProperty('--custom-messages-bg', `url(${customBackgroundDataUrl})`);
-        applyTheme('custom');
+        applyTheme('custom'); // This will now properly apply custom theme
     } else {
         applyTheme(currentTheme);
     }
     
     // Theme modal setup
-    document.getElementById('themeToggle').addEventListener('click', () => {
-        document.getElementById('themeModal').classList.add('active');
-    });
-
-    document.getElementById('closeTheme').addEventListener('click', () => {
-        document.getElementById('themeModal').classList.remove('active');
-    });
-
-    // Theme options - only handle non-custom themes
-    document.querySelectorAll('.theme-option:not(.custom-theme-option)').forEach(option => {
+    const themeToggle = document.getElementById('themeToggle');
+    const themeModal = document.getElementById('themeModal');
+    const closeTheme = document.getElementById('closeTheme');
+    
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            themeModal.classList.add('active');
+        });
+    }
+    
+    if (closeTheme) {
+        closeTheme.addEventListener('click', () => {
+            themeModal.classList.remove('active');
+        });
+    }
+    
+    // Theme options - handle non-custom themes
+    document.querySelectorAll('.theme-option:not([data-theme="custom"])').forEach(option => {
         option.addEventListener('click', () => {
             const theme = option.dataset.theme;
+            localStorage.setItem('eclipse_last_non_custom_theme', theme); // Save last non-custom
             applyTheme(theme);
-            document.getElementById('themeModal').classList.remove('active');
+            themeModal.classList.remove('active');
         });
     });
-
-    // Custom theme handling - don't recreate DOM
+    
+    // Custom theme handling
     const customOption = document.querySelector('[data-theme="custom"]');
     const uploadInput = document.getElementById('customBgUpload');
     const uploadBtn = document.getElementById('customBgUploadBtn');
     const removeBtn = document.getElementById('removeBgBtn');
     
+    // Upload button triggers file input
     if (uploadBtn) {
         uploadBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             uploadInput.click();
         });
     }
     
+    // Remove button
     if (removeBtn) {
-        removeBtn.addEventListener('click', removeCustomBackground);
+        removeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            removeCustomBackground();
+        });
     }
     
+    // File input change handler
     if (uploadInput) {
         uploadInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file && !isApplyingCustomTheme) {
                 e.target.value = ''; // Clear input immediately to prevent re-trigger
                 await applyCustomMessagesBackground(file);
-                document.getElementById('themeModal').classList.remove('active');
+                themeModal.classList.remove('active');
             }
         });
     }
     
+    // Custom option click - just open modal or re-apply if already active
+    if (customOption) {
+        customOption.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentTheme === 'custom' && customBackgroundDataUrl) {
+                applyTheme('custom'); // Re-apply if already active
+            }
+            // Modal opens via themeToggle anyway
+        });
+    }
+    
     // Close modal on outside click
-    document.getElementById('themeModal').addEventListener('click', (e) => {
-        if (e.target.id === 'themeModal') {
-            e.target.classList.remove('active');
-        }
-    });
+    if (themeModal) {
+        themeModal.addEventListener('click', (e) => {
+            if (e.target.id === 'themeModal') {
+                e.target.classList.remove('active');
+            }
+        });
+    }
 }
 
         /***** Utility Functions *****/
@@ -1798,21 +2061,38 @@ function initThemes() {
         function sanitizeName(n){
             return n.replace(/[^a-zA-Z0-9 ]/g,'').slice(0,24);
         }
+function showTransient(text, danger = false) {
+    const t = document.createElement('div');
+    t.style.cssText = `
+        position: fixed; right: 22px; bottom: 22px; z-index: 160;
+        background: ${danger ? 'linear-gradient(90deg,#ef444433,#ef444422)' : 'linear-gradient(90deg,#6b5ce7 22,#8c7ae6 11)'};
+        padding: 10px 14px; border-radius: 12px; color: ${danger ? '#fee2e2' : '#e0f2fe'};
+        backdrop-filter: blur(1px); border: 1px solid var(--eclipse-border);
+        font-family: inherit; font-size: 14px;
+        animation: slideIn 0.3s ease-out;
+    `;
+    t.textContent = text;
+    document.body.appendChild(t);
+    
+    // Add slide in animation
+    requestAnimationFrame(() => t.style.animation = 'slideIn 0.3s ease-out');
+    
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(100%)';
+    }, 2200);
+    setTimeout(() => t.remove(), 2600);
+}
 
-        function showTransient(text, danger=false){
-            const t = document.createElement('div');
-            t.style.cssText = `
-                position: fixed; right: 22px; bottom: 22px; z-index: 160;
-                background: ${danger ? 'linear-gradient(90deg,#ef444433,#ef444422)' : 'linear-gradient(90deg,#6b5ce722,#8c7ae611)'};
-                padding: 10px 14px; border-radius: 12px; color: ${danger ? '#fee2e2' : '#e0f2fe'};
-                backdrop-filter: blur(1px); border: 1px solid var(--eclipse-border);
-                font-family: inherit;
-            `;
-            t.textContent = text;
-            document.body.appendChild(t);
-            setTimeout(()=> t.style.opacity = '0', 2200);
-            setTimeout(()=> t.remove(), 2600);
-        }
+// Add this CSS for the animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+`;
+document.head.appendChild(style);
 
         /***** Chat Functions *****/
         function switchToChat(chatType, chatId) {
@@ -1905,56 +2185,193 @@ function initThemes() {
             
             userCountEl.textContent = members.length;
         }
+        // ===== ADD THIS BEFORE addMessageToDOM =====
+function attachReactionTriggers(msgEl) {
+    let longpressTimer = null;
+    
+    function openMenuAt(x, y, mid) {
+        reactionMenu.style.display = 'flex';
+        reactionMenu.style.left = (x - 8) + 'px';
+        reactionMenu.style.top = (y - 52) + 'px';
+        reactionMenu.setAttribute('data-mid', mid);
+    }
+    
+    function closeMenu() {
+        reactionMenu.style.display = 'none';
+        reactionMenu.removeAttribute('data-mid');
+    }
+    
+    // Right-click for desktop
+    msgEl.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const mid = msgEl.getAttribute('data-mid');
+        openMenuAt(e.clientX, e.clientY, mid);
+    });
+    
+    // Touch support for mobile
+    msgEl.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) return;
+        const startCoords = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        longpressTimer = setTimeout(() => {
+            const mid = msgEl.getAttribute('data-mid');
+            openMenuAt(startCoords.x, startCoords.y, mid);
+        }, 600);
+    }, { passive: true });
+    
+    ['touchend', 'touchmove', 'touchcancel'].forEach(ev => 
+        msgEl.addEventListener(ev, () => {
+            if (longpressTimer) {
+                clearTimeout(longpressTimer);
+                longpressTimer = null;
+            }
+        }, { passive: true })
+    );
+    
+    // Close menu on outside click or escape
+    const closeHandler = (e) => {
+        if (reactionMenu.style.display !== 'none' && !reactionMenu.contains(e.target)) closeMenu();
+    };
+    document.addEventListener('click', closeHandler);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMenu();
+    });
+}
+// ===== END FUNCTION =====
 
-        function addMessageToDOM(data, isSelf=false){
-            if(!data || !data.id) return;
-            if(seenMessageIds.has(data.id)) return;
-            seenMessageIds.add(data.id);
+     function addMessageToDOM(data, isSelf = false) {
+    if (!data || !data.id) return;
+    if (seenMessageIds.has(data.id)) return;
+    seenMessageIds.add(data.id);
 
-            const mid = data.id;
-            const wrap = document.createElement('div');
-            wrap.className = 'message' + (isSelf ? ' self' : '');
-            if (data.isDM) wrap.classList.add('dm-message');
-            if (data.type === 'system') wrap.classList.add('system-message');
-            wrap.setAttribute('data-mid', mid);
-            wrap.setAttribute('tabindex', '-1');
+    const mid = data.id;
+    const wrap = document.createElement('div');
+    wrap.className = 'message' + (isSelf ? ' self' : '');
+    if (data.isDM) wrap.classList.add('dm-message');
+    if (data.type === 'system') wrap.classList.add('system-message');
+    if (data.replyTo) wrap.classList.add('has-reply');
+    wrap.setAttribute('data-mid', mid);
+    wrap.setAttribute('tabindex', '-1');
+    wrap.setAttribute('data-reply-to', data.replyTo || '');
 
-            const messageHeader = document.createElement('div');
-            messageHeader.className = 'message-header';
-            
-            const userSection = document.createElement('div');
-            userSection.className = 'message-user';
-            userSection.innerHTML = `
-                <span class="user-prompt">$</span>
-                <span class="user-name">${escapeHtml(data.name || 'Unknown')}</span>
-                ${data.isDM ? '<span class="dm-indicator">[DM]</span>' : ''}
-            `;
-            
-            const timeSection = document.createElement('div');
-            timeSection.className = 'message-time';
-            timeSection.textContent = formatTime(data.timestamp);
-            
-            messageHeader.appendChild(userSection);
-            messageHeader.appendChild(timeSection);
+    // Reply indicator if this message is a reply
+    if (data.replyTo) {
+        const replyIndicator = document.createElement('div');
+        replyIndicator.className = 'reply-indicator';
+        replyIndicator.innerHTML = `
+            <span>${escapeHtml(data.replyToName || 'Unknown')}</span>
+            <button class="reply-button" data-action="view-reply">View</button>
+        `;
+        wrap.appendChild(replyIndicator);
+    }
 
-            const content = document.createElement('div');
-            content.className = 'message-content';
-            content.innerHTML = formatLinks(data.text || '');
+    const messageHeader = document.createElement('div');
+    messageHeader.className = 'message-header';
+    
+    const userSection = document.createElement('div');
+    userSection.className = 'message-user';
+    userSection.innerHTML = `
+        <span class="user-prompt">$</span>
+        <span class="user-name">${escapeHtml(data.name || 'Unknown')}</span>
+        ${data.isDM ? '<span class="dm-indicator">[DM]</span>' : ''}
+        <button class="reply-button" data-action="reply" title="Reply to this message">
+            <i class="fas fa-reply"></i>
+        </button>
+    `;
+    
+    const timeSection = document.createElement('div');
+    timeSection.className = 'message-time';
+    timeSection.textContent = formatTime(data.timestamp);
+    
+    messageHeader.appendChild(userSection);
+    messageHeader.appendChild(timeSection);
 
-            const reactionsHolder = document.createElement('div');
-            reactionsHolder.className = 'reactions';
-            reactionsHolder.setAttribute('data-mid', mid);
+    const content = document.createElement('div');
+    content.className = 'message-content';
+    content.innerHTML = formatLinks(data.text || '');
 
-            wrap.appendChild(messageHeader);
-            wrap.appendChild(content);
-            wrap.appendChild(reactionsHolder);
+    const reactionsHolder = document.createElement('div');
+    reactionsHolder.className = 'reactions';
+    reactionsHolder.setAttribute('data-mid', mid);
 
-            attachReactionTriggers(wrap);
-            messagesEl.appendChild(wrap);
-            messagesEl.scrollTop = messagesEl.scrollHeight;
+    wrap.appendChild(messageHeader);
+    if (data.replyTo) wrap.appendChild(replyIndicator); // Add after header if reply
+    wrap.appendChild(content);
+    wrap.appendChild(reactionsHolder);
 
-            if(reactionsMap[mid]) renderReactions(mid);
-        }
+    // Handle reply buttons
+    const replyBtn = wrap.querySelector('[data-action="reply"]');
+    const viewReplyBtn = wrap.querySelector('[data-action="view-reply"]');
+    
+    if (replyBtn) {
+        replyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setReplyTo(mid, data.name);
+        });
+    }
+    
+    if (viewReplyBtn) {
+        viewReplyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            scrollToMessage(data.replyTo);
+        });
+    }
+
+    attachReactionTriggers(wrap);
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    // Notify if not self and not current chat
+    if (!isSelf) {
+        notifyNewMessage(data, isSelf);
+    }
+
+    if (reactionsMap[mid]) renderReactions(mid);
+}
+        let currentReplyTo = null;
+let currentReplyToName = null;
+
+function setReplyTo(messageId, replyToName) {
+    currentReplyTo = messageId;
+    currentReplyToName = replyToName;
+    
+    const inputLine = document.querySelector('.input-line');
+    inputLine.classList.add('replying-state');
+    inputLine.setAttribute('data-reply-to', replyToName);
+    
+    messageInput.placeholder = `Replying to @${replyToName}... (press Esc to cancel)`;
+    messageInput.focus();
+    
+    showTransient(`Replying to @${replyToName}`);
+}
+
+// ===== REMOVE THIS STRAY LINE BELOW: =====
+// messageInput.placeholder = 'type message and press enter...';
+// messageInput.focus();
+
+function clearReplyState() {
+    currentReplyTo = null;
+    currentReplyToName = null;
+    
+    const inputLine = document.querySelector('.input-line');
+    inputLine.classList.remove('replying-state');
+    inputLine.removeAttribute('data-reply-to');
+    
+    messageInput.placeholder = currentChatType === 'public' ? 
+        'type message and press enter...' : 
+        `message @${currentChatId}...`;
+}
+
+// Scroll to specific message
+function scrollToMessage(messageId) {
+    const message = messagesEl.querySelector(`[data-mid="${messageId}"]`);
+    if (message) {
+        message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        message.style.background = 'rgba(107, 92, 231, 0.2)';
+        setTimeout(() => {
+            message.style.background = '';
+        }, 2000);
+    }
+}
 
         function renderReactions(mid){
             const holder = messagesEl.querySelector(`.reactions[data-mid="${mid}"]`);
@@ -2011,46 +2428,52 @@ function initThemes() {
             renderReactions(mid);
         }
 
-        function attachReactionTriggers(msgEl){
-            let longpressTimer = null;
-            function openMenuAt(x,y, mid){
-                reactionMenu.style.display = 'flex';
-                reactionMenu.style.left = (x - 8) + 'px';
-                reactionMenu.style.top = (y - 52) + 'px';
-                reactionMenu.setAttribute('data-mid', mid);
+        function attachReactionTriggers(msgEl) {
+    let longpressTimer = null;
+    function openMenuAt(x, y, mid) {
+        reactionMenu.style.display = 'flex';
+        reactionMenu.style.left = (x - 8) + 'px';
+        reactionMenu.style.top = (y - 52) + 'px';
+        reactionMenu.setAttribute('data-mid', mid);
+    }
+            function closeMenu() {
+        reactionMenu.style.display = 'none';
+        reactionMenu.removeAttribute('data-mid');
+    }
+    
+    msgEl.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const mid = msgEl.getAttribute('data-mid');
+        openMenuAt(e.clientX, e.clientY, mid);
+    });
+           // Touch support for mobile
+    msgEl.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) return;
+        const startCoords = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        longpressTimer = setTimeout(() => {
+            const mid = msgEl.getAttribute('data-mid');
+            openMenuAt(startCoords.x, startCoords.y, mid);
+        }, 600);
+    }, { passive: true });
+    
+    ['touchend', 'touchmove', 'touchcancel'].forEach(ev => 
+        msgEl.addEventListener(ev, () => {
+            if (longpressTimer) {
+                clearTimeout(longpressTimer);
+                longpressTimer = null;
             }
-            function closeMenu(){
-                reactionMenu.style.display = 'none';
-                reactionMenu.removeAttribute('data-mid');
-            }
-            msgEl.addEventListener('contextmenu', (e)=>{
-                e.preventDefault();
-                const mid = msgEl.getAttribute('data-mid');
-                openMenuAt(e.clientX, e.clientY, mid);
-            });
-            msgEl.addEventListener('touchstart', (e)=>{
-                if(e.touches.length > 1) return;
-                const startCoords = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                longpressTimer = setTimeout(()=>{
-                    const mid = msgEl.getAttribute('data-mid');
-                    openMenuAt(startCoords.x, startCoords.y, mid);
-                }, 600);
-            }, {passive:true});
-            ['touchend','touchmove','touchcancel'].forEach(ev => 
-                msgEl.addEventListener(ev, () => {
-                    if(longpressTimer){
-                        clearTimeout(longpressTimer);
-                        longpressTimer = null;
-                    }
-                }, {passive:true})
-            );
-            document.addEventListener('click', (e)=> {
-                if(reactionMenu.style.display !== 'none' && !reactionMenu.contains(e.target)) closeMenu();
-            });
-            document.addEventListener('keydown', (e)=> {
-                if(e.key === 'Escape') closeMenu();
-            });
-        }
+        }, { passive: true })
+    );
+            // Close menu on outside click or escape
+    const closeHandler = (e) => {
+        if (reactionMenu.style.display !== 'none' && !reactionMenu.contains(e.target)) closeMenu();
+    };
+    document.addEventListener('click', closeHandler);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMenu();
+    });
+}
+         
 
         function connectToRoom(){
             drone = new ScaleDrone(CLIENT_ID, {
@@ -2079,56 +2502,72 @@ function initThemes() {
                     });
                 });
 
-                room.on('data', (data, member) => {
-                    if(!data) return;
-                    
-                    if(data.type === 'reaction'){
-                        const payload = {
-                            messageId: data.messageId,
-                            reaction: data.reaction,
-                            actor: data.actor || member?.id || 'remote',
-                            timestamp: data.timestamp
-                        };
-                        handleIncomingReaction(payload);
-                        return;
-                    }
+              // Update the room data handler to support replies
+// In connectToRoom(), replace the room.on('data') handler:
+room.on('data', (data, member) => {
+    if (!data) return;
+    
+    // Handle reactions first
+    if (data.type === 'reaction') {
+        const payload = {
+            messageId: data.messageId,
+            reaction: data.reaction,
+            actor: data.actor || member?.id || 'remote',
+            timestamp: data.timestamp
+        };
+        handleIncomingReaction(payload);
+        return;
+    }
 
-                    if(data.type === 'join'){
-                        showTransient(`${data.name} joined`);
-                        return;
-                    }
+    if (data.type === 'join') {
+        showTransient(`${data.name} joined`);
+        return;
+    }
 
-                    if(data.type === 'dm'){
-                        const senderName = data.name;
-                        const targetName = data.target;
-                        
-                        if(targetName === userName || senderName === userName) {
-                            const chatPartner = senderName === userName ? targetName : senderName;
-                            
-                            if(!dmConversations.has(chatPartner)) {
-                                addDMConversation(chatPartner);
-                            }
-                            
-                            const dmMessage = { ...data, isDM: true };
-                            dmConversations.get(chatPartner).push(dmMessage);
-                            
-                            if(currentChatType === 'dm' && currentChatId === chatPartner) {
-                                addMessageToDOM(dmMessage, senderName === userName);
-                            } else {
-                                const currentUnread = unreadCounts.get(chatPartner) || 0;
-                                unreadCounts.set(chatPartner, currentUnread + 1);
-                                updateUnreadCount(chatPartner, currentUnread + 1);
-                            }
-                        }
-                        return;
-                    }
+    if (data.type === 'dm') {
+        const senderName = data.name;
+        const targetName = data.target;
+        
+        if (targetName === userName || senderName === userName) {
+            const chatPartner = senderName === userName ? targetName : senderName;
+            
+            if (!dmConversations.has(chatPartner)) {
+                addDMConversation(chatPartner);
+            }
+            
+            const dmMessage = { ...data, isDM: true };
+            dmConversations.get(chatPartner).push(dmMessage);
+            
+            if (currentChatType === 'dm' && currentChatId === chatPartner) {
+                addMessageToDOM(dmMessage, senderName === userName);
+            } else {
+                const currentUnread = unreadCounts.get(chatPartner) || 0;
+                unreadCounts.set(chatPartner, currentUnread + 1);
+                updateUnreadCount(chatPartner, currentUnread + 1);
+                notifyNewMessage(dmMessage, false);
+            }
+        }
+        return;
+    }
 
-                    if(data.id && currentChatType === 'public') {
-                        if(!seenMessageIds.has(data.id)) {
-                            addMessageToDOM(data, false);
-                        }
-                    }
-                });
+    // Handle ALL regular messages (public or DMs directed to us)
+    if (data.id && !seenMessageIds.has(data.id)) {
+        // Check if this is a DM targeted to us
+        if (data.type === 'dm' && data.target === userName) {
+            const chatPartner = data.name;
+            if (!dmConversations.has(chatPartner)) {
+                addDMConversation(chatPartner);
+            }
+            dmConversations.get(chatPartner).push(data);
+            if (currentChatType === 'dm' && currentChatId === chatPartner) {
+                addMessageToDOM(data, false);
+            }
+        } else if (currentChatType === 'public' && !data.isDM) {
+            // Public messages
+            addMessageToDOM(data, data.name === userName);
+        }
+    }
+});
 
                 room.on('member_join', (m) => updateOnlineUsers(room.members));
                 room.on('member_leave', (m) => updateOnlineUsers(room.members));
@@ -2139,41 +2578,81 @@ function initThemes() {
             drone.on('error', (err) => showTransient('Connection error', true));
         }
 
-        function sendMessage(){
-            const text = messageInput.value.trim();
-            if(!text) return;
+        function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!text) return;
 
-            const id = uid();
-            const timestamp = new Date().toISOString();
+    const id = uid();
+    const timestamp = new Date().toISOString();
+    const isReply = currentReplyTo !== null;
 
-            if(currentPrivateRoom) {
-                sendPrivateMessage();
-                return;
-            }
+    let payload = {
+        id,
+        text,
+        name: userName,
+        timestamp,
+        replyTo: isReply ? currentReplyTo : null,
+        replyToName: isReply ? currentReplyToName : null
+    };
 
-            if(currentChatType === 'public') {
-                const payload = { id, text, name: userName, timestamp };
-                if(drone && room){
-                    drone.publish({ room: `observable-${roomCode}`, message: payload });
-                }
-                addMessageToDOM(payload, true);
-                seenMessageIds.add(id);
-            } else if(currentChatType === 'dm') {
-                const dmPayload = { id, type: 'dm', text, name: userName, target: currentChatId, timestamp, isDM: true };
-                if(drone && room){
-                    drone.publish({ room: `observable-${roomCode}`, message: dmPayload });
-                }
-                if(!dmConversations.has(currentChatId)) {
-                    addDMConversation(currentChatId);
-                }
-                dmConversations.get(currentChatId).push(dmPayload);
-                addMessageToDOM(dmPayload, true);
-                seenMessageIds.add(id);
-            }
+    if (currentPrivateRoom) {
+        payload.type = 'private';
+        sendPrivateMessage(payload);
+        clearReplyState();
+        return;
+    }
 
-            messageInput.value = '';
-            messageInput.focus();
+    if (currentChatType === 'public') {
+        if (drone && room) {
+            drone.publish({ room: `observable-${roomCode}`, message: payload });
         }
+        addMessageToDOM(payload, true);
+    } else if (currentChatType === 'dm') {
+        payload.type = 'dm';
+        payload.target = currentChatId;
+        payload.isDM = true;
+        
+        if (drone && room) {
+            drone.publish({ room: `observable-${roomCode}`, message: payload });
+        }
+        if (!dmConversations.has(currentChatId)) {
+            addDMConversation(currentChatId);
+        }
+        dmConversations.get(currentChatId).push(payload);
+        addMessageToDOM(payload, true);
+    }
+
+    // Clear reply state after sending
+    clearReplyState();
+    messageInput.value = '';
+    messageInput.focus();
+}
+
+// Update private message sending
+function sendPrivateMessage(payload = null) {
+    const text = payload?.text || messageInput.value.trim();
+    if (!text) return;
+    
+    const msg = {
+        id: payload?.id || uid(),
+        text,
+        name: userName,
+        timestamp: payload?.timestamp || new Date().toISOString(),
+        replyTo: payload?.replyTo || currentReplyTo,
+        replyToName: payload?.replyToName || currentReplyToName,
+        type: 'private'
+    };
+    
+    const roomData = privateRooms.get(currentPrivateRoom);
+    if (roomData) {
+        roomData.messages.push(msg);
+        addMessageToDOM(msg, true);
+        savePrivateRooms();
+        clearReplyState();
+    }
+    
+    if (!payload) messageInput.value = '';
+}
 
         function sendPrivateMessage() {
             if (!currentPrivateRoom) return sendMessage();
@@ -2301,10 +2780,22 @@ function initThemes() {
         }
 
         function loadPrivateRooms() {
-            const saved = localStorage.getItem('eclipse_private_rooms');
-            if (saved) privateRooms = new Map(JSON.parse(saved));
-            updatePrivateRoomsUI();
-        }
+    const saved = localStorage.getItem('eclipse_private_rooms');
+    if (saved) {
+        const roomsArray = JSON.parse(saved);
+        privateRooms = new Map(roomsArray);
+        
+        // Ensure reply data is preserved
+        privateRooms.forEach((roomData) => {
+            roomData.messages.forEach(msg => {
+                if (msg.replyTo && !msg.replyToName) {
+                    msg.replyToName = 'Unknown';
+                }
+            });
+        });
+    }
+    updatePrivateRoomsUI();
+}
 
         function updatePrivateRoomsUI() {
             // This would update a private rooms list if you add one to the UI
@@ -2312,12 +2803,14 @@ function initThemes() {
 
         /***** Event Listeners *****/
         sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keydown', (e)=>{
-            if(e.key === 'Enter' && !e.shiftKey){
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+       messageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    } else if (e.key === 'Escape') {
+        clearReplyState(); // Cancel reply with Escape
+    }
+});
 
         micBtn.addEventListener('click', ()=> {
             if(isRecording) stopRecognition();
@@ -2346,6 +2839,8 @@ function initThemes() {
                 reactionMenu.style.transform = '';
             }, 120);
         });
+        document.addEventListener('click', requestNotificationPermission, { once: true });
+document.addEventListener('keydown', requestNotificationPermission, { once: true });
 
         document.addEventListener('click', (e) => {
             const chatItem = e.target.closest('.chat-item');
