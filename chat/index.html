@@ -2238,7 +2238,7 @@ function attachReactionTriggers(msgEl) {
 }
 // ===== END FUNCTION =====
 
-     function addMessageToDOM(data, isSelf = false) {
+    function addMessageToDOM(data, isSelf = false) {
     if (!data || !data.id) return;
     if (seenMessageIds.has(data.id)) return;
     seenMessageIds.add(data.id);
@@ -2251,52 +2251,37 @@ function attachReactionTriggers(msgEl) {
     if (data.replyTo) wrap.classList.add('has-reply');
     wrap.setAttribute('data-mid', mid);
     wrap.setAttribute('tabindex', '-1');
-    wrap.setAttribute('data-reply-to', data.replyTo || '');
+
+    // Build message content
+    let messageHTML = '';
 
     // Reply indicator if this message is a reply
-    if (data.replyTo) {
-        const replyIndicator = document.createElement('div');
-        replyIndicator.className = 'reply-indicator';
-        replyIndicator.innerHTML = `
-            <span>${escapeHtml(data.replyToName || 'Unknown')}</span>
-            <button class="reply-button" data-action="view-reply">View</button>
+    if (data.replyTo && data.replyToName) {
+        messageHTML += `
+            <div class="reply-indicator">
+                <span>Replying to ${escapeHtml(data.replyToName)}</span>
+                <button class="reply-button" data-action="view-reply">View</button>
+            </div>
         `;
-        wrap.appendChild(replyIndicator);
     }
 
-    const messageHeader = document.createElement('div');
-    messageHeader.className = 'message-header';
-    
-    const userSection = document.createElement('div');
-    userSection.className = 'message-user';
-    userSection.innerHTML = `
-        <span class="user-prompt">$</span>
-        <span class="user-name">${escapeHtml(data.name || 'Unknown')}</span>
-        ${data.isDM ? '<span class="dm-indicator">[DM]</span>' : ''}
-        <button class="reply-button" data-action="reply" title="Reply to this message">
-            <i class="fas fa-reply"></i>
-        </button>
+    messageHTML += `
+        <div class="message-header">
+            <div class="message-user">
+                <span class="user-prompt">$</span>
+                <span class="user-name">${escapeHtml(data.name || 'Unknown')}</span>
+                ${data.isDM ? '<span class="dm-indicator">[DM]</span>' : ''}
+                <button class="reply-button" data-action="reply" title="Reply to this message">
+                    <i class="fas fa-reply"></i>
+                </button>
+            </div>
+            <div class="message-time">${formatTime(data.timestamp)}</div>
+        </div>
+        <div class="message-content">${formatLinks(data.text || '')}</div>
+        <div class="reactions" data-mid="${mid}"></div>
     `;
-    
-    const timeSection = document.createElement('div');
-    timeSection.className = 'message-time';
-    timeSection.textContent = formatTime(data.timestamp);
-    
-    messageHeader.appendChild(userSection);
-    messageHeader.appendChild(timeSection);
 
-    const content = document.createElement('div');
-    content.className = 'message-content';
-    content.innerHTML = formatLinks(data.text || '');
-
-    const reactionsHolder = document.createElement('div');
-    reactionsHolder.className = 'reactions';
-    reactionsHolder.setAttribute('data-mid', mid);
-
-    wrap.appendChild(messageHeader);
-    if (data.replyTo) wrap.appendChild(replyIndicator); // Add after header if reply
-    wrap.appendChild(content);
-    wrap.appendChild(reactionsHolder);
+    wrap.innerHTML = messageHTML;
 
     // Handle reply buttons
     const replyBtn = wrap.querySelector('[data-action="reply"]');
@@ -2312,7 +2297,9 @@ function attachReactionTriggers(msgEl) {
     if (viewReplyBtn) {
         viewReplyBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            scrollToMessage(data.replyTo);
+            if (data.replyTo) {
+                scrollToMessage(data.replyTo);
+            }
         });
     }
 
@@ -2327,8 +2314,6 @@ function attachReactionTriggers(msgEl) {
 
     if (reactionsMap[mid]) renderReactions(mid);
 }
-        let currentReplyTo = null;
-let currentReplyToName = null;
 
 function setReplyTo(messageId, replyToName) {
     currentReplyTo = messageId;
@@ -2359,6 +2344,8 @@ function clearReplyState() {
     messageInput.placeholder = currentChatType === 'public' ? 
         'type message and press enter...' : 
         `message @${currentChatId}...`;
+    
+    messageInput.focus();
 }
 
 // Scroll to specific message
@@ -2507,6 +2494,8 @@ function scrollToMessage(messageId) {
 room.on('data', (data, member) => {
     if (!data) return;
     
+    console.log('=== RECEIVED DATA ===', data);
+    
     // Handle reactions first
     if (data.type === 'reaction') {
         const payload = {
@@ -2524,6 +2513,7 @@ room.on('data', (data, member) => {
         return;
     }
 
+    // Handle DM messages
     if (data.type === 'dm') {
         const senderName = data.name;
         const targetName = data.target;
@@ -2550,23 +2540,18 @@ room.on('data', (data, member) => {
         return;
     }
 
-    // Handle ALL regular messages (public or DMs directed to us)
-    if (data.id && !seenMessageIds.has(data.id)) {
-        // Check if this is a DM targeted to us
-        if (data.type === 'dm' && data.target === userName) {
-            const chatPartner = data.name;
-            if (!dmConversations.has(chatPartner)) {
-                addDMConversation(chatPartner);
-            }
-            dmConversations.get(chatPartner).push(data);
-            if (currentChatType === 'dm' && currentChatId === chatPartner) {
-                addMessageToDOM(data, false);
-            }
-        } else if (currentChatType === 'public' && !data.isDM) {
-            // Public messages
+    // ===== FIXED SECTION =====
+    // Handle regular messages (public messages)
+    if (data.id && data.text && data.name && !seenMessageIds.has(data.id)) {
+        console.log('Processing regular message:', data);
+        
+        // If it's a public message (type 'message' or no type) and we're in public chat
+        if ((!data.type || data.type === 'message') && currentChatType === 'public' && !data.isDM) {
+            console.log('Adding public message to DOM');
             addMessageToDOM(data, data.name === userName);
         }
     }
+    // ===== END FIXED SECTION =====
 });
 
                 room.on('member_join', (m) => updateOnlineUsers(room.members));
@@ -2578,7 +2563,7 @@ room.on('data', (data, member) => {
             drone.on('error', (err) => showTransient('Connection error', true));
         }
 
-        function sendMessage() {
+function sendMessage() {
     const text = messageInput.value.trim();
     if (!text) return;
 
@@ -2586,28 +2571,35 @@ room.on('data', (data, member) => {
     const timestamp = new Date().toISOString();
     const isReply = currentReplyTo !== null;
 
+    // SIMPLIFIED payload - don't use type for regular messages
     let payload = {
         id,
         text,
         name: userName,
-        timestamp,
-        replyTo: isReply ? currentReplyTo : null,
-        replyToName: isReply ? currentReplyToName : null
+        timestamp
     };
 
-    if (currentPrivateRoom) {
-        payload.type = 'private';
-        sendPrivateMessage(payload);
-        clearReplyState();
-        return;
+    // Add reply data if replying
+    if (isReply) {
+        payload.replyTo = currentReplyTo;
+        payload.replyToName = currentReplyToName;
     }
 
-    if (currentChatType === 'public') {
-        if (drone && room) {
-            drone.publish({ room: `observable-${roomCode}`, message: payload });
+    // Clear input immediately
+    messageInput.value = '';
+    
+    // Handle private rooms
+    if (currentPrivateRoom) {
+        payload.type = 'private';
+        const roomData = privateRooms.get(currentPrivateRoom);
+        if (roomData) {
+            roomData.messages.push(payload);
+            addMessageToDOM(payload, true);
+            savePrivateRooms();
         }
-        addMessageToDOM(payload, true);
-    } else if (currentChatType === 'dm') {
+    } 
+    // Handle DM messages
+    else if (currentChatType === 'dm') {
         payload.type = 'dm';
         payload.target = currentChatId;
         payload.isDM = true;
@@ -2621,10 +2613,16 @@ room.on('data', (data, member) => {
         dmConversations.get(currentChatId).push(payload);
         addMessageToDOM(payload, true);
     }
+    // Handle public messages (NO TYPE NEEDED)
+    else if (currentChatType === 'public') {
+        if (drone && room) {
+            drone.publish({ room: `observable-${roomCode}`, message: payload });
+        }
+        addMessageToDOM(payload, true);
+    }
 
     // Clear reply state after sending
     clearReplyState();
-    messageInput.value = '';
     messageInput.focus();
 }
 
@@ -2654,29 +2652,7 @@ function sendPrivateMessage(payload = null) {
     if (!payload) messageInput.value = '';
 }
 
-        function sendPrivateMessage() {
-            if (!currentPrivateRoom) return sendMessage();
-            
-            const text = messageInput.value.trim();
-            if (!text) return;
-            
-            const msg = {
-                id: uid(),
-                text,
-                name: userName,
-                timestamp: new Date().toISOString(),
-                type: 'private'
-            };
-            
-            const roomData = privateRooms.get(currentPrivateRoom);
-            if (roomData) {
-                roomData.messages.push(msg);
-                addMessageToDOM(msg, true);
-                savePrivateRooms();
-            }
-            
-            messageInput.value = '';
-        }
+       
 
         function initSpeech(){
             if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
@@ -2803,12 +2779,16 @@ function sendPrivateMessage(payload = null) {
 
         /***** Event Listeners *****/
         sendBtn.addEventListener('click', sendMessage);
-       messageInput.addEventListener('keydown', (e) => {
+      messageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
     } else if (e.key === 'Escape') {
-        clearReplyState(); // Cancel reply with Escape
+        if (currentReplyTo) {
+            e.preventDefault();
+            clearReplyState(); // Cancel reply with Escape
+            showTransient('Reply cancelled');
+        }
     }
 });
 
