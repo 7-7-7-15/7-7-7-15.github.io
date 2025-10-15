@@ -1141,6 +1141,110 @@
         .room-input-btn:hover {
             opacity: 0.9;
         }
+        .messages-container.with-custom-bg {
+    background: var(--custom-messages-bg, var(--eclipse-gradient)) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    image-rendering: -webkit-optimize-contrast; /* Chrome */
+    image-rendering: crisp-edges; /* Firefox */
+    image-rendering: pixelated; /* Safari */
+    image-rendering: auto; /* Default */
+    position: relative;
+    /* Add explicit width/height for better rendering */
+    width: 100%;
+    height: 100%;
+}
+
+.theme-preview {
+    width: 100%;
+    height: 60px;
+    border-radius: 6px;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    image-rendering: auto;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    border: 2px solid transparent;
+    margin-top: 8px;
+    /* Ensure sharp rendering */
+    image-rendering: -webkit-optimize-contrast;
+}
+        .messages-container.with-custom-bg {
+    background: var(--custom-messages-bg, var(--eclipse-gradient)) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: scroll !important; /* Changed from fixed */
+    position: relative;
+    /* Remove blur and improve sharpness */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    /* High-DPI support */
+    image-rendering: auto;
+}
+
+/* Remove the darkening overlay OR make it optional */
+.messages-container.with-custom-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Make overlay much lighter or remove it */
+    background: rgba(0, 0, 0, 0.1); /* Reduced from 0.6 */
+    z-index: 1;
+    /* Remove backdrop-filter blur */
+    /* backdrop-filter: blur(2px); - REMOVED */
+    /* Add crisp rendering */
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+/* Ensure messages render sharply over background */
+.messages-container.with-custom-bg > * {
+    position: relative;
+    z-index: 2;
+    /* Prevent subpixel rendering issues */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fix message rendering */
+.message {
+    margin-bottom: 20px;
+    padding: 16px;
+    border: 1px solid var(--eclipse-border);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08) !important; /* More opaque for readability */
+    backdrop-filter: none !important; /* Remove blur from messages */
+    -webkit-backdrop-filter: none !important;
+    animation: messageAppear 0.3s ease-out;
+    position: relative;
+    transition: all 0.2s;
+    /* Ensure sharp rendering */
+    transform: translateZ(0);
+    will-change: transform;
+    image-rendering: auto;
+}
+
+.message.self {
+    background: rgba(107, 92, 231, 0.15) !important; /* More opaque */
+    border-color: var(--eclipse-primary);
+}
+
+.message:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    /* Don't blur on hover */
+    filter: none;
+}
     </style>
 </head>
 
@@ -1359,156 +1463,198 @@
             );
         }
 
-        async function generateCustomThemeFromImage(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        ctx.drawImage(img, 0, 0);
-                        
-                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        const data = imageData.data;
-                        const colorCounts = {};
-                        
-                        for (let i = 0; i < data.length; i += 40) {
-                            const r = data[i];
-                            const g = data[i + 1];
-                            const b = data[i + 2];
-                            const alpha = data[i + 3];
-                            
-                            if (alpha > 128) {
-                                const colorKey = `${Math.round(r/32)*32},${Math.round(g/32)*32},${Math.round(b/32)*32}`;
-                                colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1;
-                            }
-                        }
-                        
-                        const dominantColor = Object.keys(colorCounts).reduce((a, b) => 
-                            colorCounts[a] > colorCounts[b] ? a : b
-                        );
-                        
-                        const [r, g, b] = dominantColor.split(',').map(Number);
-                        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                        
-                        const themeColors = {
-                            primary: `rgb(${r}, ${g}, ${b})`,
-                            bg: luminance > 0.5 ? 
-                                `rgb(${Math.max(0, r-80)}, ${Math.max(0, g-80)}, ${Math.max(0, b-80)})` :
-                                `rgb(${r}, ${g}, ${b})`,
-                            surface: luminance > 0.5 ? 
-                                `rgb(${Math.max(0, r-60)}, ${Math.max(0, g-60)}, ${Math.max(0, b-60)})` :
-                                `rgb(${Math.min(255, r+40)}, ${Math.min(255, g+40)}, ${Math.min(255, b+40)})`,
-                            text: luminance > 0.5 ? '#1a1a2e' : '#e0e0e0',
-                            border: `rgb(${r}, ${g}, ${b})`,
-                            accent: `rgb(${Math.min(255, r+40)}, ${Math.min(255, g+40)}, ${Math.min(255, b+40)})`
-                        };
-                        
-                        resolve({ 
-                            imageData: e.target.result, 
-                            themeColors,
-                            bgImage: `url(${e.target.result})`
-                        });
-                    };
-                    img.src = e.target.result;
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
+       async function generateCustomThemeFromImage(file) {
+    return new Promise((resolve, reject) => {
+        // Validate file size (limit to 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            reject(new Error('Image too large. Please use images under 5MB.'));
+            return;
         }
 
-        async function applyCustomMessagesBackground(file) {
-            if (!file || !file.type.startsWith('image/')) {
-                showTransient('Please select a valid image file', true);
-                return;
-            }
-            
-            isApplyingCustomTheme = true;
-            const customOption = document.querySelector('[data-theme="custom"]');
-            const preview = document.getElementById('bgPreview');
-            const removeBtn = document.getElementById('removeBgBtn');
-            
-            if (customOption) {
-                customOption.innerHTML = '<div class="custom-loading"><div class="spinner"></div>Processing...</div>';
-            }
-            
-            try {
-                const { imageData, themeColors, bgImage } = await generateCustomThemeFromImage(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                // Create optimized canvas - limit dimensions for performance
+                const MAX_WIDTH = 1920;
+                const MAX_HEIGHT = 1080;
+                let { width, height } = img;
                 
-                const primaryHex = rgbToHex(
-                    parseInt(themeColors.primary.match(/\d+/g)[0]),
-                    parseInt(themeColors.primary.match(/\d+/g)[1]),
-                    parseInt(themeColors.primary.match(/\d+/g)[2])
+                // Resize if too large
+                if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+                    const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
+                    width *= ratio;
+                    height *= ratio;
+                }
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = width;
+                canvas.height = height;
+                
+                // High quality rendering
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                
+                // Draw with better quality
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Get optimized data URL
+                const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.9); // 90% quality JPEG
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                
+                // Sample more pixels for better color detection
+                const colorCounts = {};
+                const sampleSize = Math.max(1, Math.floor(canvas.width * canvas.height / 5000)); // ~5k samples
+                
+                for (let i = 0; i < data.length; i += sampleSize * 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    const alpha = data[i + 3];
+                    
+                    if (alpha > 128) {
+                        const colorKey = `${Math.round(r/16)*16},${Math.round(g/16)*16},${Math.round(b/16)*16}`;
+                        colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1;
+                    }
+                }
+                
+                const dominantColor = Object.keys(colorCounts).reduce((a, b) => 
+                    colorCounts[a] > colorCounts[b] ? a : b
                 );
                 
-                const customCSS = `
-                    :root.custom-messages-theme {
-                        --eclipse-bg: ${themeColors.bg};
-                        --eclipse-surface: ${themeColors.surface};
-                        --eclipse-border: ${themeColors.border};
-                        --eclipse-primary: ${themeColors.primary};
-                        --eclipse-accent: ${themeColors.accent};
-                        --eclipse-text: ${themeColors.text};
-                        --eclipse-text-dim: ${adjustColor(themeColors.text, -20)};
-                        --eclipse-success: ${adjustColor(primaryHex, -30)};
-                        --eclipse-danger: ${adjustColor(primaryHex, -50)};
-                    }
-                    .messages-container.with-custom-bg {
-                        --custom-messages-bg: ${bgImage} !important;
-                    }
-                `;
+                const [r, g, b] = dominantColor.split(',').map(Number);
+                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
                 
-                let style = document.getElementById('custom-messages-styles');
-                if (!style) {
-                    style = document.createElement('style');
-                    style.id = 'custom-messages-styles';
-                    document.head.appendChild(style);
-                }
-                style.textContent = customCSS;
+                const themeColors = {
+                    primary: `rgb(${r}, ${g}, ${b})`,
+                    bg: luminance > 0.5 ? 
+                        `rgb(${Math.max(0, r-80)}, ${Math.max(0, g-80)}, ${Math.max(0, b-80)})` :
+                        `rgb(${r}, ${g}, ${b})`,
+                    surface: luminance > 0.5 ? 
+                        `rgb(${Math.max(0, r-60)}, ${Math.max(0, g-60)}, ${Math.max(0, b-60)})` :
+                        `rgb(${Math.min(255, r+40)}, ${Math.min(255, g+40)}, ${Math.min(255, b+40)})`,
+                    text: luminance > 0.5 ? '#1a1a2e' : '#e0e0e0',
+                    border: `rgb(${r}, ${g}, ${b})`,
+                    accent: `rgb(${Math.min(255, r+40)}, ${Math.min(255, g+40)}, ${Math.min(255, b+40)})`
+                };
                 
-                messagesEl.classList.add('with-custom-bg');
-                messagesEl.style.setProperty('--custom-messages-bg', bgImage);
-                customBackgroundDataUrl = imageData;
-                localStorage.setItem('eclipse_custom_messages_bg', imageData);
-                
-                if (preview) {
-                    preview.style.backgroundImage = bgImage;
-                    preview.style.opacity = '1';
-                }
-                
-                if (removeBtn) {
-                    removeBtn.style.display = 'block';
-                }
-                
-                if (customOption) {
-                    customOption.innerHTML = `
-                        <button class="custom-upload-btn" id="customBgUploadBtn">Upload New BG</button>
-                        <input type="file" class="custom-upload-input" id="customBgUpload" accept="image/*">
-                        <button class="remove-bg-btn" id="removeBgBtn">Remove BG</button>
-                        <div class="theme-preview" id="bgPreview" style="background-image: ${bgImage}"></div>
-                    `;
-                    customOption.classList.add('active');
-                    
-                    // Re-attach event listeners
-                    document.getElementById('customBgUploadBtn').addEventListener('click', () => {
-                        document.getElementById('customBgUpload').click();
-                    });
-                    document.getElementById('removeBgBtn').addEventListener('click', removeCustomBackground);
-                }
-                
-                applyTheme('custom');
-                showTransient('Custom messages background applied! 🎨');
-                
-            } catch (error) {
-                console.error('Error processing custom background:', error);
-                showTransient('Failed to process image', true);
-            } finally {
-                isApplyingCustomTheme = false;
+                resolve({ 
+                    imageData: optimizedDataUrl, 
+                    themeColors,
+                    bgImage: `url(${optimizedDataUrl})`,
+                    canvas // Store for preview
+                });
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+      async function applyCustomMessagesBackground(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        showTransient('Please select a valid image file', true);
+        return;
+    }
+    
+    // Show processing indicator
+    const customOption = document.querySelector('[data-theme="custom"]');
+    if (customOption) {
+        customOption.innerHTML = '<div class="custom-loading"><div class="spinner"></div>Processing image...</div>';
+    }
+    
+    try {
+        const result = await generateCustomThemeFromImage(file);
+        
+        // Apply with higher quality settings
+        const customCSS = `
+            :root.custom-messages-theme {
+                --eclipse-bg: ${result.themeColors.bg};
+                --eclipse-surface: ${result.themeColors.surface};
+                --eclipse-border: ${result.themeColors.border};
+                --eclipse-primary: ${result.themeColors.primary};
+                --eclipse-accent: ${result.themeColors.accent};
+                --eclipse-text: ${result.themeColors.text};
+                --eclipse-text-dim: ${adjustColor(rgbToHex(
+                    parseInt(result.themeColors.primary.match(/\d+/g)[0]),
+                    parseInt(result.themeColors.primary.match(/\d+/g)[1]),
+                    parseInt(result.themeColors.primary.match(/\d+/g)[2])
+                ), -20)};
+                --eclipse-success: ${adjustColor(rgbToHex(
+                    parseInt(result.themeColors.primary.match(/\d+/g)[0]),
+                    parseInt(result.themeColors.primary.match(/\d+/g)[1]),
+                    parseInt(result.themeColors.primary.match(/\d+/g)[2])
+                ), -30)};
+                --eclipse-danger: ${adjustColor(rgbToHex(
+                    parseInt(result.themeColors.primary.match(/\d+/g)[0]),
+                    parseInt(result.themeColors.primary.match(/\d+/g)[1]),
+                    parseInt(result.themeColors.primary.match(/\d+/g)[2])
+                ), -50)};
+            }
+            .messages-container.with-custom-bg {
+                --custom-messages-bg: ${result.bgImage} !important;
+                background-size: cover !important;
+                background-position: center !important;
+                background-repeat: no-repeat !important;
+                image-rendering: auto !important;
+            }
+        `;
+        
+        let style = document.getElementById('custom-messages-styles');
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'custom-messages-styles';
+            document.head.appendChild(style);
+        }
+        style.textContent = customCSS;
+        
+        messagesEl.classList.add('with-custom-bg');
+        customBackgroundDataUrl = result.imageData;
+        localStorage.setItem('eclipse_custom_messages_bg', result.imageData);
+        
+        // Update preview with canvas for sharp rendering
+        const preview = document.getElementById('bgPreview');
+        if (preview) {
+            preview.style.backgroundImage = result.bgImage;
+            preview.style.opacity = '1';
+            // Use canvas for preview if available
+            if (result.canvas) {
+                preview.style.backgroundImage = `url(${result.canvas.toDataURL('image/jpeg', 0.95)})`;
             }
         }
+        
+        // Show remove button
+        const removeBtn = document.getElementById('removeBgBtn');
+        if (removeBtn) removeBtn.style.display = 'block';
+        
+        // Rebuild custom option UI
+        if (customOption) {
+            customOption.classList.add('active');
+            customOption.innerHTML = `
+                <button class="custom-upload-btn" id="customBgUploadBtn">Upload New BG</button>
+                <input type="file" class="custom-upload-input" id="customBgUpload" accept="image/*">
+                <button class="remove-bg-btn" id="removeBgBtn">Remove BG</button>
+                <div class="theme-preview" id="bgPreview" style="background-image: ${result.bgImage}; opacity: 1;"></div>
+            `;
+            
+            // Re-attach listeners
+            document.getElementById('customBgUploadBtn').onclick = () => {
+                document.getElementById('customBgUpload').click();
+            };
+            document.getElementById('removeBgBtn').onclick = removeCustomBackground;
+        }
+        
+        applyTheme('custom');
+        showTransient('Custom background applied with high quality! 🎨');
+        
+    } catch (error) {
+        console.error('Error processing custom background:', error);
+        showTransient(error.message || 'Failed to process image. Try a smaller file.', true);
+    }
+}
 
         function removeCustomBackground() {
             messagesEl.classList.remove('with-custom-bg');
@@ -1663,7 +1809,7 @@
                 position: fixed; right: 22px; bottom: 22px; z-index: 160;
                 background: ${danger ? 'linear-gradient(90deg,#ef444433,#ef444422)' : 'linear-gradient(90deg,#6b5ce722,#8c7ae611)'};
                 padding: 10px 14px; border-radius: 12px; color: ${danger ? '#fee2e2' : '#e0f2fe'};
-                backdrop-filter: blur(10px); border: 1px solid var(--eclipse-border);
+                backdrop-filter: blur(1px); border: 1px solid var(--eclipse-border);
                 font-family: inherit;
             `;
             t.textContent = text;
