@@ -1576,6 +1576,8 @@ body.theme-custom .eclipse-container {
         let privateRooms = new Map();
         let currentPrivateRoom = null;
 
+       
+
         // DOM refs
         const joinModal = document.getElementById('joinModal');
         const joinBtn = document.getElementById('joinBtn');
@@ -1616,6 +1618,18 @@ function requestNotificationPermission() {
         });
     }
 }
+    // Save messages for a chat/channel to localStorage
+function saveChannelMessages(chatType, chatId, messagesArray) {
+    const key = `eclipse_chat_messages_${chatType}_${chatId}`;
+    localStorage.setItem(key, JSON.stringify(messagesArray));
+}
+
+// Load messages for a chat/channel from localStorage
+function loadChannelMessages(chatType, chatId) {
+    const key = `eclipse_chat_messages_${chatType}_${chatId}`;
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+}    
 
 // Send browser notification
 function sendBrowserNotification(title, body, options = {}) {
@@ -1625,7 +1639,7 @@ function sendBrowserNotification(title, body, options = {}) {
         body,
         icon: '/assets/logo/logo.png', // Use your favicon
         badge: '/assets/logo/logo.png',
-        tag: 'eclipse-chat',
+        tag: 'Eclipse',
         vibrate: [100, 50, 100], // Vibration pattern
         ...options
     });
@@ -2111,31 +2125,51 @@ style.textContent = `
 document.head.appendChild(style);
 
         /***** Chat Functions *****/
-        function switchToChat(chatType, chatId) {
-            currentChatType = chatType;
-            currentChatId = chatId;
-            
-            document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
-            const activeItem = document.querySelector(`[data-chat-id="${chatId}"]`);
-            if (activeItem) activeItem.classList.add('active');
-            
-            currentChatDisplay.textContent = chatType === 'public' ? 'public' : `dm:${chatId}`;
-            
-            messagesEl.innerHTML = '';
-            seenMessageIds.clear();
-            
-            if (chatType === 'dm' && dmConversations.has(chatId)) {
-                const messages = dmConversations.get(chatId);
-                messages.forEach(msg => addMessageToDOM(msg, msg.name === userName));
-            }
-            
-            unreadCounts.set(chatId, 0);
-            updateUnreadCount(chatId, 0);
-            
-            messageInput.placeholder = chatType === 'public' ? 
-                'type message and press enter...' : 
-                `message @${chatId}...`;
-        }
+       function switchToChat(chatType, chatId) {
+    // Save current messages before switching away
+    if (currentChatType && currentChatId) {
+        // Gather all DOM messages in the chat window
+        const messages = [];
+        messagesEl.querySelectorAll('.message').forEach(msgEl => {
+            // You may want to extract more fields if needed!
+            messages.push({
+                html: msgEl.innerHTML,
+                className: msgEl.className,
+                mid: msgEl.getAttribute('data-mid')
+            });
+        });
+        saveChannelMessages(currentChatType, currentChatId, messages);
+    }
+
+    currentChatType = chatType;
+    currentChatId = chatId;
+
+    document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+    const activeItem = document.querySelector(`[data-chat-id="${chatId}"]`);
+    if (activeItem) activeItem.classList.add('active');
+
+    currentChatDisplay.textContent = chatType === 'public' ? 'public' : `dm:${chatId}`;
+
+    messagesEl.innerHTML = '';
+    seenMessageIds.clear();
+
+    // Restore messages from localStorage, if any
+    const savedMessages = loadChannelMessages(chatType, chatId);
+    savedMessages.forEach(msg => {
+        const wrap = document.createElement('div');
+        wrap.className = msg.className;
+        wrap.setAttribute('data-mid', msg.mid);
+        wrap.innerHTML = msg.html;
+        messagesEl.appendChild(wrap);
+    });
+
+    unreadCounts.set(chatId, 0);
+    updateUnreadCount(chatId, 0);
+
+    messageInput.placeholder = chatType === 'public' ? 
+        'type message and press enter...' : 
+        `message @${chatId}...`;
+}
 
         function updateUnreadCount(chatId, count) {
             const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
@@ -2657,6 +2691,19 @@ function sendMessage() {
     // Clear reply state after sending
     clearReplyState();
     messageInput.focus();
+    // After addMessageToDOM and before clearReplyState()
+setTimeout(() => {
+    // Delay so DOM updates before saving
+    const messages = [];
+    messagesEl.querySelectorAll('.message').forEach(msgEl => {
+        messages.push({
+            html: msgEl.innerHTML,
+            className: msgEl.className,
+            mid: msgEl.getAttribute('data-mid')
+        });
+    });
+    saveChannelMessages(currentChatType, currentChatId, messages);
+}, 50);
 }
 
 // Update private message sending
