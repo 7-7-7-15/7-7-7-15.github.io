@@ -2829,15 +2829,32 @@ function sendPrivateMessage(payload = null) {
     );
     switchToPrivateRoom(code);
 }
-       function joinPrivateRoom(code) {
-    const roomData = privateRooms.get(code);
+      function joinPrivateRoom(code) {
+    // Get the current rooms from localStorage
+    const saved = localStorage.getItem('eclipse_private_rooms');
+    let roomsArray = [];
+    if (saved) roomsArray = JSON.parse(saved);
+
+    // Convert to Map if necessary
+    let privateRoomsMap = new Map(roomsArray);
+
+    // Get the room by code
+    const roomData = privateRoomsMap.get(code);
+
     if (roomData) {
-        if (!roomData.users.includes(userName)) roomData.users.push(userName);
+        // Add user to room if not already a member
+        if (!roomData.users.includes(userName)) {
+            roomData.users.push(userName);
+            privateRoomsMap.set(code, roomData);
+            localStorage.setItem('eclipse_private_rooms', JSON.stringify(Array.from(privateRoomsMap)));
+        }
+        privateRooms = privateRoomsMap;
         currentPrivateRoom = code;
-        savePrivateRooms();
         updatePrivateRoomsUI();
         switchToPrivateRoom(code);
         showTransient(`Joined ${roomData.name}`);
+    } else {
+        showTransient("Room not found! (You can only join rooms created in this browser/session unless you add a backend.)", true);
     }
 }
 
@@ -3024,8 +3041,13 @@ document.getElementById('openJoinRoom').onclick = function() {
     document.getElementById('roomInputField').value = '';
     document.getElementById('confirmRoomBtn').onclick = () => {
         const code = document.getElementById('roomInputField').value.trim();
-        if (code) joinPrivateRoom(code);
-        document.getElementById('roomInputModal').classList.remove('active');
+        const roomData = privateRooms.get(code); // <-- This only works if the room exists!
+        if (code && roomData) {
+            joinPrivateRoom(code);
+            document.getElementById('roomInputModal').classList.remove('active');
+        } else {
+            showTransient("Room not found! (Rooms are local only unless you add a server backend.)", true);
+        }
     };
 };
 
