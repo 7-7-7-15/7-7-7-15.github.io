@@ -1593,6 +1593,8 @@ body.theme-custom .eclipse-container {
         const reactionsMap = {};
         let privateRooms = new Map();
         let currentPrivateRoom = null;
+        let currentReplyTo = null;  // Make sure this is explicitly null
+        let currentReplyToName = null;
 
        
 
@@ -2405,8 +2407,8 @@ function setReplyTo(messageId, replyToName) {
     currentReplyToName = replyToName;
     
     const inputLine = document.querySelector('.input-line');
-    inputLine.classList.add('replying-state');
-    inputLine.setAttribute('data-reply-to', replyToName);
+    inputLine?.classList.add('replying-state');
+    inputLine?.setAttribute('data-reply-to', replyToName);
     
     messageInput.placeholder = `Replying to @${replyToName}... (press Esc to cancel)`;
     messageInput.focus();
@@ -2423,8 +2425,8 @@ function clearReplyState() {
     currentReplyToName = null;
     
     const inputLine = document.querySelector('.input-line');
-    inputLine.classList.remove('replying-state');
-    inputLine.removeAttribute('data-reply-to');
+    inputLine?.classList.remove('replying-state');
+    inputLine?.removeAttribute('data-reply-to');
     
     messageInput.placeholder = currentChatType === 'public' ? 
         'type message and press enter...' : 
@@ -2654,9 +2656,9 @@ function sendMessage() {
 
     const id = uid();
     const timestamp = new Date().toISOString();
-    const isReply = currentReplyTo !== null;
+    const isReply = currentReplyTo !== null && currentReplyTo !== undefined; // Explicit check
 
-    // SIMPLIFIED payload - don't use type for regular messages
+    // Base payload for all messages
     let payload = {
         id,
         text,
@@ -2664,7 +2666,7 @@ function sendMessage() {
         timestamp
     };
 
-    // Add reply data if replying
+    // Only add reply data if we actually have a valid reply
     if (isReply) {
         payload.replyTo = currentReplyTo;
         payload.replyToName = currentReplyToName;
@@ -2698,8 +2700,9 @@ function sendMessage() {
         dmConversations.get(currentChatId).push(payload);
         addMessageToDOM(payload, true);
     }
-    // Handle public messages (NO TYPE NEEDED)
+    // Handle public messages (NO TYPE for regular public messages)
     else if (currentChatType === 'public') {
+        // For public messages, DON'T add type: 'message' - just send the base payload
         if (drone && room) {
             drone.publish({ room: `observable-${roomCode}`, message: payload });
         }
@@ -2707,21 +2710,24 @@ function sendMessage() {
     }
 
     // Clear reply state after sending
-    clearReplyState();
+    if (isReply) {
+        clearReplyState();
+    }
+    
     messageInput.focus();
-    // After addMessageToDOM and before clearReplyState()
-setTimeout(() => {
-    // Delay so DOM updates before saving
-    const messages = [];
-    messagesEl.querySelectorAll('.message').forEach(msgEl => {
-        messages.push({
-            html: msgEl.innerHTML,
-            className: msgEl.className,
-            mid: msgEl.getAttribute('data-mid')
+    
+    // Save messages after DOM update
+    setTimeout(() => {
+        const messages = [];
+        messagesEl.querySelectorAll('.message').forEach(msgEl => {
+            messages.push({
+                html: msgEl.innerHTML,
+                className: msgEl.className,
+                mid: msgEl.getAttribute('data-mid')
+            });
         });
-    });
-    saveChannelMessages(currentChatType, currentChatId, messages);
-}, 50);
+        saveChannelMessages(currentChatType, currentChatId, messages);
+    }, 50);
 }
 
 // Update private message sending
