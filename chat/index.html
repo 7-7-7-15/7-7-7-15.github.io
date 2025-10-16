@@ -2829,17 +2829,17 @@ function sendPrivateMessage(payload = null) {
     );
     switchToPrivateRoom(code);
 }
-        function joinPrivateRoom(code) {
-            const roomData = privateRooms.get(code);
-            if (roomData) {
-                if (!roomData.users.includes(userName)) roomData.users.push(userName);
-                currentPrivateRoom = code;
-                savePrivateRooms();
-                updatePrivateRoomsUI();
-                switchToPrivateRoom(code);
-                showTransient(`Joined ${roomData.name}`);
-            }
-        }
+       function joinPrivateRoom(code) {
+    const roomData = privateRooms.get(code);
+    if (roomData) {
+        if (!roomData.users.includes(userName)) roomData.users.push(userName);
+        currentPrivateRoom = code;
+        savePrivateRooms();
+        updatePrivateRoomsUI();
+        switchToPrivateRoom(code);
+        showTransient(`Joined ${roomData.name}`);
+    }
+}
 
         function switchToPrivateRoom(code) {
             const roomData = privateRooms.get(code);
@@ -2891,11 +2891,11 @@ function sendPrivateMessage(payload = null) {
         }
     }
 });
-     function updatePrivateRoomsUI() {
+        function updatePrivateRoomsUI() {
     const list = document.getElementById('privateRoomList');
     list.innerHTML = '';
     privateRooms.forEach(room => {
-        // Show only rooms where you are a member
+        // Only show rooms where you are a member
         if (room.users.includes(userName)) {
             const item = document.createElement('div');
             item.className = 'chat-item';
