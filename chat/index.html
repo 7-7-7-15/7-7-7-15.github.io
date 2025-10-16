@@ -2775,116 +2775,333 @@ function createPrivateRoom(name, isPrivate = true) {
     switchToPrivateRoom(code);
 }
 
+// ===== REAL-TIME PRIVATE ROOMS WITH SCALEDRONE =====
 function createPrivateRoom(name, isPrivate = true) {
-    console.log('createPrivateRoom called:', { name, isPrivate, userName, droneExists: !!drone, droneClosed: drone?.closed });
-    
-    // Check if main connection exists
     if (!drone || drone.closed) {
-        showTransient('❌ Connect to main chat first! Click "Connect" button.', true);
+        showTransient('❌ Connect to main chat first!', true);
         return;
     }
     
     const code = generateRoomCode();
-    console.log('Generated room code:', code);
     
     // Create room data
-    privateRooms.set(code, { 
+    const roomData = { 
         name, 
         code, 
         users: [userName], 
         messages: [],
         isPrivate,
-        scaledroneRoom: null
-    });
+        channel: `private-${code}`, // Channel name for filtering
+        isRealtime: true // Always real-time
+    };
     
+    privateRooms.set(code, roomData);
     currentPrivateRoom = code;
     savePrivateRooms();
-    updatePrivateRoomsUI(); // Show room immediately (will be red until connected)
     
-    try {
-        console.log('Subscribing to private room:', `private-${code}`);
-        const privateRoom = drone.subscribe(`private-${code}`);
-        
-        privateRoom.on('open', (err) => {
-            console.log('Private room open:', { err, code });
-            if (err) {
-                console.error('Private room open error:', err);
-                showTransient(`❌ Failed to create ${code}: ${err.message || err}`, true);
-                privateRooms.delete(code);
-                currentPrivateRoom = null;
-                savePrivateRooms();
-                updatePrivateRoomsUI();
-                return;
-            }
-            
-            // SUCCESS
-            const roomData = privateRooms.get(code);
-            if (roomData) {
-                roomData.scaledroneRoom = privateRoom;
-                privateRooms.set(code, roomData);
-                savePrivateRooms();
-                updatePrivateRoomsUI();
-                
-                privateRoom.publish({
-                    type: 'join',
-                    name: userName,
-                    timestamp: new Date().toISOString()
-                });
-                
-                switchToPrivateRoom(code);
-                showTransient(`✅ Created & joined ${name} 🟢 (${code})`);
-            }
-        });
-        
-        privateRoom.on('data', (data) => {
-            console.log('Private room data:', data);
-            // Handle messages, joins, etc. (same as before)
-        });
-        
-        privateRoom.on('error', (err) => {
-            console.error('Private room error:', err);
-            showTransient(`Room error: ${err.message}`, true);
-        });
-        
-    } catch (error) {
-        console.error('Create room error:', error);
-        showTransient(`❌ Create failed: ${error.message}`, true);
-        privateRooms.delete(code);
-        currentPrivateRoom = null;
-        savePrivateRooms();
-        updatePrivateRoomsUI();
-    }
-}
-function switchToPrivateRoom(code) {
-    const roomData = privateRooms.get(code);
-    if (!roomData) return;
-    
-    messagesEl.innerHTML = '';
-    seenMessageIds.clear();
-    
-    currentPrivateRoom = code;
-    currentChatDisplay.textContent = `#${roomData.name || code} (private)`;
-    
-    roomData.messages.forEach(msg => {
-        addMessageToDOM(msg, msg.name === userName);
+    // Announce room creation to main room
+    drone.publish({
+        room: `observable-${roomCode}`,
+        message: {
+            type: 'private-room-create',
+            code: code,
+            name: name,
+            creator: userName,
+            channel: roomData.channel,
+            timestamp: new Date().toISOString()
+        }
     });
     
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    switchToPrivateRoom(code);
+    updatePrivateRoomsUI();
+    showTransient(`🟢 Created real-time room: ${name} (${code})`);
 }
 
-function savePrivateRooms() {
-    localStorage.setItem('eclipse_private_rooms', JSON.stringify(Array.from(privateRooms)));
-}
-
-function loadPrivateRooms() {
-    const saved = localStorage.getItem('eclipse_private_rooms');
-    if (saved) {
-        const roomsArray = JSON.parse(saved);
-        privateRooms = new Map(roomsArray);
-        updatePrivateRoomsUI();
+function joinPrivateRoom(code) {
+    if (!code || !code.startsWith('ECL')) {
+        showTransient('Invalid room code', true);
+        return;
+    }
+    
+    const roomData = privateRooms.get(code);
+    if (roomData) {
+        // Already exists - just join
+        if (!roomData.users.includes(userName)) {
+            roomData.users.push(userName);
+            // Announce join
+            drone.publish({
+                room: `observable-${roomCode}`,
+                message: {
+                    type: 'private-room-join',
+                    code: code,
+                    name: userName,
+                    channel: roomData.channel,
+                    timestamp: new Date().toISOString()
+                }
+            });
+            savePrivateRooms();
+        }
+        switchToPrivateRoom(code);
+        showTransient(`🟢 Joined ${roomData.name}`);
+    } else {
+        // Room doesn't exist locally - check if others know about it
+        showTransient(`🔍 Looking for room ${code}...`);
+        
+        // Request room info from others
+        drone.publish({
+            room: `observable-${roomCode}`,
+            message: {
+                type: 'private-room-request',
+                code: code,
+                requester: userName,
+                timestamp: new Date().toISOString()
+            }
+        });
+        
+        // Create locally as fallback after 3 seconds
+        setTimeout(() => {
+            if (!privateRooms.has(code)) {
+                privateRooms.set(code, {
+                    name: `Room ${code}`,
+                    code,
+                    users: [userName],
+                    messages: [],
+                    isPrivate: true,
+                    channel: `private-${code}`,
+                    isRealtime: true
+                });
+                savePrivateRooms();
+                switchToPrivateRoom(code);
+                updatePrivateRoomsUI();
+                showTransient(`⚠️ Created local fallback for ${code}`);
+            }
+        }, 3000);
     }
 }
 
+// Update main room data handler to filter private messages
+function updateMainRoomDataHandler() {
+    if (!room) return;
+    
+    room.on('data', (data, member) => {
+        if (!data) return;
+
+        // Handle private room messages
+        if (data.type === 'private-message' && data.channel) {
+            const code = data.channel.replace('private-', '');
+            const roomData = privateRooms.get(code);
+            
+            if (roomData && currentPrivateRoom === code) {
+                // Show in current private room
+                addMessageToDOM(data, data.name === userName);
+                roomData.messages.push(data);
+                savePrivateRooms();
+            }
+            return;
+        }
+        
+        // Handle room creation announcements
+        if (data.type === 'private-room-create') {
+            const { code, name, channel } = data;
+            if (!privateRooms.has(code)) {
+                privateRooms.set(code, {
+                    name,
+                    code,
+                    users: [data.creator],
+                    messages: [],
+                    isPrivate: true,
+                    channel,
+                    isRealtime: true
+                });
+                updatePrivateRoomsUI();
+                showTransient(`New room created: ${name} (${code})`);
+            }
+            return;
+        }
+        
+        // Handle room join announcements
+        if (data.type === 'private-room-join') {
+            const { code, name } = data;
+            const roomData = privateRooms.get(code);
+            if (roomData && !roomData.users.includes(name)) {
+                roomData.users.push(name);
+                savePrivateRooms();
+                if (currentPrivateRoom === code) {
+                    showTransient(`${name} joined the room`);
+                }
+                updatePrivateRoomsUI();
+            }
+            return;
+        }
+        
+        // Handle room requests
+        if (data.type === 'private-room-request') {
+            const { code } = data;
+            const roomData = privateRooms.get(code);
+            if (roomData) {
+                // Share room info with requester
+                drone.publish({
+                    room: `observable-${roomCode}`,
+                    message: {
+                        type: 'private-room-info',
+                        code: code,
+                        name: roomData.name,
+                        channel: roomData.channel,
+                        users: roomData.users,
+                        timestamp: new Date().toISOString()
+                    }
+                });
+            }
+            return;
+        }
+        
+        // Handle room info responses
+        if (data.type === 'private-room-info') {
+            const { code, name, channel, users } = data;
+            if (!privateRooms.has(code)) {
+                privateRooms.set(code, {
+                    name,
+                    code,
+                    users: [...users, userName], // Add self
+                    messages: [],
+                    isPrivate: true,
+                    channel,
+                    isRealtime: true
+                });
+                savePrivateRooms();
+                switchToPrivateRoom(code);
+                updatePrivateRoomsUI();
+                showTransient(`🟢 Joined existing room: ${name}`);
+            }
+            return;
+        }
+        
+        // Existing public/DM handling...
+        if (data.type === 'reaction') {
+            handleIncomingReaction(data);
+            return;
+        }
+        
+        if (data.type === 'join') {
+            showTransient(`${data.name} joined`);
+            return;
+        }
+        
+        if (data.type === 'dm') {
+            // Existing DM logic...
+            return;
+        }
+        
+        if (data.id && data.text && data.name && !seenMessageIds.has(data.id)) {
+            if ((!data.type || data.type === 'message') && currentChatType === 'public' && !data.isDM) {
+                addMessageToDOM(data, data.name === userName);
+            }
+        }
+    });
+}
+
+// Update sendMessage for private rooms
+function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!text) return;
+
+    const id = uid();
+    const timestamp = new Date().toISOString();
+    const payload = {
+        id,
+        text,
+        name: userName,
+        timestamp
+    };
+
+    messageInput.value = '';
+
+    if (currentPrivateRoom) {
+        // Send to private room via main channel
+        const roomData = privateRooms.get(currentPrivateRoom);
+        if (roomData) {
+            payload.type = 'private-message';
+            payload.channel = roomData.channel;
+            
+            roomData.messages.push(payload);
+            addMessageToDOM(payload, true);
+            savePrivateRooms();
+            
+            // Broadcast via main room
+            if (drone && room && !room.closed) {
+                drone.publish({
+                    room: `observable-${roomCode}`,
+                    message: payload
+                });
+            }
+        }
+    } else if (currentChatType === 'dm') {
+        // Existing DM logic
+        payload.type = 'dm';
+        payload.target = currentChatId;
+        payload.isDM = true;
+        if (drone && room) {
+            drone.publish({ room: `observable-${roomCode}`, message: payload });
+        }
+        addMessageToDOM(payload, true);
+    } else {
+        // Public chat
+        if (drone && room) {
+            drone.publish({ room: `observable-${roomCode}`, message: payload });
+        }
+        addMessageToDOM(payload, true);
+    }
+
+    if (currentReplyTo) clearReplyState();
+    messageInput.focus();
+}
+
+// Update connectToRoom to use new data handler
+function connectToRoom() {
+    try {
+        drone = new ScaleDrone(CLIENT_ID, {
+            data: { name: userName }
+        });
+
+        drone.on('open', (err) => {
+            if (err) {
+                showTransient('Connection error: ' + err, true);
+                return;
+            }
+            clientId = drone.clientId;
+            room = drone.subscribe(`observable-${roomCode}`);
+            
+            room.on('open', (err) => {
+                if (err) {
+                    showTransient('Room subscription error: ' + err, true);
+                    return;
+                }
+                // Use the new unified data handler
+                updateMainRoomDataHandler();
+                
+                drone.publish({
+                    room: `observable-${roomCode}`,
+                    message: {
+                        type: 'join',
+                        name: userName,
+                        timestamp: new Date().toISOString()
+                    }
+                });
+            });
+
+            // Rest of connection handlers...
+            room.on('member_join', (m) => updateOnlineUsers(room.members));
+            room.on('member_leave', (m) => updateOnlineUsers(room.members));
+            room.on('members', (m) => updateOnlineUsers(m));
+        });
+
+        // Error handlers...
+    } catch (error) {
+        showTransient('Failed to connect', true);
+    }
+}
+
+// Simplified status - always green for real-time
 function updatePrivateRoomsUI() {
     const list = document.getElementById('privateRoomList');
     if (!list) return;
@@ -2898,13 +3115,12 @@ function updatePrivateRoomsUI() {
             item.setAttribute('data-chat-type', 'private');
             item.setAttribute('data-chat-id', code);
             
-            const status = room.scaledroneRoom ? '🟢' : '🔴';
             item.innerHTML = `
                 <div class="chat-icon">
                     <i class="fas ${room.isPrivate ? 'fa-lock' : 'fa-globe'}"></i>
                 </div>
                 <div class="chat-name">
-                    ${room.name} ${status} 
+                    ${room.name} 🟢 
                     <span style="font-size:11px;color:#aaa;">(${code})</span>
                 </div>
             `;
@@ -2918,6 +3134,8 @@ function updatePrivateRoomsUI() {
 // ===== ROOM MODAL HANDLERS =====
 // ===== FIXED ROOM MODAL HANDLERS =====
 document.addEventListener('DOMContentLoaded', () => {
+    // ... existing code ...
+    
     const openCreateRoom = document.getElementById('openCreateRoom');
     const openJoinRoom = document.getElementById('openJoinRoom');
     const cancelRoomBtn = document.getElementById('cancelRoomBtn');
@@ -2927,115 +3145,82 @@ document.addEventListener('DOMContentLoaded', () => {
     const roomInputTitle = document.getElementById('roomInputTitle');
     const roomPrivacyToggle = document.getElementById('roomPrivacyToggle');
     
-    console.log('Room modal elements:', { openCreateRoom, openJoinRoom, confirmRoomBtn, roomInputField });
+    if (!openCreateRoom || !openJoinRoom || !confirmRoomBtn) {
+        console.error('Missing room modal elements');
+        return;
+    }
     
     function setupCreateRoom() {
-        if (!confirmRoomBtn || !roomInputField || !roomInputTitle || !roomPrivacyToggle) {
-            console.error('Missing modal elements for create room');
-            return;
-        }
-        
-        roomInputTitle.textContent = 'Create Room';
-        roomInputField.placeholder = 'Room name';
-        confirmRoomBtn.textContent = 'Create';
+        roomInputTitle.textContent = 'Create Private Room';
+        roomInputField.placeholder = 'Enter room name';
+        confirmRoomBtn.textContent = 'Create Room';
         roomInputField.value = '';
         roomPrivacyToggle.checked = true;
         roomInputModal.classList.add('active');
+        roomInputField.focus();
         
-        // CRITICAL: Clear previous handler and add new one
-        confirmRoomBtn.onclick = null;
-        confirmRoomBtn.onclick = function(e) {
+        // Clear previous handler
+        confirmRoomBtn.replaceWith(confirmRoomBtn.cloneNode(true));
+        const newConfirmBtn = document.getElementById('confirmRoomBtn');
+        
+        newConfirmBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-            console.log('Create room button clicked');
-            
             const name = roomInputField.value.trim();
-            const isPrivate = roomPrivacyToggle.checked;
-            
-            console.log('Create room attempt:', { name, isPrivate });
-            
             if (!name) {
                 showTransient('Please enter a room name', true);
-                roomInputField.focus();
                 return;
             }
-            
-            createPrivateRoom(name, isPrivate);
             roomInputModal.classList.remove('active');
-        };
+            createPrivateRoom(name, true); // Always private + real-time
+        });
     }
     
     function setupJoinRoom() {
-        if (!confirmRoomBtn || !roomInputField || !roomInputTitle) {
-            console.error('Missing modal elements for join room');
-            return;
-        }
-        
         roomInputTitle.textContent = 'Join Room';
         roomInputField.placeholder = 'Enter ECL... room code';
-        confirmRoomBtn.textContent = 'Join';
+        confirmRoomBtn.textContent = 'Join Room';
         roomInputField.value = '';
         roomInputModal.classList.add('active');
+        roomInputField.focus();
         
-        confirmRoomBtn.onclick = null;
-        confirmRoomBtn.onclick = function(e) {
+        confirmRoomBtn.replaceWith(confirmRoomBtn.cloneNode(true));
+        const newConfirmBtn = document.getElementById('confirmRoomBtn');
+        
+        newConfirmBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-            console.log('Join room button clicked');
-            
             const code = roomInputField.value.trim().toUpperCase();
-            if (code && code.startsWith('ECL')) {
-                joinPrivateRoom(code);
-                roomInputModal.classList.remove('active');
-            } else {
-                showTransient('Please enter a valid ECL... room code', true);
-                roomInputField.focus();
-            }
-        };
-    }
-    
-    if (openCreateRoom) {
-        openCreateRoom.addEventListener('click', (e) => {
-            e.preventDefault();
-            console.log('Open create room clicked');
-            setupCreateRoom();
-        });
-    }
-    
-    if (openJoinRoom) {
-        openJoinRoom.addEventListener('click', (e) => {
-            e.preventDefault();
-            console.log('Open join room clicked');
-            setupJoinRoom();
-        });
-    }
-    
-    if (cancelRoomBtn) {
-        cancelRoomBtn.addEventListener('click', (e) => {
-            e.preventDefault();
             roomInputModal.classList.remove('active');
-            roomInputField.value = '';
-        });
-    }
-    
-    if (roomInputModal) {
-        roomInputModal.addEventListener('click', (e) => {
-            if (e.target.id === 'roomInputModal') {
-                roomInputModal.classList.remove('active');
-                roomInputField.value = '';
+            if (code.startsWith('ECL')) {
+                joinPrivateRoom(code);
+            } else {
+                showTransient('Invalid room code. Must start with ECL...', true);
             }
         });
     }
     
-    // Enter key support
-    if (roomInputField) {
-        roomInputField.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                confirmRoomBtn.click();
-            }
-        });
-    }
+    openCreateRoom.addEventListener('click', setupCreateRoom);
+    openJoinRoom.addEventListener('click', setupJoinRoom);
+    
+    cancelRoomBtn.addEventListener('click', () => {
+        roomInputModal.classList.remove('active');
+        roomInputField.value = '';
+    });
+    
+    // Enter key
+    roomInputField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            confirmRoomBtn.click();
+        }
+    });
+    
+    // Click outside to close
+    roomInputModal.addEventListener('click', (e) => {
+        if (e.target.id === 'roomInputModal') {
+            roomInputModal.classList.remove('active');
+        }
+    });
 });
+        loadPrivateRooms(); // Add this line
 
 // ===== INITIALIZE =====
 window.addEventListener('load', () => {
