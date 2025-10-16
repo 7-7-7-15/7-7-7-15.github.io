@@ -1408,6 +1408,14 @@ body.theme-custom .eclipse-container {
         <div class="room-input-container">
             <h3 id="roomInputTitle">Create Room</h3>
             <input type="text" id="roomInputField" class="room-input-field" placeholder="Room name">
+            <!-- Inside .room-input-container -->
+<div style="margin-bottom: 12px;">
+  <label>
+    <input type="checkbox" id="roomPrivacyToggle" checked>
+    Private Room
+  </label>
+</div>
+            <div id="publicRoomsList" style="margin-top:10px;"></div>
             <div class="room-input-actions">
                 <button class="room-input-btn secondary" id="cancelRoomBtn">Cancel</button>
                 <button class="room-input-btn primary" id="confirmRoomBtn">Create</button>
@@ -1440,6 +1448,16 @@ body.theme-custom .eclipse-container {
                     <div class="section-title">Direct Messages</div>
                     <div id="dmList"></div>
                 </div>
+                <div class="chat-section">
+  <div class="section-title">Private Rooms</div>
+  <div id="privateRoomList"></div>
+</div>
+             <div class="chat-section">
+<div style="padding:16px;">
+  <button id="openCreateRoom" class="add-room-btn">+ Create Room</button>
+  <button id="openJoinRoom" class="join-code-btn">Join by Code</button>
+</div>
+             </div>
                 
                 <div class="chat-section">
                     <div class="section-title">Online Users</div>
@@ -2795,15 +2813,22 @@ function sendPrivateMessage(payload = null) {
         function generateRoomCode() { return 'ECL' + Math.random().toString(36).substr(2,6).toUpperCase(); }
 
         function createPrivateRoom(name) {
-            const code = generateRoomCode();
-            privateRooms.set(code, { name, code, users: [userName], messages: [] });
-            currentPrivateRoom = code;
-            savePrivateRooms();
-            updatePrivateRoomsUI();
-            showTransient(`Created ${name} (${code})`);
-            switchToPrivateRoom(code);
-        }
-
+           const code = generateRoomCode();
+    privateRooms.set(code, { 
+        name, 
+        code, 
+        users: [userName], 
+        messages: [], 
+        isPrivate: isPrivate // Track privacy!
+    });
+    currentPrivateRoom = code;
+    savePrivateRooms();
+    updatePrivateRoomsUI();
+    showTransient(
+      `Created ${name} (${code}). ${isPrivate ? "Share this code to invite others!" : "This room is public and visible to all users."}`
+    );
+    switchToPrivateRoom(code);
+}
         function joinPrivateRoom(code) {
             const roomData = privateRooms.get(code);
             if (roomData) {
@@ -2851,10 +2876,7 @@ function sendPrivateMessage(payload = null) {
     updatePrivateRoomsUI();
 }
 
-        function updatePrivateRoomsUI() {
-            // This would update a private rooms list if you add one to the UI
-        }
-
+    
         /***** Event Listeners *****/
         sendBtn.addEventListener('click', sendMessage);
       messageInput.addEventListener('keydown', (e) => {
@@ -2869,6 +2891,32 @@ function sendPrivateMessage(payload = null) {
         }
     }
 });
+     function updatePrivateRoomsUI() {
+    const list = document.getElementById('privateRoomList');
+    list.innerHTML = '';
+    privateRooms.forEach(room => {
+        // Show only rooms where you are a member
+        if (room.users.includes(userName)) {
+            const item = document.createElement('div');
+            item.className = 'chat-item';
+            item.setAttribute('data-chat-type', room.isPrivate ? 'private' : 'publicRoom');
+            item.setAttribute('data-chat-id', room.code);
+            item.innerHTML = `<div class="chat-icon"><i class="fas ${room.isPrivate ? 'fa-lock' : 'fa-globe'}"></i></div>
+                              <div class="chat-name">${room.name} <span style="font-size:11px;color:#aaa;">(${room.code})</span></div>`;
+            item.onclick = () => switchToPrivateRoom(room.code);
+            list.appendChild(item);
+        }
+    });
+}
+        function createPrivateRoom(name) {
+    const code = generateRoomCode();
+    privateRooms.set(code, { name, code, users: [userName], messages: [] });
+    currentPrivateRoom = code;
+    savePrivateRooms();
+    updatePrivateRoomsUI();
+    showTransient(`Created ${name} (${code}). Share this code to invite others!`);
+    switchToPrivateRoom(code);
+}
 
         micBtn.addEventListener('click', ()=> {
             if(isRecording) stopRecognition();
@@ -2951,21 +2999,45 @@ document.addEventListener('keydown', requestNotificationPermission, { once: true
                 };
             }
         });
+        // Open Create Room modal
+document.getElementById('openCreateRoom').onclick = function() {
+    document.getElementById('roomInputTitle').textContent = 'Create Room';
+    document.getElementById('roomInputField').placeholder = 'Room name';
+    document.getElementById('confirmRoomBtn').textContent = 'Create';
+    document.getElementById('roomInputModal').classList.add('active');
+    document.getElementById('roomInputField').value = '';
+    document.getElementById('roomPrivacyToggle').checked = true; // Default private
+    document.getElementById('confirmRoomBtn').onclick = () => {
+        const name = document.getElementById('roomInputField').value.trim();
+        const isPrivate = document.getElementById('roomPrivacyToggle').checked;
+        if (name) createPrivateRoom(name, isPrivate);
+        document.getElementById('roomInputModal').classList.remove('active');
+    };
+};
+
+// Open Join Room modal
+document.getElementById('openJoinRoom').onclick = function() {
+    document.getElementById('roomInputTitle').textContent = 'Join Room';
+    document.getElementById('roomInputField').placeholder = 'Enter room code';
+    document.getElementById('confirmRoomBtn').textContent = 'Join';
+    document.getElementById('roomInputModal').classList.add('active');
+    document.getElementById('roomInputField').value = '';
+    document.getElementById('confirmRoomBtn').onclick = () => {
+        const code = document.getElementById('roomInputField').value.trim();
+        if (code) joinPrivateRoom(code);
+        document.getElementById('roomInputModal').classList.remove('active');
+    };
+};
 
         /***** Initialization *****/
-      window.addEventListener('load', () => {
+    window.addEventListener('load', () => {
     try {
+        // Always show the join modal, even if a username is stored
         const stored = localStorage.getItem('eclipse_chat_username') || localStorage.getItem('ln-username');
         if (stored) {
-            usernameInput.value = stored;
-            userName = sanitizeName(stored);
-            roomCode = generateSiteRoomCode();
-            sidebarUserInfo.textContent = `${userName}@eclipse`;
-            joinModal.style.display = 'none';
-            connectToRoom();
-        } else {
-            joinModal.style.display = 'flex';
+            usernameInput.value = stored; // You can prefill the username input
         }
+        joinModal.style.display = 'flex'; // Always show modal!
         customBackgroundDataUrl = localStorage.getItem('eclipse_custom_messages_bg');
     } catch (e) {}
 
