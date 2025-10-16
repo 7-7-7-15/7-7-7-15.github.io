@@ -1577,55 +1577,197 @@ body.theme-custom .eclipse-container {
 
     <script src="https://cdn.scaledrone.com/scaledrone.min.js"></script>
     <script>
-        /***** Eclipse Chat - Messages Background Version *****/
+ /***** Eclipse Chat - COMPLETE FUNCTIONAL VERSION *****/
 
-        /***** Config & state *****/ 
-        const CLIENT_ID = "Ddsziop1s0J8gTjH";
-        let drone = null, room = null, clientId = null;
-        let userName = "", roomCode = "";
-        let recognition = null, isRecording = false;
-        let currentChatType = 'public';
-        let currentChatId = 'public';
-        let onlineUsers = new Map();
-        let dmConversations = new Map();
-        let unreadCounts = new Map();
-        const seenMessageIds = new Set();
-        const reactionsMap = {};
-        let privateRooms = new Map();
-        let currentPrivateRoom = null;
-        let currentReplyTo = null;  // Make sure this is explicitly null
-        let currentReplyToName = null;
+const CLIENT_ID = "Ddsziop1s0J8gTjH";
+let drone = null, room = null, clientId = null;
+let userName = "", roomCode = "";
+let recognition = null, isRecording = false;
+let currentChatType = 'public';
+let currentChatId = 'public';
+let onlineUsers = new Map();
+let dmConversations = new Map();
+let unreadCounts = new Map();
+const seenMessageIds = new Set();
+const reactionsMap = {};
+let privateRooms = new Map();
+let currentPrivateRoom = null;
+let currentReplyTo = null;
+let currentReplyToName = null;
 
-       
+// DOM refs
+const joinModal = document.getElementById('joinModal');
+const joinBtn = document.getElementById('joinBtn');
+const demoBtn = document.getElementById('demoBtn');
+const usernameInput = document.getElementById('usernameInput');
+const sidebarUserInfo = document.getElementById('sidebarUserInfo');
+const currentChatDisplay = document.getElementById('currentChatDisplay');
+const messagesEl = document.getElementById('messages');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const micBtn = document.getElementById('micButton');
+const micIcon = document.getElementById('micIcon');
+const userCountEl = document.getElementById('userCount');
+const reactionMenu = document.getElementById('reactionMenu');
+const onlineUsersList = document.getElementById('onlineUsersList');
+const dmList = document.getElementById('dmList');
+const themeToggle = document.getElementById('themeToggle');
+const themeModal = document.getElementById('themeModal');
+const closeTheme = document.getElementById('closeTheme');
+const customBgUpload = document.getElementById('customBgUpload');
+const customBgUploadBtn = document.getElementById('customBgUploadBtn');
+const removeBgBtn = document.getElementById('removeBgBtn');
+const bgPreview = document.getElementById('bgPreview');
 
-        // DOM refs
-        const joinModal = document.getElementById('joinModal');
-        const joinBtn = document.getElementById('joinBtn');
-        const demoBtn = document.getElementById('demoBtn');
-        const usernameInput = document.getElementById('usernameInput');
-        const sidebarUserInfo = document.getElementById('sidebarUserInfo');
-        const currentChatDisplay = document.getElementById('currentChatDisplay');
-        const messagesEl = document.getElementById('messages');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const micBtn = document.getElementById('micButton');
-        const micIcon = document.getElementById('micIcon');
-        const userCountEl = document.getElementById('userCount');
-        const reactionMenu = document.getElementById('reactionMenu');
-        const onlineUsersList = document.getElementById('onlineUsersList');
-        const dmList = document.getElementById('dmList');
-
-        /***** Enhanced Theme Management *****/
-        const themes = ['dark', 'sunset', 'blue-sunset', 'gray', 'neon', 'cyber', 'ocean', 'forest', 'desert', 'purple-haze', 'matrix', 'retro', 'custom'];
-        let currentTheme = localStorage.getItem('eclipse_chat_theme') || 'dark';
-        let customBackground = localStorage.getItem('eclipse_custom_messages_bg') || null;
-        let customBackgroundDataUrl = null;
-        let isApplyingCustomTheme = false;
-
-        // Notification permission state
+// Theme system
+const themes = ['dark', 'sunset', 'blue-sunset', 'gray', 'neon', 'cyber', 'ocean', 'forest', 'desert', 'purple-haze', 'matrix', 'retro', 'custom'];
+let currentTheme = localStorage.getItem('eclipse_chat_theme') || 'dark';
+let customBackground = localStorage.getItem('eclipse_custom_messages_bg') || null;
+let customBackgroundDataUrl = null;
+let isApplyingCustomTheme = false;
 let notificationPermission = Notification.permission;
 
-// Request notification permission on first interaction
+// ===== FIXED CONNECT BUTTON - MAIN ISSUE =====
+document.addEventListener('DOMContentLoaded', function() {
+    // CRITICAL: Ensure join button works
+    if (joinBtn) {
+        joinBtn.addEventListener('click', joinRoom);
+        console.log('Join button listener attached');
+    }
+    
+    if (demoBtn) {
+        demoBtn.addEventListener('click', function() {
+            usernameInput.value = 'DemoUser' + Math.floor(Math.random() * 1000);
+            joinRoom();
+        });
+    }
+    
+    if (usernameInput) {
+        usernameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                joinRoom();
+            }
+        });
+    }
+    
+    // Show join modal
+    if (joinModal) {
+        joinModal.style.display = 'flex';
+        
+        // Prefill username
+        const stored = localStorage.getItem('eclipse_chat_username');
+        if (stored) {
+            usernameInput.value = stored;
+        }
+    }
+    
+    initThemes();
+    loadPrivateRooms();
+    requestNotificationPermission();
+});
+
+// ===== FIXED JOIN ROOM FUNCTION =====
+function joinRoom() {
+    console.log('joinRoom called'); // Debug
+    const rawName = sanitizeName(usernameInput.value || 'EclipseUser');
+    if (!rawName) {
+        showTransient('Please enter a valid username (alphanumeric only)', true);
+        usernameInput.focus();
+        return;
+    }
+    
+    userName = rawName;
+    roomCode = generateSiteRoomCode();
+    
+    // Update UI IMMEDIATELY
+    sidebarUserInfo.textContent = `${userName}@eclipse`;
+    joinModal.style.display = 'none';
+    
+    // Save username
+    try {
+        localStorage.setItem('eclipse_chat_username', userName);
+    } catch(e) {
+        console.warn('Could not save username to localStorage');
+    }
+    
+    // Connect to Scaledrone
+    connectToRoom();
+    
+    requestNotificationPermission();
+    showTransient(`Welcome ${userName}! Connected to Eclipse Chat 🚀`);
+    
+    // Switch to public chat
+    switchToChat('public', 'public');
+}
+
+// ===== UTILITY FUNCTIONS =====
+function generateSiteRoomCode() {
+    const hostname = window.location.hostname || 'localhost';
+    return hostname.replace(/[^a-zA-Z0-9]/g, '_') + '_eclipse_chat';
+}
+
+function uid() {
+    return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8);
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[c]));
+}
+
+function formatLinks(text) {
+    const urlPattern = /(https?:\/\/[^\s]+)/g;
+    return escapeHtml(text).replace(urlPattern, url => `<a class="link" href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+}
+
+function formatTime(iso) {
+    try {
+        const d = iso ? new Date(iso) : new Date();
+        return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    } catch(e) {
+        return '';
+    }
+}
+
+function sanitizeName(n) {
+    return n.replace(/[^a-zA-Z0-9 ]/g,'').slice(0,24);
+}
+
+function showTransient(text, danger = false) {
+    const t = document.createElement('div');
+    t.style.cssText = `
+        position: fixed; right: 22px; bottom: 22px; z-index: 160;
+        background: ${danger ? 'linear-gradient(90deg,#ef444433,#ef444422)' : 'linear-gradient(90deg,#6b5ce7 22,#8c7ae6 11)'};
+        padding: 10px 14px; border-radius: 12px; color: ${danger ? '#fee2e2' : '#e0f2fe'};
+        backdrop-filter: blur(1px); border: 1px solid var(--eclipse-border);
+        font-family: inherit; font-size: 14px;
+        animation: slideIn 0.3s ease-out;
+    `;
+    t.textContent = text;
+    document.body.appendChild(t);
+    
+    requestAnimationFrame(() => t.style.animation = 'slideIn 0.3s ease-out');
+    
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(100%)';
+    }, 2200);
+    setTimeout(() => t.remove(), 2600);
+}
+
+// Add CSS for animation
+if (!document.querySelector('#transient-style')) {
+    const style = document.createElement('style');
+    style.id = 'transient-style';
+    style.textContent = `
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ===== NOTIFICATIONS =====
 function requestNotificationPermission() {
     if (notificationPermission === 'granted') return;
     
@@ -1638,36 +1780,20 @@ function requestNotificationPermission() {
         });
     }
 }
-    // Save messages for a chat/channel to localStorage
-function saveChannelMessages(chatType, chatId, messagesArray) {
-    const key = `eclipse_chat_messages_${chatType}_${chatId}`;
-    localStorage.setItem(key, JSON.stringify(messagesArray));
-}
 
-// Load messages for a chat/channel from localStorage
-function loadChannelMessages(chatType, chatId) {
-    const key = `eclipse_chat_messages_${chatType}_${chatId}`;
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
-}    
-
-// Send browser notification
 function sendBrowserNotification(title, body, options = {}) {
     if (notificationPermission !== 'granted') return;
     
     const notification = new Notification(title, {
         body,
-        icon: '/assets/logo/logo.png', // Use your favicon
+        icon: '/assets/logo/logo.png',
         badge: '/assets/logo/logo.png',
         tag: 'Eclipse',
-        vibrate: [100, 50, 100], // Vibration pattern
+        vibrate: [100, 50, 100],
         ...options
     });
     
-    // Auto-dismiss after 5 seconds
     setTimeout(() => notification.close(), 5000);
-    
-    // Click to focus window
     notification.onclick = () => {
         window.focus();
         notification.close();
@@ -1682,16 +1808,11 @@ function notifyNewMessage(data, isSelf = false) {
     let body = '';
     
     if (data.isDM && data.target === userName) {
-        // Incoming DM
-        if (currentChatType === 'dm' && currentChatId === data.name) {
-            // Currently viewing this DM, don't notify
-            return;
-        }
+        if (currentChatType === 'dm' && currentChatId === data.name) return;
         shouldNotify = true;
         title = `DM from ${data.name}`;
         body = data.text.substring(0, 100);
     } else if (currentChatType === 'public' && !data.isDM) {
-        // Public message when viewing public
         if (document.hidden || !document.hasFocus()) {
             shouldNotify = true;
             title = 'New message in public';
@@ -1707,26 +1828,616 @@ function notifyNewMessage(data, isSelf = false) {
     }
 }
 
-        function rgbToHex(r, g, b) {
-            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-        }
+// ===== LOCAL STORAGE FOR MESSAGES =====
+function saveChannelMessages(chatType, chatId, messagesArray) {
+    const key = `eclipse_chat_messages_${chatType}_${chatId}`;
+    localStorage.setItem(key, JSON.stringify(messagesArray));
+}
 
-        function adjustColor(hex, amount) {
-            const num = parseInt(hex.replace("#", ""), 16);
-            const amt = Math.round(2.55 * amount);
-            const R = (num >> 16) + amt;
-            const G = (num >> 8 & 0x00FF) + amt;
-            const B = (num & 0x0000FF) + amt;
-            return rgbToHex(
-                Math.max(0, Math.min(255, R)),
-                Math.max(0, Math.min(255, G)),
-                Math.max(0, Math.min(255, B))
-            );
-        }
+function loadChannelMessages(chatType, chatId) {
+    const key = `eclipse_chat_messages_${chatType}_${chatId}`;
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+}
 
-       async function generateCustomThemeFromImage(file) {
+// ===== CHAT FUNCTIONS =====
+function switchToChat(chatType, chatId) {
+    // Save current messages
+    if (currentChatType && currentChatId) {
+        const messages = [];
+        messagesEl.querySelectorAll('.message').forEach(msgEl => {
+            messages.push({
+                html: msgEl.innerHTML,
+                className: msgEl.className,
+                mid: msgEl.getAttribute('data-mid')
+            });
+        });
+        saveChannelMessages(currentChatType, currentChatId, messages);
+    }
+
+    currentChatType = chatType;
+    currentChatId = chatId;
+
+    document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+    const activeItem = document.querySelector(`[data-chat-id="${chatId}"]`);
+    if (activeItem) activeItem.classList.add('active');
+
+    currentChatDisplay.textContent = chatType === 'public' ? 'public' : `dm:${chatId}`;
+
+    messagesEl.innerHTML = '';
+    seenMessageIds.clear();
+
+    // Restore messages
+    const savedMessages = loadChannelMessages(chatType, chatId);
+    savedMessages.forEach(msg => {
+        const wrap = document.createElement('div');
+        wrap.className = msg.className;
+        wrap.setAttribute('data-mid', msg.mid);
+        wrap.innerHTML = msg.html;
+        messagesEl.appendChild(wrap);
+    });
+
+    unreadCounts.set(chatId, 0);
+    updateUnreadCount(chatId, 0);
+
+    messageInput.placeholder = chatType === 'public' ? 
+        'type message and press enter...' : 
+        `message @${chatId}...`;
+}
+
+function updateUnreadCount(chatId, count) {
+    const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
+    if (!chatItem) return;
+    
+    let badge = chatItem.querySelector('.unread-count');
+    if (count > 0) {
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.className = 'unread-count';
+            chatItem.appendChild(badge);
+        }
+        badge.textContent = count;
+    } else if (badge) {
+        badge.remove();
+    }
+}
+
+function addDMConversation(username) {
+    if (dmConversations.has(username)) return;
+    
+    dmConversations.set(username, []);
+    
+    const dmItem = document.createElement('div');
+    dmItem.className = 'chat-item';
+    dmItem.setAttribute('data-chat-type', 'dm');
+    dmItem.setAttribute('data-chat-id', username);
+    dmItem.innerHTML = `
+        <div class="chat-icon"><i class="fas fa-user"></i></div>
+        <div class="chat-name">${username}</div>
+    `;
+    
+    dmItem.addEventListener('click', () => switchToChat('dm', username));
+    dmList.appendChild(dmItem);
+}
+
+function updateOnlineUsers(members) {
+    onlineUsers.clear();
+    onlineUsersList.innerHTML = '';
+    
+    if (!members) return;
+    
+    members.forEach(member => {
+        if (member.clientData && member.clientData.name && member.clientData.name !== userName) {
+            const username = member.clientData.name;
+            onlineUsers.set(member.id, { username, id: member.id });
+            
+            const userItem = document.createElement('div');
+            userItem.className = 'user-item';
+            userItem.innerHTML = `
+                <div class="user-status"></div>
+                <div class="user-name">${username}</div>
+            `;
+            
+            userItem.addEventListener('click', () => {
+                addDMConversation(username);
+                switchToChat('dm', username);
+            });
+            
+            onlineUsersList.appendChild(userItem);
+        }
+    });
+    
+    userCountEl.textContent = members.length;
+}
+
+// ===== REACTIONS =====
+function attachReactionTriggers(msgEl) {
+    let longpressTimer = null;
+    
+    function openMenuAt(x, y, mid) {
+        reactionMenu.style.display = 'flex';
+        reactionMenu.style.left = (x - 8) + 'px';
+        reactionMenu.style.top = (y - 52) + 'px';
+        reactionMenu.setAttribute('data-mid', mid);
+    }
+    
+    function closeMenu() {
+        reactionMenu.style.display = 'none';
+        reactionMenu.removeAttribute('data-mid');
+    }
+    
+    msgEl.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const mid = msgEl.getAttribute('data-mid');
+        openMenuAt(e.clientX, e.clientY, mid);
+    });
+    
+    msgEl.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) return;
+        const startCoords = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        longpressTimer = setTimeout(() => {
+            const mid = msgEl.getAttribute('data-mid');
+            openMenuAt(startCoords.x, startCoords.y, mid);
+        }, 600);
+    }, { passive: true });
+    
+    ['touchend', 'touchmove', 'touchcancel'].forEach(ev => 
+        msgEl.addEventListener(ev, () => {
+            if (longpressTimer) {
+                clearTimeout(longpressTimer);
+                longpressTimer = null;
+            }
+        }, { passive: true })
+    );
+    
+    const closeHandler = (e) => {
+        if (reactionMenu.style.display !== 'none' && !reactionMenu.contains(e.target)) closeMenu();
+    };
+    document.addEventListener('click', closeHandler);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMenu();
+    });
+}
+
+function addMessageToDOM(data, isSelf = false) {
+    if (!data || !data.id || seenMessageIds.has(data.id)) return;
+    seenMessageIds.add(data.id);
+
+    const mid = data.id;
+    const wrap = document.createElement('div');
+    wrap.className = 'message' + (isSelf ? ' self' : '');
+    if (data.isDM) wrap.classList.add('dm-message');
+    if (data.type === 'system') wrap.classList.add('system-message');
+    if (data.replyTo) wrap.classList.add('has-reply');
+    wrap.setAttribute('data-mid', mid);
+    wrap.setAttribute('tabindex', '-1');
+
+    let messageHTML = '';
+
+    if (data.replyTo && data.replyToName) {
+        messageHTML += `
+            <div class="reply-indicator">
+                <span>Replying to ${escapeHtml(data.replyToName)}</span>
+                <button class="reply-button" data-action="view-reply">View</button>
+            </div>
+        `;
+    }
+
+    messageHTML += `
+    <div class="message-header">
+        <div class="message-user">
+            <span class="user-prompt">$</span>
+            <span class="user-name">${escapeHtml(data.name || 'Unknown')}</span>
+            ${data.isDM ? '<span class="dm-indicator">[DM]</span>' : ''}
+            <button class="reply-button" data-action="reply" title="Reply to this message">
+                <i class="fas fa-reply"></i>
+            </button>
+            <button class="reaction-button" data-action="react" title="React to this message">
+                <i class="fas fa-smile"></i>
+            </button>
+        </div>
+        <div class="message-time">${formatTime(data.timestamp)}</div>
+    </div>
+    <div class="message-content">${formatLinks(data.text || '')}</div>
+    <div class="reactions" data-mid="${mid}"></div>
+`;
+
+    wrap.innerHTML = messageHTML;
+
+    // Event listeners
+    const replyBtn = wrap.querySelector('[data-action="reply"]');
+    const viewReplyBtn = wrap.querySelector('[data-action="view-reply"]');
+    const reactBtn = wrap.querySelector('[data-action="react"]');
+    
+    if (replyBtn) {
+        replyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setReplyTo(mid, data.name);
+        });
+    }
+    
+    if (viewReplyBtn) {
+        viewReplyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (data.replyTo) {
+                scrollToMessage(data.replyTo);
+            }
+        });
+    }
+    
+    if (reactBtn) {
+        reactBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const rect = reactBtn.getBoundingClientRect();
+            reactionMenu.style.display = 'flex';
+            reactionMenu.style.left = (rect.left + window.scrollX - 8) + 'px';
+            reactionMenu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+            reactionMenu.setAttribute('data-mid', mid);
+        });
+    }
+
+    attachReactionTriggers(wrap);
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    if (!isSelf) {
+        notifyNewMessage(data, isSelf);
+    }
+
+    if (reactionsMap[mid]) renderReactions(mid);
+}
+
+function setReplyTo(messageId, replyToName) {
+    currentReplyTo = messageId;
+    currentReplyToName = replyToName;
+    
+    const inputLine = document.querySelector('.input-line');
+    inputLine?.classList.add('replying-state');
+    inputLine?.setAttribute('data-reply-to', replyToName);
+    
+    messageInput.placeholder = `Replying to @${replyToName}... (press Esc to cancel)`;
+    messageInput.focus();
+    
+    showTransient(`Replying to @${replyToName}`);
+}
+
+function clearReplyState() {
+    currentReplyTo = null;
+    currentReplyToName = null;
+    
+    const inputLine = document.querySelector('.input-line');
+    inputLine?.classList.remove('replying-state');
+    inputLine?.removeAttribute('data-reply-to');
+    
+    messageInput.placeholder = currentChatType === 'public' ? 
+        'type message and press enter...' : 
+        `message @${currentChatId}...`;
+    
+    messageInput.focus();
+}
+
+function scrollToMessage(messageId) {
+    const message = messagesEl.querySelector(`[data-mid="${messageId}"]`);
+    if (message) {
+        message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        message.classList.add('highlight');
+        setTimeout(() => message.classList.remove('highlight'), 2000);
+    }
+}
+
+function renderReactions(mid) {
+    const holder = messagesEl.querySelector(`.reactions[data-mid="${mid}"]`);
+    if (!holder) return;
+    holder.innerHTML = '';
+    const map = reactionsMap[mid] || {};
+    for (const emoji of Object.keys(map)) {
+        const users = map[emoji];
+        const count = users.size;
+        if (count <= 0) continue;
+        const pill = document.createElement('div');
+        pill.className = 'reaction-pill';
+        if (users.has(clientId)) pill.classList.add('active');
+        pill.innerHTML = `<span class="reaction-emoji">${emoji}</span><span class="reaction-count">${count}</span>`;
+        pill.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleReaction(mid, emoji);
+        });
+        holder.appendChild(pill);
+    }
+}
+
+function toggleReaction(mid, emoji) {
+    if (!mid || !emoji) return;
+    if (!reactionsMap[mid]) reactionsMap[mid] = {};
+    if (!reactionsMap[mid][emoji]) reactionsMap[mid][emoji] = new Set();
+    const users = reactionsMap[mid][emoji];
+    const already = users.has(clientId);
+    if (already) users.delete(clientId);
+    else users.add(clientId);
+    renderReactions(mid);
+    if (drone && room) {
+        drone.publish({
+            room: `observable-${roomCode}`,
+            message: {
+                type: 'reaction',
+                messageId: mid,
+                reaction: emoji,
+                actor: clientId,
+                timestamp: new Date().toISOString()
+            }
+        });
+    }
+}
+
+function handleIncomingReaction(payload) {
+    if (!payload || !payload.messageId || !payload.reaction) return;
+    const mid = payload.messageId;
+    const emoji = payload.reaction;
+    const actor = payload.actor || 'remote';
+    if (!reactionsMap[mid]) reactionsMap[mid] = {};
+    if (!reactionsMap[mid][emoji]) reactionsMap[mid][emoji] = new Set();
+    reactionsMap[mid][emoji].add(actor);
+    renderReactions(mid);
+}
+
+// Reaction menu buttons
+document.querySelectorAll('.menu-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const mid = reactionMenu.getAttribute('data-mid');
+        const emoji = btn.dataset.reaction;
+        if (mid && emoji) {
+            toggleReaction(mid, emoji);
+            reactionMenu.style.display = 'none';
+        }
+    });
+});
+
+// Close reaction menu
+document.addEventListener('click', () => {
+    if (reactionMenu.style.display !== 'none') {
+        reactionMenu.style.display = 'none';
+    }
+});
+
+// ===== CONNECTION =====
+function connectToRoom() {
+    try {
+        drone = new ScaleDrone(CLIENT_ID, {
+            data: { name: userName }
+        });
+
+        drone.on('open', (err) => {
+            if (err) {
+                showTransient('Connection error: ' + err, true);
+                return;
+            }
+            clientId = drone.clientId;
+            room = drone.subscribe(`observable-${roomCode}`);
+            
+            room.on('open', (err) => {
+                if (err) {
+                    showTransient('Room subscription error: ' + err, true);
+                    return;
+                }
+                drone.publish({
+                    room: `observable-${roomCode}`,
+                    message: {
+                        type: 'join',
+                        name: userName,
+                        timestamp: new Date().toISOString()
+                    }
+                });
+            });
+
+            room.on('data', (data, member) => {
+                if (!data) return;
+
+                if (data.type === 'reaction') {
+                    const payload = {
+                        messageId: data.messageId,
+                        reaction: data.reaction,
+                        actor: data.actor || member?.id || 'remote',
+                        timestamp: data.timestamp
+                    };
+                    handleIncomingReaction(payload);
+                    return;
+                }
+
+                if (data.type === 'join') {
+                    showTransient(`${data.name} joined`);
+                    return;
+                }
+
+                if (data.type === 'dm') {
+                    const senderName = data.name;
+                    const targetName = data.target;
+                    
+                    if (targetName === userName || senderName === userName) {
+                        const chatPartner = senderName === userName ? targetName : senderName;
+                        
+                        if (!dmConversations.has(chatPartner)) {
+                            addDMConversation(chatPartner);
+                        }
+                        
+                        const dmMessage = { ...data, isDM: true };
+                        dmConversations.get(chatPartner).push(dmMessage);
+                        
+                        if (currentChatType === 'dm' && currentChatId === chatPartner) {
+                            addMessageToDOM(dmMessage, senderName === userName);
+                        } else {
+                            const currentUnread = unreadCounts.get(chatPartner) || 0;
+                            unreadCounts.set(chatPartner, currentUnread + 1);
+                            updateUnreadCount(chatPartner, currentUnread + 1);
+                            notifyNewMessage(dmMessage, false);
+                        }
+                    }
+                    return;
+                }
+
+                if (data.id && data.text && data.name && !seenMessageIds.has(data.id)) {
+                    if ((!data.type || data.type === 'message') && currentChatType === 'public' && !data.isDM) {
+                        addMessageToDOM(data, data.name === userName);
+                    }
+                }
+            });
+
+            room.on('member_join', (m) => updateOnlineUsers(room.members));
+            room.on('member_leave', (m) => updateOnlineUsers(room.members));
+            room.on('members', (m) => updateOnlineUsers(m));
+        });
+
+        drone.on('close', () => {
+            showTransient('Disconnected', true);
+        });
+
+        drone.on('error', (err) => {
+            showTransient('Connection error', true);
+        });
+
+    } catch (error) {
+        console.error('Connection failed:', error);
+        showTransient('Failed to connect to chat server', true);
+    }
+}
+
+// ===== MESSAGE SENDING =====
+sendBtn.addEventListener('click', sendMessage);
+
+messageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    } else if (e.key === 'Escape') {
+        if (currentReplyTo) {
+            e.preventDefault();
+            clearReplyState();
+            showTransient('Reply cancelled');
+        }
+    }
+});
+
+function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!text) return;
+
+    const id = uid();
+    const timestamp = new Date().toISOString();
+    const isReply = currentReplyTo !== null;
+
+    let payload = {
+        id,
+        text,
+        name: userName,
+        timestamp
+    };
+
+    if (isReply) {
+        payload.replyTo = currentReplyTo;
+        payload.replyToName = currentReplyToName;
+    }
+
+    messageInput.value = '';
+
+    if (currentPrivateRoom) {
+        const roomData = privateRooms.get(currentPrivateRoom);
+        if (roomData) {
+            roomData.messages.push(payload);
+            addMessageToDOM(payload, true);
+            savePrivateRooms();
+        }
+    } else if (currentChatType === 'dm') {
+        payload.type = 'dm';
+        payload.target = currentChatId;
+        payload.isDM = true;
+        
+        if (drone && room) {
+            drone.publish({ room: `observable-${roomCode}`, message: payload });
+        }
+        addDMConversation(currentChatId);
+        dmConversations.get(currentChatId).push(payload);
+        addMessageToDOM(payload, true);
+    } else if (currentChatType === 'public') {
+        if (drone && room) {
+            drone.publish({ room: `observable-${roomCode}`, message: payload });
+        }
+        addMessageToDOM(payload, true);
+    }
+
+    if (isReply) clearReplyState();
+    messageInput.focus();
+}
+
+// ===== SPEECH RECOGNITION =====
+function initSpeech() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        micIcon.className = 'fas fa-microphone-slash';
+        micBtn.disabled = true;
+        micBtn.title = 'Speech recognition not supported';
+        return;
+    }
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRec();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => {
+        isRecording = true;
+        micIcon.className = 'fas fa-microphone';
+        micBtn.classList.add('active');
+    };
+    recognition.onresult = (e) => {
+        const txt = e.results[0][0].transcript;
+        messageInput.value = txt;
+        sendMessage();
+    };
+    recognition.onerror = () => {
+        showTransient('Speech error');
+        stopRecognition();
+    };
+    recognition.onend = () => stopRecognition();
+}
+
+function startRecognition() {
+    if (!recognition) initSpeech();
+    try { recognition.start(); } catch(e) {}
+}
+
+function stopRecognition() {
+    isRecording = false;
+    micIcon.className = 'fas fa-microphone-slash';
+    micBtn.classList.remove('active');
+    try { recognition && recognition.stop(); } catch(e) {}
+}
+
+micBtn.addEventListener('click', () => {
+    if (isRecording) {
+        stopRecognition();
+    } else {
+        startRecognition();
+    }
+});
+
+// ===== THEME SYSTEM =====
+function rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+}
+
+function adjustColor(hex, amount) {
+    const num = parseInt(hex.replace("#", ""), 16);
+    const amt = Math.round(2.55 * amount);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    return rgbToHex(
+        Math.max(0, Math.min(255, R)),
+        Math.max(0, Math.min(255, G)),
+        Math.max(0, Math.min(255, B))
+    );
+}
+
+async function generateCustomThemeFromImage(file) {
     return new Promise((resolve, reject) => {
-        // Validate file size (limit to 5MB)
         if (file.size > 5 * 1024 * 1024) {
             reject(new Error('Image too large. Please use images under 5MB.'));
             return;
@@ -1736,12 +2447,10 @@ function notifyNewMessage(data, isSelf = false) {
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-                // Create optimized canvas - limit dimensions for performance
                 const MAX_WIDTH = 1920;
                 const MAX_HEIGHT = 1080;
                 let { width, height } = img;
                 
-                // Resize if too large
                 if (width > MAX_WIDTH || height > MAX_HEIGHT) {
                     const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
                     width *= ratio;
@@ -1753,21 +2462,16 @@ function notifyNewMessage(data, isSelf = false) {
                 canvas.width = width;
                 canvas.height = height;
                 
-                // High quality rendering
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
-                
-                // Draw with better quality
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // Get optimized data URL
-                const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.9); // 90% quality JPEG
+                const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imageData.data;
                 
-                // Sample more pixels for better color detection
                 const colorCounts = {};
-                const sampleSize = Math.max(1, Math.floor(canvas.width * canvas.height / 5000)); // ~5k samples
+                const sampleSize = Math.max(1, Math.floor(canvas.width * canvas.height / 5000));
                 
                 for (let i = 0; i < data.length; i += sampleSize * 4) {
                     const r = data[i];
@@ -1805,7 +2509,7 @@ function notifyNewMessage(data, isSelf = false) {
                     imageData: optimizedDataUrl, 
                     themeColors,
                     bgImage: `url(${optimizedDataUrl})`,
-                    canvas // Store for preview
+                    canvas
                 });
             };
             img.onerror = reject;
@@ -1815,29 +2519,25 @@ function notifyNewMessage(data, isSelf = false) {
         reader.readAsDataURL(file);
     });
 }
-    async function applyCustomMessagesBackground(file) {
+
+async function applyCustomMessagesBackground(file) {
     if (!file || !file.type.startsWith('image/')) {
         showTransient('Please select a valid image file', true);
         return;
     }
     
+    if (isApplyingCustomTheme) return;
     isApplyingCustomTheme = true;
-    const customOption = document.querySelector('[data-theme="custom"]');
-    const preview = document.getElementById('bgPreview');
-    const removeBtn = document.getElementById('removeBgBtn');
-    
-    // Show loading
-    if (preview) {
-        preview.innerHTML = '<div class="custom-loading"><div class="spinner"></div>Processing...</div>';
-    }
     
     try {
         const result = await generateCustomThemeFromImage(file);
         
+        const existingStyle = document.getElementById('custom-messages-styles');
+        if (existingStyle) existingStyle.remove();
+        
         const primaryRgb = result.themeColors.primary.match(/\d+/g).map(Number);
         const primaryHex = rgbToHex(primaryRgb[0], primaryRgb[1], primaryRgb[2]);
         
-        // Create comprehensive custom theme CSS
         const customCSS = `
             :root.custom-messages-theme {
                 --eclipse-bg: ${result.themeColors.bg};
@@ -1847,159 +2547,118 @@ function notifyNewMessage(data, isSelf = false) {
                 --eclipse-accent: ${result.themeColors.accent};
                 --eclipse-text: ${result.themeColors.text};
                 --eclipse-text-dim: ${adjustColor(primaryHex, -20)};
-                --eclipse-success: ${adjustColor(primaryHex, -30)};
-                --eclipse-danger: ${adjustColor(primaryHex, -50)};
-                --eclipse-warning: ${adjustColor(primaryHex, -40)};
                 --eclipse-gradient: linear-gradient(135deg, ${result.themeColors.bg} 0%, ${result.themeColors.surface} 100%);
             }
             body.theme-custom {
                 background: var(--eclipse-gradient) !important;
             }
-            .messages-container.with-custom-bg {
-                --custom-messages-bg: ${result.bgImage} !important;
+            body.theme-custom .messages-container {
+                --custom-messages-bg: ${result.bgImage};
                 background: var(--custom-messages-bg) !important;
+                background-size: cover !important;
+                background-position: center !important;
+                background-repeat: no-repeat !important;
             }
         `;
         
-        let style = document.getElementById('custom-messages-styles');
-        if (!style) {
-            style = document.createElement('style');
-            style.id = 'custom-messages-styles';
-            document.head.appendChild(style);
-        }
+        const style = document.createElement('style');
+        style.id = 'custom-messages-styles';
         style.textContent = customCSS;
+        document.head.appendChild(style);
         
-        // Apply immediately
         customBackgroundDataUrl = result.imageData;
         localStorage.setItem('eclipse_custom_messages_bg', result.imageData);
         
-        // Update preview
-        if (preview) {
-            preview.innerHTML = '';
-            preview.style.backgroundImage = result.bgImage;
-            preview.style.opacity = '1';
+        document.documentElement.classList.add('custom-messages-theme');
+        document.body.classList.add('theme-custom');
+        messagesEl.classList.add('with-custom-bg');
+        
+        if (bgPreview) {
+            bgPreview.style.backgroundImage = result.bgImage;
+            bgPreview.style.opacity = '1';
+            bgPreview.innerHTML = '';
         }
+        if (removeBgBtn) removeBgBtn.style.display = 'block';
         
-        if (removeBtn) removeBtn.style.display = 'block';
-        if (customOption) customOption.classList.add('active');
+        currentTheme = 'custom';
+        localStorage.setItem('eclipse_chat_theme', 'custom');
         
-        // Apply custom theme - this won't remove the background now
-        applyTheme('custom');
-        showTransient('Custom theme applied! 🎨');
+        showTransient('Custom theme applied successfully! 🎨');
         
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Custom theme error:', error);
         showTransient(error.message || 'Failed to process image', true);
     } finally {
         isApplyingCustomTheme = false;
-        document.getElementById('customBgUpload').value = '';
-        if (preview) preview.innerHTML = ''; // Clear loading
+        customBgUpload.value = '';
     }
 }
-     function removeCustomBackground() {
-    // Remove custom background but keep the ability to re-apply
+
+function removeCustomBackground() {
+    const customStyle = document.getElementById('custom-messages-styles');
+    if (customStyle) customStyle.remove();
+    
     messagesEl.classList.remove('with-custom-bg');
     messagesEl.style.removeProperty('--custom-messages-bg');
-    
-    const customStyle = document.getElementById('custom-messages-styles');
-    if (customStyle) {
-        // Keep the style element but remove custom background specific rules
-        const newCSS = customStyle.textContent.replace(
-            /--custom-messages-bg:.*!important;|\.messages-container\.with-custom-bg\{[^}]*\}/g, 
-            ''
-        );
-        customStyle.textContent = newCSS;
-    }
     
     customBackgroundDataUrl = null;
     localStorage.removeItem('eclipse_custom_messages_bg');
     
-    const removeBtn = document.getElementById('removeBgBtn');
-    const preview = document.getElementById('bgPreview');
-    
-    if (removeBtn) removeBtn.style.display = 'none';
-    if (preview) {
-        preview.style.backgroundImage = '';
-        preview.style.opacity = '0.7';
+    if (removeBgBtn) removeBgBtn.style.display = 'none';
+    if (bgPreview) {
+        bgPreview.style.backgroundImage = '';
+        bgPreview.style.opacity = '0.7';
     }
     
     const customOption = document.querySelector('[data-theme="custom"]');
     if (customOption) customOption.classList.remove('active');
     
-    // Switch to last non-custom theme or dark
     const lastTheme = localStorage.getItem('eclipse_last_non_custom_theme') || 'dark';
     applyTheme(lastTheme);
     showTransient('Custom background removed');
 }
-        function applyTheme(theme) {
-    // Don't remove custom background when applying custom theme
-    const wasCustomActive = currentTheme === 'custom' && customBackgroundDataUrl;
-    
-    // Remove body theme class first
+
+function applyTheme(theme) {
     document.body.className = '';
+    document.documentElement.classList.remove('custom-messages-theme');
     
     if (theme === 'custom' && customBackgroundDataUrl) {
-        // Apply custom theme CSS
-        document.body.classList.add('custom-messages-theme');
-        document.body.classList.add('theme-custom'); // Add custom class for body
-        
-        // Ensure messages container has custom background
+        document.body.classList.add('theme-custom');
         messagesEl.classList.add('with-custom-bg');
         messagesEl.style.setProperty('--custom-messages-bg', `url(${customBackgroundDataUrl})`);
-        
-        // Apply custom theme colors via CSS variables
-        const customStyle = document.getElementById('custom-messages-styles');
-        if (customStyle) {
-            // Make sure custom styles are always applied for custom theme
-            document.documentElement.classList.add('custom-messages-theme');
-        }
-        
     } else {
-        // Remove custom theme elements for non-custom themes
-        document.documentElement.classList.remove('custom-messages-theme');
+        document.body.classList.add(`theme-${theme}`);
         messagesEl.classList.remove('with-custom-bg');
         messagesEl.style.removeProperty('--custom-messages-bg');
-        
-        // Apply regular theme
-        document.body.classList.add(`theme-${theme}`);
+        if (theme !== 'custom') {
+            localStorage.setItem('eclipse_last_non_custom_theme', theme);
+        }
     }
     
     currentTheme = theme;
     localStorage.setItem('eclipse_chat_theme', theme);
     
-    // Update theme option active states
     document.querySelectorAll('.theme-option').forEach(opt => {
         opt.classList.toggle('active', opt.dataset.theme === theme);
     });
 }
+
 function initThemes() {
     currentTheme = localStorage.getItem('eclipse_chat_theme') || 'dark';
     customBackgroundDataUrl = localStorage.getItem('eclipse_custom_messages_bg');
     
-    // If we have custom background, apply custom theme
     if (customBackgroundDataUrl && currentTheme === 'custom') {
-        const preview = document.getElementById('bgPreview');
-        const removeBtn = document.getElementById('removeBgBtn');
-        const customOption = document.querySelector('[data-theme="custom"]');
-        
-        if (preview) {
-            preview.style.backgroundImage = `url(${customBackgroundDataUrl})`;
-            preview.style.opacity = '1';
+        if (bgPreview) {
+            bgPreview.style.backgroundImage = `url(${customBackgroundDataUrl})`;
+            bgPreview.style.opacity = '1';
         }
-        if (removeBtn) removeBtn.style.display = 'block';
-        if (customOption) customOption.classList.add('active');
-        
+        if (removeBgBtn) removeBgBtn.style.display = 'block';
         messagesEl.classList.add('with-custom-bg');
         messagesEl.style.setProperty('--custom-messages-bg', `url(${customBackgroundDataUrl})`);
-        applyTheme('custom'); // This will now properly apply custom theme
+        applyTheme('custom');
     } else {
         applyTheme(currentTheme);
     }
-    
-    // Theme modal setup
-    const themeToggle = document.getElementById('themeToggle');
-    const themeModal = document.getElementById('themeModal');
-    const closeTheme = document.getElementById('closeTheme');
     
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
@@ -2013,64 +2672,42 @@ function initThemes() {
         });
     }
     
-    // Theme options - handle non-custom themes
     document.querySelectorAll('.theme-option:not([data-theme="custom"])').forEach(option => {
         option.addEventListener('click', () => {
             const theme = option.dataset.theme;
-            localStorage.setItem('eclipse_last_non_custom_theme', theme); // Save last non-custom
+            localStorage.setItem('eclipse_last_non_custom_theme', theme);
             applyTheme(theme);
             themeModal.classList.remove('active');
         });
     });
     
-    // Custom theme handling
-    const customOption = document.querySelector('[data-theme="custom"]');
-    const uploadInput = document.getElementById('customBgUpload');
-    const uploadBtn = document.getElementById('customBgUploadBtn');
-    const removeBtn = document.getElementById('removeBgBtn');
-    
-    // Upload button triggers file input
-    if (uploadBtn) {
-        uploadBtn.addEventListener('click', (e) => {
+    if (customBgUploadBtn) {
+        customBgUploadBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            uploadInput.click();
+            customBgUpload.click();
         });
     }
     
-    // Remove button
-    if (removeBtn) {
-        removeBtn.addEventListener('click', (e) => {
+    if (removeBgBtn) {
+        removeBgBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             removeCustomBackground();
         });
     }
     
-    // File input change handler
-    if (uploadInput) {
-        uploadInput.addEventListener('change', async (e) => {
+    if (customBgUpload) {
+        customBgUpload.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file && !isApplyingCustomTheme) {
-                e.target.value = ''; // Clear input immediately to prevent re-trigger
+                e.target.value = '';
                 await applyCustomMessagesBackground(file);
                 themeModal.classList.remove('active');
             }
         });
     }
     
-    // Custom option click - just open modal or re-apply if already active
-    if (customOption) {
-        customOption.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (currentTheme === 'custom' && customBackgroundDataUrl) {
-                applyTheme('custom'); // Re-apply if already active
-            }
-            // Modal opens via themeToggle anyway
-        });
-    }
-    
-    // Close modal on outside click
     if (themeModal) {
         themeModal.addEventListener('click', (e) => {
             if (e.target.id === 'themeModal') {
@@ -2080,1007 +2717,250 @@ function initThemes() {
     }
 }
 
-        /***** Utility Functions *****/
-        function generateSiteRoomCode(){
-            const hostname = window.location.hostname || 'localhost';
-            return hostname.replace(/[^a-zA-Z0-9]/g, '_') + '_eclipse_chat';
-        }
-
-        function uid(){
-            return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8);
-        }
-
-        function escapeHtml(s){
-            return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[c]));
-        }
-
-        function formatLinks(text){
-            const urlPattern = /(https?:\/\/[^\s]+)/g;
-            return escapeHtml(text).replace(urlPattern, url => `<a class="link" href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
-        }
-
-        function formatTime(iso){
-            try{
-                const d = iso ? new Date(iso) : new Date();
-                return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            }catch(e){
-                return '';
-            }
-        }
-
-        function sanitizeName(n){
-            return n.replace(/[^a-zA-Z0-9 ]/g,'').slice(0,24);
-        }
-function showTransient(text, danger = false) {
-    const t = document.createElement('div');
-    t.style.cssText = `
-        position: fixed; right: 22px; bottom: 22px; z-index: 160;
-        background: ${danger ? 'linear-gradient(90deg,#ef444433,#ef444422)' : 'linear-gradient(90deg,#6b5ce7 22,#8c7ae6 11)'};
-        padding: 10px 14px; border-radius: 12px; color: ${danger ? '#fee2e2' : '#e0f2fe'};
-        backdrop-filter: blur(1px); border: 1px solid var(--eclipse-border);
-        font-family: inherit; font-size: 14px;
-        animation: slideIn 0.3s ease-out;
-    `;
-    t.textContent = text;
-    document.body.appendChild(t);
-    
-    // Add slide in animation
-    requestAnimationFrame(() => t.style.animation = 'slideIn 0.3s ease-out');
-    
-    setTimeout(() => {
-        t.style.opacity = '0';
-        t.style.transform = 'translateX(100%)';
-    }, 2200);
-    setTimeout(() => t.remove(), 2600);
+// ===== PRIVATE ROOMS =====
+function generateRoomCode() { 
+    return 'ECL' + Math.random().toString(36).substr(2,6).toUpperCase(); 
 }
 
-// Add this CSS for the animation
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateX(100%); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-`;
-document.head.appendChild(style);
-
-        /***** Chat Functions *****/
-       function switchToChat(chatType, chatId) {
-    // Save current messages before switching away
-    if (currentChatType && currentChatId) {
-        // Gather all DOM messages in the chat window
-        const messages = [];
-        messagesEl.querySelectorAll('.message').forEach(msgEl => {
-            // You may want to extract more fields if needed!
-            messages.push({
-                html: msgEl.innerHTML,
-                className: msgEl.className,
-                mid: msgEl.getAttribute('data-mid')
-            });
-        });
-        saveChannelMessages(currentChatType, currentChatId, messages);
-    }
-
-    currentChatType = chatType;
-    currentChatId = chatId;
-
-    document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
-    const activeItem = document.querySelector(`[data-chat-id="${chatId}"]`);
-    if (activeItem) activeItem.classList.add('active');
-
-    currentChatDisplay.textContent = chatType === 'public' ? 'public' : `dm:${chatId}`;
-
-    messagesEl.innerHTML = '';
-    seenMessageIds.clear();
-
-    // Restore messages from localStorage, if any
-    const savedMessages = loadChannelMessages(chatType, chatId);
-    savedMessages.forEach(msg => {
-        const wrap = document.createElement('div');
-        wrap.className = msg.className;
-        wrap.setAttribute('data-mid', msg.mid);
-        wrap.innerHTML = msg.html;
-        messagesEl.appendChild(wrap);
-    });
-
-    unreadCounts.set(chatId, 0);
-    updateUnreadCount(chatId, 0);
-
-    messageInput.placeholder = chatType === 'public' ? 
-        'type message and press enter...' : 
-        `message @${chatId}...`;
-}
-
-        function updateUnreadCount(chatId, count) {
-            const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
-            if (!chatItem) return;
-            
-            let badge = chatItem.querySelector('.unread-count');
-            if (count > 0) {
-                if (!badge) {
-                    badge = document.createElement('div');
-                    badge.className = 'unread-count';
-                    chatItem.appendChild(badge);
-                }
-                badge.textContent = count;
-            } else if (badge) {
-                badge.remove();
-            }
-        }
-
-        function addDMConversation(username) {
-            if (dmConversations.has(username)) return;
-            
-            dmConversations.set(username, []);
-            
-            const dmItem = document.createElement('div');
-            dmItem.className = 'chat-item';
-            dmItem.setAttribute('data-chat-type', 'dm');
-            dmItem.setAttribute('data-chat-id', username);
-            dmItem.innerHTML = `
-                <div class="chat-icon"><i class="fas fa-user"></i></div>
-                <div class="chat-name">${username}</div>
-            `;
-            
-            dmItem.addEventListener('click', () => switchToChat('dm', username));
-            dmList.appendChild(dmItem);
-        }
-
-        function updateOnlineUsers(members) {
-            onlineUsers.clear();
-            onlineUsersList.innerHTML = '';
-            
-            if (!members) return;
-            
-            members.forEach(member => {
-                if (member.clientData && member.clientData.name && member.clientData.name !== userName) {
-                    const username = member.clientData.name;
-                    onlineUsers.set(member.id, { username, id: member.id });
-                    
-                    const userItem = document.createElement('div');
-                    userItem.className = 'user-item';
-                    userItem.innerHTML = `
-                        <div class="user-status"></div>
-                        <div class="user-name">${username}</div>
-                    `;
-                    
-                    userItem.addEventListener('click', () => {
-                        addDMConversation(username);
-                        switchToChat('dm', username);
-                    });
-                    
-                    onlineUsersList.appendChild(userItem);
-                }
-            });
-            
-            userCountEl.textContent = members.length;
-        }
-        // ===== ADD THIS BEFORE addMessageToDOM =====
-function attachReactionTriggers(msgEl) {
-    let longpressTimer = null;
+function createPrivateRoom(name, isPrivate = true) {
+    const code = generateRoomCode();
     
-    function openMenuAt(x, y, mid) {
-        reactionMenu.style.display = 'flex';
-        reactionMenu.style.left = (x - 8) + 'px';
-        reactionMenu.style.top = (y - 52) + 'px';
-        reactionMenu.setAttribute('data-mid', mid);
-    }
-    
-    function closeMenu() {
-        reactionMenu.style.display = 'none';
-        reactionMenu.removeAttribute('data-mid');
-    }
-    
-    // Right-click for desktop
-    msgEl.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        const mid = msgEl.getAttribute('data-mid');
-        openMenuAt(e.clientX, e.clientY, mid);
-    });
-    
-    // Touch support for mobile
-    msgEl.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 1) return;
-        const startCoords = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        longpressTimer = setTimeout(() => {
-            const mid = msgEl.getAttribute('data-mid');
-            openMenuAt(startCoords.x, startCoords.y, mid);
-        }, 600);
-    }, { passive: true });
-    
-    ['touchend', 'touchmove', 'touchcancel'].forEach(ev => 
-        msgEl.addEventListener(ev, () => {
-            if (longpressTimer) {
-                clearTimeout(longpressTimer);
-                longpressTimer = null;
-            }
-        }, { passive: true })
-    );
-    
-    // Close menu on outside click or escape
-    const closeHandler = (e) => {
-        if (reactionMenu.style.display !== 'none' && !reactionMenu.contains(e.target)) closeMenu();
-    };
-    document.addEventListener('click', closeHandler);
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeMenu();
-    });
-}
-// ===== END FUNCTION =====
-
-    function addMessageToDOM(data, isSelf = false) {
-    if (!data || !data.id) return;
-    if (seenMessageIds.has(data.id)) return;
-    seenMessageIds.add(data.id);
-
-    const mid = data.id;
-    const wrap = document.createElement('div');
-    wrap.className = 'message' + (isSelf ? ' self' : '');
-    if (data.isDM) wrap.classList.add('dm-message');
-    if (data.type === 'system') wrap.classList.add('system-message');
-    if (data.replyTo) wrap.classList.add('has-reply');
-    wrap.setAttribute('data-mid', mid);
-    wrap.setAttribute('tabindex', '-1');
-
-    // Build message content
-    let messageHTML = '';
-
-    // Reply indicator if this message is a reply
-    if (data.replyTo && data.replyToName) {
-        messageHTML += `
-            <div class="reply-indicator">
-                <span>Replying to ${escapeHtml(data.replyToName)}</span>
-                <button class="reply-button" data-action="view-reply">View</button>
-            </div>
-        `;
-    }
-
-    messageHTML += `
-    <div class="message-header">
-        <div class="message-user">
-            <span class="user-prompt">$</span>
-            <span class="user-name">${escapeHtml(data.name || 'Unknown')}</span>
-            ${data.isDM ? '<span class="dm-indicator">[DM]</span>' : ''}
-            <button class="reply-button" data-action="reply" title="Reply to this message">
-                <i class="fas fa-reply"></i>
-            </button>
-            <button class="reaction-button" data-action="react" title="React to this message">
-                <i class="fas fa-smile"></i>
-            </button>
-        </div>
-        <div class="message-time">${formatTime(data.timestamp)}</div>
-    </div>
-    <div class="message-content">${formatLinks(data.text || '')}</div>
-    <div class="reactions" data-mid="${mid}"></div>
-`;
-
-    wrap.innerHTML = messageHTML;
-
-    // Handle reply buttons
-    const replyBtn = wrap.querySelector('[data-action="reply"]');
-    const viewReplyBtn = wrap.querySelector('[data-action="view-reply"]');
-    
-    if (replyBtn) {
-        replyBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            setReplyTo(mid, data.name);
-        });
-    }
-    
-    if (viewReplyBtn) {
-        viewReplyBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (data.replyTo) {
-                scrollToMessage(data.replyTo);
-            }
-        });
-    }
-        const reactBtn = wrap.querySelector('[data-action="react"]');
-if (reactBtn) {
-    reactBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        // Show reaction menu near the button (use .getBoundingClientRect for position)
-        const rect = reactBtn.getBoundingClientRect();
-        const mid = wrap.getAttribute('data-mid');
-        // Open menu at button position (adjust y as needed)
-        reactionMenu.style.display = 'flex';
-        reactionMenu.style.left = (rect.left + window.scrollX - 8) + 'px';
-        reactionMenu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
-        reactionMenu.setAttribute('data-mid', mid);
-    });
-}
-
-    attachReactionTriggers(wrap);
-    messagesEl.appendChild(wrap);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-
-    // Notify if not self and not current chat
-    if (!isSelf) {
-        notifyNewMessage(data, isSelf);
-    }
-
-    if (reactionsMap[mid]) renderReactions(mid);
-}
-
-function setReplyTo(messageId, replyToName) {
-    currentReplyTo = messageId;
-    currentReplyToName = replyToName;
-    
-    const inputLine = document.querySelector('.input-line');
-    inputLine?.classList.add('replying-state');
-    inputLine?.setAttribute('data-reply-to', replyToName);
-    
-    messageInput.placeholder = `Replying to @${replyToName}... (press Esc to cancel)`;
-    messageInput.focus();
-    
-    showTransient(`Replying to @${replyToName}`);
-}
-
-// ===== REMOVE THIS STRAY LINE BELOW: =====
-// messageInput.placeholder = 'type message and press enter...';
-// messageInput.focus();
-
-function clearReplyState() {
-    currentReplyTo = null;
-    currentReplyToName = null;
-    
-    const inputLine = document.querySelector('.input-line');
-    inputLine?.classList.remove('replying-state');
-    inputLine?.removeAttribute('data-reply-to');
-    
-    messageInput.placeholder = currentChatType === 'public' ? 
-        'type message and press enter...' : 
-        `message @${currentChatId}...`;
-    
-    messageInput.focus();
-}
-
-// Scroll to specific message
-function scrollToMessage(messageId) {
-    const message = messagesEl.querySelector(`[data-mid="${messageId}"]`);
-    if (message) {
-        message.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        message.style.background = 'rgba(107, 92, 231, 0.2)';
-        setTimeout(() => {
-            message.style.background = '';
-        }, 2000);
-    }
-}
-
-        function renderReactions(mid){
-            const holder = messagesEl.querySelector(`.reactions[data-mid="${mid}"]`);
-            if(!holder) return;
-            holder.innerHTML = '';
-            const map = reactionsMap[mid] || {};
-            for(const emoji of Object.keys(map)){
-                const users = map[emoji];
-                const count = users.size;
-                if(count <= 0) continue;
-                const pill = document.createElement('div');
-                pill.className = 'reaction-pill';
-                if(users.has(clientId)) pill.classList.add('active');
-                pill.innerHTML = `<span class="reaction-emoji">${emoji}</span><span class="reaction-count">${count}</span>`;
-                pill.addEventListener('click', (e)=>{
-                    e.stopPropagation();
-                    toggleReaction(mid, emoji);
-                });
-                holder.appendChild(pill);
-            }
-        }
-
-        function toggleReaction(mid, emoji){
-            if(!mid || !emoji) return;
-            if(!reactionsMap[mid]) reactionsMap[mid] = {};
-            if(!reactionsMap[mid][emoji]) reactionsMap[mid][emoji] = new Set();
-            const users = reactionsMap[mid][emoji];
-            const already = users.has(clientId);
-            if(already) users.delete(clientId);
-            else users.add(clientId);
-            renderReactions(mid);
-            if(drone && room){
-                drone.publish({
-                    room: `observable-${roomCode}`,
-                    message: {
-                        type:'reaction',
-                        messageId: mid,
-                        reaction: emoji,
-                        actor: clientId,
-                        timestamp: new Date().toISOString()
-                    }
-                });
-            }
-        }
-
-        function handleIncomingReaction(payload){
-            if(!payload || !payload.messageId || !payload.reaction) return;
-            const mid = payload.messageId;
-            const emoji = payload.reaction;
-            const actor = payload.actor || payload.actorId || 'remote';
-            if(!reactionsMap[mid]) reactionsMap[mid] = {};
-            if(!reactionsMap[mid][emoji]) reactionsMap[mid][emoji] = new Set();
-            reactionsMap[mid][emoji].add(actor);
-            renderReactions(mid);
-        }
-
-        function attachReactionTriggers(msgEl) {
-    let longpressTimer = null;
-    function openMenuAt(x, y, mid) {
-        reactionMenu.style.display = 'flex';
-        reactionMenu.style.left = (x - 8) + 'px';
-        reactionMenu.style.top = (y - 52) + 'px';
-        reactionMenu.setAttribute('data-mid', mid);
-    }
-            function closeMenu() {
-        reactionMenu.style.display = 'none';
-        reactionMenu.removeAttribute('data-mid');
-    }
-    
-    msgEl.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        const mid = msgEl.getAttribute('data-mid');
-        openMenuAt(e.clientX, e.clientY, mid);
-    });
-           // Touch support for mobile
-    msgEl.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 1) return;
-        const startCoords = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        longpressTimer = setTimeout(() => {
-            const mid = msgEl.getAttribute('data-mid');
-            openMenuAt(startCoords.x, startCoords.y, mid);
-        }, 600);
-    }, { passive: true });
-    
-    ['touchend', 'touchmove', 'touchcancel'].forEach(ev => 
-        msgEl.addEventListener(ev, () => {
-            if (longpressTimer) {
-                clearTimeout(longpressTimer);
-                longpressTimer = null;
-            }
-        }, { passive: true })
-    );
-            // Close menu on outside click or escape
-    const closeHandler = (e) => {
-        if (reactionMenu.style.display !== 'none' && !reactionMenu.contains(e.target)) closeMenu();
-    };
-    document.addEventListener('click', closeHandler);
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeMenu();
-    });
-}
-         
-
-        function connectToRoom(){
-            drone = new ScaleDrone(CLIENT_ID, {
-                data: { name: userName }
-            });
-
-            drone.on('open', (err) => {
-                if(err){
-                    alert('Connection error: ' + err);
-                    return;
-                }
-                clientId = drone.clientId;
-                room = drone.subscribe(`observable-${roomCode}`);
-                room.on('open', (err) => {
-                    if(err){
-                        alert('Room subscription error: ' + err);
-                        return;
-                    }
-                    drone.publish({
-                        room: `observable-${roomCode}`,
-                        message: {
-                            type:'join',
-                            name:userName,
-                            timestamp:new Date().toISOString()
-                        }
-                    });
-                });
-
-              // Update the room data handler to support replies
-// In connectToRoom(), replace the room.on('data') handler:
-room.on('data', (data, member) => {
-    if (!data) return;
-    
-    console.log('=== RECEIVED DATA ===', data);
-    
-    // Handle reactions first
-    if (data.type === 'reaction') {
-        const payload = {
-            messageId: data.messageId,
-            reaction: data.reaction,
-            actor: data.actor || member?.id || 'remote',
-            timestamp: data.timestamp
-        };
-        handleIncomingReaction(payload);
-        return;
-    }
-
-    if (data.type === 'join') {
-        showTransient(`${data.name} joined`);
-        return;
-    }
-
-    // Handle DM messages
-    if (data.type === 'dm') {
-        const senderName = data.name;
-        const targetName = data.target;
-        
-        if (targetName === userName || senderName === userName) {
-            const chatPartner = senderName === userName ? targetName : senderName;
-            
-            if (!dmConversations.has(chatPartner)) {
-                addDMConversation(chatPartner);
-            }
-            
-            const dmMessage = { ...data, isDM: true };
-            dmConversations.get(chatPartner).push(dmMessage);
-            
-            if (currentChatType === 'dm' && currentChatId === chatPartner) {
-                addMessageToDOM(dmMessage, senderName === userName);
-            } else {
-                const currentUnread = unreadCounts.get(chatPartner) || 0;
-                unreadCounts.set(chatPartner, currentUnread + 1);
-                updateUnreadCount(chatPartner, currentUnread + 1);
-                notifyNewMessage(dmMessage, false);
-            }
-        }
-        return;
-    }
-
-    // ===== FIXED SECTION =====
-    // Handle regular messages (public messages)
-    if (data.id && data.text && data.name && !seenMessageIds.has(data.id)) {
-        console.log('Processing regular message:', data);
-        
-        // If it's a public message (type 'message' or no type) and we're in public chat
-        if ((!data.type || data.type === 'message') && currentChatType === 'public' && !data.isDM) {
-            console.log('Adding public message to DOM');
-            addMessageToDOM(data, data.name === userName);
-        }
-    }
-    // ===== END FIXED SECTION =====
-});
-
-                room.on('member_join', (m) => updateOnlineUsers(room.members));
-                room.on('member_leave', (m) => updateOnlineUsers(room.members));
-                room.on('members', (m) => updateOnlineUsers(m));
-            });
-
-            drone.on('close', () => showTransient('Disconnected', true));
-            drone.on('error', (err) => showTransient('Connection error', true));
-        }
-
-function sendMessage() {
-    const text = messageInput.value.trim();
-    if (!text) return;
-
-    const id = uid();
-    const timestamp = new Date().toISOString();
-    const isReply = currentReplyTo !== null && currentReplyTo !== undefined; // Explicit check
-
-    // Base payload for all messages
-    let payload = {
-        id,
-        text,
-        name: userName,
-        timestamp
-    };
-
-    // Only add reply data if we actually have a valid reply
-    if (isReply) {
-        payload.replyTo = currentReplyTo;
-        payload.replyToName = currentReplyToName;
-    }
-
-    // Clear input immediately
-    messageInput.value = '';
-    
-    // Handle private rooms
-    if (currentPrivateRoom) {
-        payload.type = 'private';
-        const roomData = privateRooms.get(currentPrivateRoom);
-        if (roomData) {
-            roomData.messages.push(payload);
-            addMessageToDOM(payload, true);
-            savePrivateRooms();
-        }
-    } 
-    // Handle DM messages
-    else if (currentChatType === 'dm') {
-        payload.type = 'dm';
-        payload.target = currentChatId;
-        payload.isDM = true;
-        
-        if (drone && room) {
-            drone.publish({ room: `observable-${roomCode}`, message: payload });
-        }
-        if (!dmConversations.has(currentChatId)) {
-            addDMConversation(currentChatId);
-        }
-        dmConversations.get(currentChatId).push(payload);
-        addMessageToDOM(payload, true);
-    }
-    // Handle public messages (NO TYPE for regular public messages)
-    else if (currentChatType === 'public') {
-        // For public messages, DON'T add type: 'message' - just send the base payload
-        if (drone && room) {
-            drone.publish({ room: `observable-${roomCode}`, message: payload });
-        }
-        addMessageToDOM(payload, true);
-    }
-
-    // Clear reply state after sending
-    if (isReply) {
-        clearReplyState();
-    }
-    
-    messageInput.focus();
-    
-    // Save messages after DOM update
-    setTimeout(() => {
-        const messages = [];
-        messagesEl.querySelectorAll('.message').forEach(msgEl => {
-            messages.push({
-                html: msgEl.innerHTML,
-                className: msgEl.className,
-                mid: msgEl.getAttribute('data-mid')
-            });
-        });
-        saveChannelMessages(currentChatType, currentChatId, messages);
-    }, 50);
-}
-
-// Update private message sending
-function sendPrivateMessage(payload = null) {
-    const text = payload?.text || messageInput.value.trim();
-    if (!text) return;
-    
-    const msg = {
-        id: payload?.id || uid(),
-        text,
-        name: userName,
-        timestamp: payload?.timestamp || new Date().toISOString(),
-        replyTo: payload?.replyTo || currentReplyTo,
-        replyToName: payload?.replyToName || currentReplyToName,
-        type: 'private'
-    };
-    
-    const roomData = privateRooms.get(currentPrivateRoom);
-    if (roomData) {
-        roomData.messages.push(msg);
-        addMessageToDOM(msg, true);
-        savePrivateRooms();
-        clearReplyState();
-    }
-    
-    if (!payload) messageInput.value = '';
-}
-
-       
-
-        function initSpeech(){
-            if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
-                micIcon.className = 'fas fa-microphone-slash';
-                micBtn.disabled = true;
-                micBtn.title = 'Speech recognition not supported';
-                return;
-            }
-            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRec();
-            recognition.lang = 'en-US';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-            recognition.onstart = ()=> {
-                isRecording = true;
-                micIcon.className = 'fas fa-microphone';
-                micBtn.classList.add('active');
-            };
-            recognition.onresult = (e)=>{
-                const txt = e.results[0][0].transcript;
-                messageInput.value = txt;
-                sendMessage();
-            };
-            recognition.onerror = ()=> {
-                showTransient('Speech error');
-                stopRecognition();
-            };
-            recognition.onend = ()=> stopRecognition();
-        }
-
-        function startRecognition(){
-            if(!recognition) initSpeech();
-            try{ recognition.start(); }catch(e){}
-        }
-
-        function stopRecognition(){
-            isRecording = false;
-            micIcon.className = 'fas fa-microphone-slash';
-            micBtn.classList.remove('active');
-            try{ recognition && recognition.stop(); }catch(e){}
-        }
-
-       function joinRoom() {
-    const rawName = sanitizeName(usernameInput.value || 'EclipseUser');
-    if(!rawName){
-        alert('Please enter a username');
-        return;
-    }
-    userName = rawName;
-    roomCode = generateSiteRoomCode();
-    sidebarUserInfo.textContent = `${userName}@eclipse`;
-    joinModal.style.display = 'none';
-    try {
-        localStorage.setItem('eclipse_chat_username', userName);
-    } catch(e){}
-    connectToRoom();
-}
-
-        // Private Rooms
-        function generateRoomCode() { return 'ECL' + Math.random().toString(36).substr(2,6).toUpperCase(); }
-
-        function createPrivateRoom(name) {
-           const code = generateRoomCode();
     privateRooms.set(code, { 
         name, 
         code, 
         users: [userName], 
-        messages: [], 
-        isPrivate: isPrivate // Track privacy!
+        messages: [],
+        isPrivate,
+        scaledroneRoom: null
     });
+    
     currentPrivateRoom = code;
     savePrivateRooms();
     updatePrivateRoomsUI();
-    showTransient(
-      `Created ${name} (${code}). ${isPrivate ? "Share this code to invite others!" : "This room is public and visible to all users."}`
-    );
+    showTransient(`Created ${name} (${code})`);
     switchToPrivateRoom(code);
 }
-      function joinPrivateRoom(code) {
-    // Get the current rooms from localStorage
-    const saved = localStorage.getItem('eclipse_private_rooms');
-    let roomsArray = [];
-    if (saved) roomsArray = JSON.parse(saved);
 
-    // Convert to Map if necessary
-    let privateRoomsMap = new Map(roomsArray);
-
-    // Get the room by code
-    const roomData = privateRoomsMap.get(code);
-
-    if (roomData) {
-        // Add user to room if not already a member
-        if (!roomData.users.includes(userName)) {
-            roomData.users.push(userName);
-            privateRoomsMap.set(code, roomData);
-            localStorage.setItem('eclipse_private_rooms', JSON.stringify(Array.from(privateRoomsMap)));
-        }
-        privateRooms = privateRoomsMap;
-        currentPrivateRoom = code;
-        updatePrivateRoomsUI();
-        switchToPrivateRoom(code);
-        showTransient(`Joined ${roomData.name}`);
-    } else {
-        showTransient("Room not found! (You can only join rooms created in this browser/session unless you add a backend.)", true);
+function joinPrivateRoom(code) {
+    if (!drone || drone.closed) {
+        showTransient('Connect to main chat first', true);
+        return;
+    }
+    
+    try {
+        const privateRoom = drone.subscribe(`private-${code}`);
+        
+        privateRoom.on('open', (err) => {
+            if (err) {
+                showTransient('Failed to join room or room doesn\'t exist', true);
+                return;
+            }
+            
+            const roomData = privateRooms.get(code) || {
+                name: code,
+                code,
+                users: [userName],
+                messages: [],
+                isPrivate: true,
+                scaledroneRoom: privateRoom
+            };
+            roomData.scaledroneRoom = privateRoom;
+            privateRooms.set(code, roomData);
+            
+            privateRoom.publish({
+                type: 'join',
+                name: userName,
+                timestamp: new Date().toISOString()
+            });
+            
+            currentPrivateRoom = code;
+            updatePrivateRoomsUI();
+            switchToPrivateRoom(code);
+            savePrivateRooms();
+            showTransient(`Joined private room ${code}`);
+        });
+        
+        privateRoom.on('data', (data, member) => {
+            if (data.type === 'join') {
+                showTransient(`${data.name} joined the room`);
+                const roomData = privateRooms.get(code);
+                if (roomData && !roomData.users.includes(data.name)) {
+                    roomData.users.push(data.name);
+                    savePrivateRooms();
+                    updatePrivateRoomsUI();
+                }
+                return;
+            }
+            
+            if (data.id && data.text && currentPrivateRoom === code) {
+                addMessageToDOM(data, data.name === userName);
+                const roomData = privateRooms.get(code);
+                if (roomData) {
+                    roomData.messages.push(data);
+                    savePrivateRooms();
+                }
+            }
+        });
+        
+    } catch (error) {
+        showTransient('Failed to connect to private room', true);
+        console.error('Private room join error:', error);
     }
 }
 
-        function switchToPrivateRoom(code) {
-            const roomData = privateRooms.get(code);
-            if (!roomData) return;
-            
-            messagesEl.innerHTML = '';
-            seenMessageIds.clear();
-            
-            roomData.messages.forEach(msg => addMessageToDOM(msg, msg.name === userName));
-            
-            currentChatDisplay.textContent = `#${roomData.name} (private)`;
-            currentPrivateRoom = code;
-        }
+function switchToPrivateRoom(code) {
+    const roomData = privateRooms.get(code);
+    if (!roomData) return;
+    
+    messagesEl.innerHTML = '';
+    seenMessageIds.clear();
+    
+    currentPrivateRoom = code;
+    currentChatDisplay.textContent = `#${roomData.name || code} (private)`;
+    
+    roomData.messages.forEach(msg => {
+        addMessageToDOM(msg, msg.name === userName);
+    });
+    
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+}
 
-        function savePrivateRooms() {
-            localStorage.setItem('eclipse_private_rooms', JSON.stringify(Array.from(privateRooms)));
-        }
+function savePrivateRooms() {
+    localStorage.setItem('eclipse_private_rooms', JSON.stringify(Array.from(privateRooms)));
+}
 
-        function loadPrivateRooms() {
+function loadPrivateRooms() {
     const saved = localStorage.getItem('eclipse_private_rooms');
     if (saved) {
         const roomsArray = JSON.parse(saved);
         privateRooms = new Map(roomsArray);
-        
-        // Ensure reply data is preserved
-        privateRooms.forEach((roomData) => {
-            roomData.messages.forEach(msg => {
-                if (msg.replyTo && !msg.replyToName) {
-                    msg.replyToName = 'Unknown';
-                }
-            });
-        });
+        updatePrivateRoomsUI();
     }
-    updatePrivateRoomsUI();
 }
 
-    
-        /***** Event Listeners *****/
-        sendBtn.addEventListener('click', sendMessage);
-      messageInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    } else if (e.key === 'Escape') {
-        if (currentReplyTo) {
-            e.preventDefault();
-            clearReplyState(); // Cancel reply with Escape
-            showTransient('Reply cancelled');
-        }
-    }
-});
-        function updatePrivateRoomsUI() {
+function updatePrivateRoomsUI() {
     const list = document.getElementById('privateRoomList');
+    if (!list) return;
+    
     list.innerHTML = '';
-    privateRooms.forEach(room => {
-        // Only show rooms where you are a member
+    
+    privateRooms.forEach((room, code) => {
         if (room.users.includes(userName)) {
             const item = document.createElement('div');
             item.className = 'chat-item';
-            item.setAttribute('data-chat-type', room.isPrivate ? 'private' : 'publicRoom');
-            item.setAttribute('data-chat-id', room.code);
-            item.innerHTML = `<div class="chat-icon"><i class="fas ${room.isPrivate ? 'fa-lock' : 'fa-globe'}"></i></div>
-                              <div class="chat-name">${room.name} <span style="font-size:11px;color:#aaa;">(${room.code})</span></div>`;
-            item.onclick = () => switchToPrivateRoom(room.code);
+            item.setAttribute('data-chat-type', 'private');
+            item.setAttribute('data-chat-id', code);
+            
+            const status = room.scaledroneRoom ? '🟢' : '🔴';
+            item.innerHTML = `
+                <div class="chat-icon">
+                    <i class="fas ${room.isPrivate ? 'fa-lock' : 'fa-globe'}"></i>
+                </div>
+                <div class="chat-name">
+                    ${room.name} ${status} 
+                    <span style="font-size:11px;color:#aaa;">(${code})</span>
+                </div>
+            `;
+            
+            item.onclick = () => switchToPrivateRoom(code);
             list.appendChild(item);
         }
     });
 }
-        function createPrivateRoom(name) {
-    const code = generateRoomCode();
-    privateRooms.set(code, { name, code, users: [userName], messages: [] });
-    currentPrivateRoom = code;
-    savePrivateRooms();
-    updatePrivateRoomsUI();
-    showTransient(`Created ${name} (${code}). Share this code to invite others!`);
-    switchToPrivateRoom(code);
-}
 
-        micBtn.addEventListener('click', ()=> {
-            if(isRecording) stopRecognition();
-            else startRecognition();
-        });
-
-        usernameInput.addEventListener('keydown', (e)=> {
-            if(e.key === 'Enter') joinRoom();
-        });
-
-        joinBtn.addEventListener('click', joinRoom);
-        demoBtn.addEventListener('click', ()=> {
-            usernameInput.value = 'EclipseUser';
-            joinRoom();
-        });
-
-        reactionMenu.addEventListener('click', (e)=>{
-            const btn = e.target.closest('button[data-reaction]');
-            if(!btn) return;
-            const emoji = btn.getAttribute('data-reaction');
-            const mid = reactionMenu.getAttribute('data-mid');
-            if(mid && emoji) toggleReaction(mid, emoji);
-            reactionMenu.style.transform = 'scale(.98)';
-            setTimeout(()=> {
-                reactionMenu.style.display = 'none';
-                reactionMenu.style.transform = '';
-            }, 120);
-        });
-        document.addEventListener('click', requestNotificationPermission, { once: true });
-document.addEventListener('keydown', requestNotificationPermission, { once: true });
-
-        document.addEventListener('click', (e) => {
-            const chatItem = e.target.closest('.chat-item');
-            if (chatItem) {
-                const chatType = chatItem.getAttribute('data-chat-type');
-                const chatId = chatItem.getAttribute('data-chat-id');
-                switchToChat(chatType, chatId);
-            }
-        });
-
-        document.getElementById('btnInvite').addEventListener('click', ()=>{
-            const url = window.location.href;
-            navigator.clipboard?.writeText(url).then(()=> showTransient('Invite link copied!'));
-        });
-
-        document.getElementById('btnLeave').addEventListener('click', ()=> {
-            if(confirm('Leave Eclipse Chat?')) location.reload();
-        });
-
-        // Private room listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            loadPrivateRooms();
+// ===== ROOM MODAL HANDLERS =====
+document.addEventListener('DOMContentLoaded', () => {
+    const openCreateRoom = document.getElementById('openCreateRoom');
+    const openJoinRoom = document.getElementById('openJoinRoom');
+    const cancelRoomBtn = document.getElementById('cancelRoomBtn');
+    const roomInputModal = document.getElementById('roomInputModal');
+    
+    function clearModalHandlers() {
+        const confirmBtn = document.getElementById('confirmRoomBtn');
+        if (confirmBtn) confirmBtn.onclick = null;
+    }
+    
+    if (openCreateRoom) {
+        openCreateRoom.onclick = function() {
+            clearModalHandlers();
+            document.getElementById('roomInputTitle').textContent = 'Create Room';
+            document.getElementById('roomInputField').placeholder = 'Room name';
+            document.getElementById('confirmRoomBtn').textContent = 'Create';
+            roomInputModal.classList.add('active');
+            document.getElementById('roomInputField').value = '';
+            document.getElementById('roomPrivacyToggle').checked = true;
             
             const confirmBtn = document.getElementById('confirmRoomBtn');
-            const cancelBtn = document.getElementById('cancelRoomBtn');
-            const roomModal = document.getElementById('roomInputModal');
+            confirmBtn.onclick = function(e) {
+                e.preventDefault();
+                const name = document.getElementById('roomInputField').value.trim();
+                const isPrivate = document.getElementById('roomPrivacyToggle').checked;
+                if (name) {
+                    createPrivateRoom(name, isPrivate);
+                    roomInputModal.classList.remove('active');
+                    clearModalHandlers();
+                } else {
+                    showTransient('Please enter a room name', true);
+                }
+            };
+        };
+    }
+    
+    if (openJoinRoom) {
+        openJoinRoom.onclick = function() {
+            clearModalHandlers();
+            document.getElementById('roomInputTitle').textContent = 'Join Room';
+            document.getElementById('roomInputField').placeholder = 'Enter room code';
+            document.getElementById('confirmRoomBtn').textContent = 'Join';
+            roomInputModal.classList.add('active');
+            document.getElementById('roomInputField').value = '';
             
-            if (confirmBtn) {
-                confirmBtn.onclick = () => {
-                    const name = document.getElementById('roomInputField').value.trim();
-                    if (name) createPrivateRoom(name);
-                    roomModal.classList.remove('active');
-                    document.getElementById('roomInputField').value = '';
-                };
+            const confirmBtn = document.getElementById('confirmRoomBtn');
+            confirmBtn.onclick = function(e) {
+                e.preventDefault();
+                const code = document.getElementById('roomInputField').value.trim().toUpperCase();
+                if (code && code.startsWith('ECL')) {
+                    joinPrivateRoom(code);
+                    roomInputModal.classList.remove('active');
+                    clearModalHandlers();
+                } else {
+                    showTransient('Please enter a valid ECL... room code', true);
+                }
+            };
+        };
+    }
+    
+    if (cancelRoomBtn) {
+        cancelRoomBtn.onclick = () => {
+            roomInputModal.classList.remove('active');
+            document.getElementById('roomInputField').value = '';
+            clearModalHandlers();
+        };
+    }
+    
+    if (roomInputModal) {
+        roomInputModal.onclick = (e) => {
+            if (e.target.id === 'roomInputModal') {
+                roomInputModal.classList.remove('active');
+                document.getElementById('roomInputField').value = '';
+                clearModalHandlers();
             }
-            
-            if (cancelBtn) {
-                cancelBtn.onclick = () => {
-                    roomModal.classList.remove('active');
-                    document.getElementById('roomInputField').value = '';
-                };
-            }
-            
-            if (roomModal) {
-                roomModal.onclick = (e) => {
-                    if (e.target.id === 'roomInputModal') {
-                        roomModal.classList.remove('active');
-                        document.getElementById('roomInputField').value = '';
-                    }
-                };
-            }
-        });
-        // Open Create Room modal
-document.getElementById('openCreateRoom').onclick = function() {
-    document.getElementById('roomInputTitle').textContent = 'Create Room';
-    document.getElementById('roomInputField').placeholder = 'Room name';
-    document.getElementById('confirmRoomBtn').textContent = 'Create';
-    document.getElementById('roomInputModal').classList.add('active');
-    document.getElementById('roomInputField').value = '';
-    document.getElementById('roomPrivacyToggle').checked = true; // Default private
-    document.getElementById('confirmRoomBtn').onclick = () => {
-        const name = document.getElementById('roomInputField').value.trim();
-        const isPrivate = document.getElementById('roomPrivacyToggle').checked;
-        if (name) createPrivateRoom(name, isPrivate);
-        document.getElementById('roomInputModal').classList.remove('active');
-    };
-};
-
-// Open Join Room modal
-document.getElementById('openJoinRoom').onclick = function() {
-    document.getElementById('roomInputTitle').textContent = 'Join Room';
-    document.getElementById('roomInputField').placeholder = 'Enter room code';
-    document.getElementById('confirmRoomBtn').textContent = 'Join';
-    document.getElementById('roomInputModal').classList.add('active');
-    document.getElementById('roomInputField').value = '';
-    document.getElementById('confirmRoomBtn').onclick = () => {
-        const code = document.getElementById('roomInputField').value.trim();
-        const roomData = privateRooms.get(code); // <-- This only works if the room exists!
-        if (code && roomData) {
-            joinPrivateRoom(code);
-            document.getElementById('roomInputModal').classList.remove('active');
-        } else {
-            showTransient("Room not found! (Rooms are local only unless you add a server backend.)", true);
-        }
-    };
-};
-
-        /***** Initialization *****/
-    window.addEventListener('load', () => {
-    try {
-        // Always show the join modal, even if a username is stored
-        const stored = localStorage.getItem('eclipse_chat_username') || localStorage.getItem('ln-username');
-        if (stored) {
-            usernameInput.value = stored; // You can prefill the username input
-        }
-        joinModal.style.display = 'flex'; // Always show modal!
-        customBackgroundDataUrl = localStorage.getItem('eclipse_custom_messages_bg');
-    } catch (e) {}
-
-    initThemes();
-
-    addMessageToDOM({
-        id: uid(),
-        name:'System',
-        text: 'Welcome to Eclipse Chat! Click users to start DMs. Right-click messages to react. Use theme toggle for messages backgrounds!',
-        timestamp: new Date().toISOString(),
-        type: 'system'
-    }, false);
+        };
+    }
 });
 
-        document.addEventListener('DOMContentLoaded', loadPrivateRooms);
-    </script>
+// ===== INITIALIZE =====
+window.addEventListener('load', () => {
+    if (joinModal.style.display === 'flex') {
+        addMessageToDOM({
+            id: uid(),
+            name: 'System',
+            text: 'Welcome to Eclipse Chat! Click users to start DMs. Right-click messages to react. Use theme toggle for custom backgrounds!',
+            timestamp: new Date().toISOString(),
+            type: 'system'
+        }, false);
+    }
+});
+                </script>
 </body>
 </html>
