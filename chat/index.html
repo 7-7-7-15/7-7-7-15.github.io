@@ -1401,6 +1401,11 @@ body.theme-custom .eclipse-container {
 }
     </style>
 </head>
+    <div id="debugStatus" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px;background:rgba(0,0,0,0.8);color:white;border-radius:5px;font-size:12px;">
+    <div>Status: <span id="statusText">Loading...</span></div>
+    <div>Drone: <span id="droneStatus">None</span></div>
+    <div>Room: <span id="roomStatus">None</span></div>
+</div>
 
 <body class="theme-dark">
     <!-- Room Modal -->
@@ -1448,6 +1453,7 @@ body.theme-custom .eclipse-container {
                     <div class="section-title">Direct Messages</div>
                     <div id="dmList"></div>
                 </div>
+               
                 <div class="chat-section">
   <div class="section-title">Private Rooms</div>
   <div id="privateRoomList"></div>
@@ -1842,8 +1848,10 @@ function loadChannelMessages(chatType, chatId) {
 
 // ===== CHAT FUNCTIONS =====
 function switchToChat(chatType, chatId) {
-    // Save current messages
-    if (currentChatType && currentChatId) {
+    console.log('Switching to:', chatType, chatId); // For future debugging
+    
+    // Save current messages BEFORE switching
+    if (currentChatType && currentChatId && currentChatType !== 'public') {
         const messages = [];
         messagesEl.querySelectorAll('.message').forEach(msgEl => {
             messages.push({
@@ -1858,32 +1866,58 @@ function switchToChat(chatType, chatId) {
     currentChatType = chatType;
     currentChatId = chatId;
 
-    document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
-    const activeItem = document.querySelector(`[data-chat-id="${chatId}"]`);
+    // Update ALL chat tabs to remove active
+    document.querySelectorAll('.chat-tab, .chat-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Add active to clicked item
+    const activeItem = document.querySelector(`[data-chat-id="${chatId}"], [data-chat-type="${chatType}"]`);
     if (activeItem) activeItem.classList.add('active');
 
-    currentChatDisplay.textContent = chatType === 'public' ? 'public' : `dm:${chatId}`;
+    // Update display
+    currentChatDisplay.textContent = chatType === 'public' ? '🌐 Public' : 
+                                   chatType === 'dm' ? `💬 DM: ${chatId}` : 
+                                   `🔒 ${chatId}`;
 
+    // Clear and load messages
     messagesEl.innerHTML = '';
     seenMessageIds.clear();
 
-    // Restore messages
-    const savedMessages = loadChannelMessages(chatType, chatId);
-    savedMessages.forEach(msg => {
-        const wrap = document.createElement('div');
-        wrap.className = msg.className;
-        wrap.setAttribute('data-mid', msg.mid);
-        wrap.innerHTML = msg.html;
-        messagesEl.appendChild(wrap);
-    });
+    if (chatType === 'public') {
+        // Load public messages (from ScaleDrone)
+        messageInput.placeholder = 'type message and press enter...';
+    } else if (chatType === 'dm') {
+        const savedMessages = loadChannelMessages('dm', chatId);
+        savedMessages.forEach(msg => {
+            const wrap = document.createElement('div');
+            wrap.className = msg.className;
+            wrap.setAttribute('data-mid', msg.mid);
+            wrap.innerHTML = msg.html;
+            messagesEl.appendChild(wrap);
+        });
+        messageInput.placeholder = `message @${chatId}...`;
+    }
 
-    unreadCounts.set(chatId, 0);
-    updateUnreadCount(chatId, 0);
+    // Reset unread counts
+    if (chatType === 'dm') {
+        unreadCounts.set(chatId, 0);
+        updateUnreadCount(chatId, 0);
+    }
 
-    messageInput.placeholder = chatType === 'public' ? 
-        'type message and press enter...' : 
-        `message @${chatId}...`;
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    updateDebugStatus();
 }
+
+// Add click handlers for ALL chat tabs
+document.addEventListener('click', (e) => {
+    const chatBtn = e.target.closest('[data-chat-type], [data-chat-id]');
+    if (chatBtn) {
+        const chatType = chatBtn.dataset.chatType || 'public';
+        const chatId = chatBtn.dataset.chatId || chatType;
+        switchToChat(chatType, chatId);
+    }
+});
 
 function updateUnreadCount(chatId, count) {
     const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
@@ -3015,6 +3049,35 @@ window.addEventListener('load', () => {
         }, false);
     }
 });
+        // Add after connectToRoom() function
+function updateDebugStatus() {
+    const statusEl = document.getElementById('statusText');
+    const droneEl = document.getElementById('droneStatus');
+    const roomEl = document.getElementById('roomStatus');
+    
+    if (!statusEl || !droneEl || !roomEl) return;
+    
+    if (!drone) {
+        statusEl.textContent = '❌ Not Connected';
+        droneEl.textContent = 'None';
+        roomEl.textContent = 'None';
+        return;
+    }
+    
+    if (drone.closed) {
+        statusEl.textContent = '🔴 Disconnected';
+        droneEl.textContent = 'Closed';
+        roomEl.textContent = room ? 'Closed' : 'None';
+    } else {
+        statusEl.textContent = '🟢 Connected';
+        droneEl.textContent = 'Active';
+        roomEl.textContent = room ? 'Active' : 'None';
+    }
+}
+
+// Update status every 2 seconds
+setInterval(updateDebugStatus, 2000);
+updateDebugStatus(); // Initial call
                 </script>
 </body>
 </html>
