@@ -1187,10 +1187,15 @@
                     `;
                 case 'video-player':
                     return `
-                        <div class="video-player">
-                            <video controls>
-                                <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-                            </video>
+                          <div class="browser-content">
+                            <div class="browser-toolbar">
+                                <button>←</button>
+                                <input type="text" class="browser-address" value="https://vidfast.xyz" placeholder="Search or enter website">
+                                <button>⟳</button>
+                            </div>
+                            <div class="browser-page">
+                                <iframe src="https://7-7-7-14.github.io/active"></iframe>
+                            </div>
                         </div>
                     `;
                 case 'music-player':
