@@ -1583,7 +1583,7 @@ body.theme-custom .eclipse-container {
 
     <script src="https://cdn.scaledrone.com/scaledrone.min.js"></script>
     <script>
- /***** Eclipse Chat - COMPLETE FUNCTIONAL VERSION *****/
+/***** Eclipse Chat - COMPLETE FUNCTIONAL VERSION WITH FIXED PRIVATE ROOMS *****/
 
 const CLIENT_ID = "Ddsziop1s0J8gTjH";
 let drone = null, room = null, clientId = null;
@@ -1624,6 +1624,14 @@ const customBgUpload = document.getElementById('customBgUpload');
 const customBgUploadBtn = document.getElementById('customBgUploadBtn');
 const removeBgBtn = document.getElementById('removeBgBtn');
 const bgPreview = document.getElementById('bgPreview');
+const openCreateRoom = document.getElementById('openCreateRoom');
+const openJoinRoom = document.getElementById('openJoinRoom');
+const cancelRoomBtn = document.getElementById('cancelRoomBtn');
+const roomInputModal = document.getElementById('roomInputModal');
+const confirmRoomBtn = document.getElementById('confirmRoomBtn');
+const roomInputField = document.getElementById('roomInputField');
+const roomInputTitle = document.getElementById('roomInputTitle');
+const roomPrivacyToggle = document.getElementById('roomPrivacyToggle');
 
 // Theme system
 const themes = ['dark', 'sunset', 'blue-sunset', 'gray', 'neon', 'cyber', 'ocean', 'forest', 'desert', 'purple-haze', 'matrix', 'retro', 'custom'];
@@ -1633,7 +1641,7 @@ let customBackgroundDataUrl = null;
 let isApplyingCustomTheme = false;
 let notificationPermission = Notification.permission;
 
-// ===== FIXED CONNECT BUTTON - MAIN ISSUE =====
+// ===== DOMCONTENTLOADED - MAIN INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
     // CRITICAL: Ensure join button works
     if (joinBtn) {
@@ -1668,13 +1676,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     initThemes();
+    initRoomHandlers();
     loadPrivateRooms();
     requestNotificationPermission();
+    initSpeech();
 });
 
 // ===== FIXED JOIN ROOM FUNCTION =====
 function joinRoom() {
-    console.log('joinRoom called'); // Debug
+    console.log('joinRoom called');
     const rawName = sanitizeName(usernameInput.value || 'EclipseUser');
     if (!rawName) {
         showTransient('Please enter a valid username (alphanumeric only)', true);
@@ -1714,6 +1724,10 @@ function generateSiteRoomCode() {
 
 function uid() {
     return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8);
+}
+
+function generateRoomCode() { 
+    return 'ECL' + Math.random().toString(36).substr(2,6).toUpperCase(); 
 }
 
 function escapeHtml(s) {
@@ -1846,12 +1860,38 @@ function loadChannelMessages(chatType, chatId) {
     return raw ? JSON.parse(raw) : [];
 }
 
+// ===== PRIVATE ROOMS STORAGE =====
+function loadPrivateRooms() {
+    try {
+        const saved = localStorage.getItem('eclipse_private_rooms');
+        if (saved) {
+            const rooms = JSON.parse(saved);
+            privateRooms.clear();
+            rooms.forEach(room => {
+                privateRooms.set(room.code, room);
+            });
+            updatePrivateRoomsUI();
+        }
+    } catch(e) {
+        console.warn('Failed to load private rooms:', e);
+    }
+}
+
+function savePrivateRooms() {
+    try {
+        const roomsArray = Array.from(privateRooms.entries()).map(([code, room]) => room);
+        localStorage.setItem('eclipse_private_rooms', JSON.stringify(roomsArray));
+    } catch(e) {
+        console.warn('Failed to save private rooms:', e);
+    }
+}
+
 // ===== CHAT FUNCTIONS =====
 function switchToChat(chatType, chatId) {
-    console.log('Switching to:', chatType, chatId); // For future debugging
+    console.log('Switching to:', chatType, chatId);
     
     // Save current messages BEFORE switching
-    if (currentChatType && currentChatId && currentChatType !== 'public') {
+    if (currentChatType && currentChatId && currentChatType !== 'public' && currentChatType !== 'private') {
         const messages = [];
         messagesEl.querySelectorAll('.message').forEach(msgEl => {
             messages.push({
@@ -1865,6 +1905,7 @@ function switchToChat(chatType, chatId) {
 
     currentChatType = chatType;
     currentChatId = chatId;
+    currentPrivateRoom = chatType === 'private' ? chatId : null;
 
     // Update ALL chat tabs to remove active
     document.querySelectorAll('.chat-tab, .chat-item').forEach(item => {
@@ -1876,18 +1917,36 @@ function switchToChat(chatType, chatId) {
     if (activeItem) activeItem.classList.add('active');
 
     // Update display
-    currentChatDisplay.textContent = chatType === 'public' ? '🌐 Public' : 
-                                   chatType === 'dm' ? `💬 DM: ${chatId}` : 
-                                   `🔒 ${chatId}`;
+    if (chatType === 'public') {
+        currentChatDisplay.textContent = '🌐 Public';
+        messageInput.placeholder = 'type message and press enter...';
+    } else if (chatType === 'dm') {
+        currentChatDisplay.textContent = `💬 DM: ${chatId}`;
+        messageInput.placeholder = `message @${chatId}...`;
+    } else if (chatType === 'private') {
+        const roomData = privateRooms.get(chatId);
+        if (roomData) {
+            currentChatDisplay.textContent = `🔒 ${roomData.name}`;
+            messageInput.placeholder = `Message in ${roomData.name}...`;
+            // Load private room messages
+            messagesEl.innerHTML = '';
+            seenMessageIds.clear();
+            roomData.messages.forEach(msg => {
+                if (!seenMessageIds.has(msg.id)) {
+                    addMessageToDOM(msg, msg.name === userName);
+                    seenMessageIds.add(msg.id);
+                }
+            });
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+            return;
+        }
+    }
 
-    // Clear and load messages
+    // Clear and load messages for non-private
     messagesEl.innerHTML = '';
     seenMessageIds.clear();
 
-    if (chatType === 'public') {
-        // Load public messages (from ScaleDrone)
-        messageInput.placeholder = 'type message and press enter...';
-    } else if (chatType === 'dm') {
+    if (chatType === 'dm') {
         const savedMessages = loadChannelMessages('dm', chatId);
         savedMessages.forEach(msg => {
             const wrap = document.createElement('div');
@@ -1896,7 +1955,6 @@ function switchToChat(chatType, chatId) {
             wrap.innerHTML = msg.html;
             messagesEl.appendChild(wrap);
         });
-        messageInput.placeholder = `message @${chatId}...`;
     }
 
     // Reset unread counts
@@ -1954,6 +2012,268 @@ function addDMConversation(username) {
     dmList.appendChild(dmItem);
 }
 
+// ===== PRIVATE ROOMS UI =====
+function updatePrivateRoomsUI() {
+    const list = document.getElementById('privateRoomList');
+    if (!list) {
+        console.warn('Private room list not found');
+        return;
+    }
+    
+    list.innerHTML = '';
+    
+    let hasUserRooms = false;
+    
+    privateRooms.forEach((roomData, code) => {
+        if (roomData.users.includes(userName)) {
+            hasUserRooms = true;
+            const item = document.createElement('div');
+            item.className = 'chat-item' + (currentPrivateRoom === code ? ' active' : '');
+            item.setAttribute('data-chat-type', 'private');
+            item.setAttribute('data-chat-id', code);
+            
+            const userCount = roomData.users.length;
+            const statusIcon = roomData.isRealtime ? '🟢' : '⚪';
+            
+            item.innerHTML = `
+                <div class="chat-icon">
+                    <i class="fas ${roomData.isPrivate ? 'fa-lock' : 'fa-globe'}"></i>
+                </div>
+                <div class="chat-name">
+                    ${roomData.name} ${statusIcon}
+                    <span style="font-size:11px;color:var(--eclipse-text-dim);">(${code})</span>
+                    ${userCount > 1 ? `<span class="unread-count">${userCount}</span>` : ''}
+                </div>
+            `;
+            
+            item.addEventListener('click', () => switchToPrivateRoom(code));
+            list.appendChild(item);
+        }
+    });
+    
+    if (!hasUserRooms) {
+        const noRooms = document.createElement('div');
+        noRooms.style.cssText = 'padding:20px;text-align:center;color:var(--eclipse-text-dim);font-size:13px;';
+        noRooms.innerHTML = '<i class="fas fa-lock-open"></i><br>Create or join a private room!';
+        list.appendChild(noRooms);
+    }
+}
+
+function switchToPrivateRoom(code) {
+    const roomData = privateRooms.get(code);
+    if (!roomData) return;
+    
+    currentChatType = 'private';
+    currentChatId = code;
+    currentPrivateRoom = code;
+    
+    // Update UI
+    document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+    const activeItem = document.querySelector(`[data-chat-id="${code}"]`);
+    if (activeItem) activeItem.classList.add('active');
+    
+    currentChatDisplay.textContent = `🔒 ${roomData.name}`;
+    
+    // Load messages
+    messagesEl.innerHTML = '';
+    seenMessageIds.clear();
+    
+    roomData.messages.forEach(msg => {
+        if (!seenMessageIds.has(msg.id)) {
+            addMessageToDOM(msg, msg.name === userName);
+            seenMessageIds.add(msg.id);
+        }
+    });
+    
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    messageInput.placeholder = `Message in ${roomData.name}...`;
+    messageInput.focus();
+    
+    updateDebugStatus();
+}
+
+function createPrivateRoom(name, isPrivate = true) {
+    if (!drone || drone.closed) {
+        showTransient('❌ Connect to main chat first!', true);
+        return;
+    }
+    
+    const code = generateRoomCode();
+    
+    // Create room data FIRST
+    const roomData = { 
+        name, 
+        code, 
+        users: [userName], 
+        messages: [],
+        isPrivate,
+        channel: `private-${code}`,
+        isRealtime: true,
+        createdAt: new Date().toISOString()
+    };
+    
+    privateRooms.set(code, roomData);
+    currentPrivateRoom = code;
+    
+    // IMMEDIATELY update UI before announcing
+    updatePrivateRoomsUI();
+    
+    // Save after UI update
+    savePrivateRooms();
+    
+    // Announce room creation to main room
+    drone.publish({
+        room: `observable-${roomCode}`,
+        message: {
+            type: 'private-room-create',
+            code: code,
+            name: name,
+            creator: userName,
+            channel: roomData.channel,
+            timestamp: new Date().toISOString()
+        }
+    });
+    
+    // Switch to the newly created room
+    switchToPrivateRoom(code);
+    
+    showTransient(`🟢 Created & joined: ${name} (${code})`);
+}
+
+function joinPrivateRoom(code) {
+    if (!code || !code.startsWith('ECL')) {
+        showTransient('Invalid room code', true);
+        return;
+    }
+    
+    const roomData = privateRooms.get(code);
+    if (roomData) {
+        if (!roomData.users.includes(userName)) {
+            roomData.users.push(userName);
+            drone.publish({
+                room: `observable-${roomCode}`,
+                message: {
+                    type: 'private-room-join',
+                    code: code,
+                    name: userName,
+                    channel: roomData.channel,
+                    timestamp: new Date().toISOString()
+                }
+            });
+            savePrivateRooms();
+        }
+        switchToPrivateRoom(code);
+        showTransient(`🟢 Joined ${roomData.name}`);
+    } else {
+        showTransient(`🔍 Looking for room ${code}...`);
+        
+        drone.publish({
+            room: `observable-${roomCode}`,
+            message: {
+                type: 'private-room-request',
+                code: code,
+                requester: userName,
+                timestamp: new Date().toISOString()
+            }
+        });
+        
+        setTimeout(() => {
+            if (!privateRooms.has(code)) {
+                privateRooms.set(code, {
+                    name: `Room ${code}`,
+                    code,
+                    users: [userName],
+                    messages: [],
+                    isPrivate: true,
+                    channel: `private-${code}`,
+                    isRealtime: true
+                });
+                savePrivateRooms();
+                switchToPrivateRoom(code);
+                updatePrivateRoomsUI();
+                showTransient(`⚠️ Created local fallback for ${code}`);
+            }
+        }, 3000);
+    }
+}
+
+// ===== ROOM MODAL HANDLERS =====
+function initRoomHandlers() {
+    if (!openCreateRoom || !openJoinRoom || !confirmRoomBtn) {
+        console.error('Missing room modal elements');
+        return;
+    }
+    
+    function setupCreateRoom() {
+        roomInputTitle.textContent = 'Create Private Room';
+        roomInputField.placeholder = 'Enter room name';
+        confirmRoomBtn.textContent = 'Create Room';
+        roomInputField.value = '';
+        roomPrivacyToggle.checked = true;
+        roomInputModal.classList.add('active');
+        roomInputField.focus();
+        
+        // Clear previous handler
+        confirmRoomBtn.replaceWith(confirmRoomBtn.cloneNode(true));
+        const newConfirmBtn = document.getElementById('confirmRoomBtn');
+        
+        newConfirmBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const name = roomInputField.value.trim();
+            if (!name) {
+                showTransient('Please enter a room name', true);
+                return;
+            }
+            roomInputModal.classList.remove('active');
+            createPrivateRoom(name, true);
+        });
+    }
+    
+    function setupJoinRoom() {
+        roomInputTitle.textContent = 'Join Room';
+        roomInputField.placeholder = 'Enter ECL... room code';
+        confirmRoomBtn.textContent = 'Join Room';
+        roomInputField.value = '';
+        roomInputModal.classList.add('active');
+        roomInputField.focus();
+        
+        confirmRoomBtn.replaceWith(confirmRoomBtn.cloneNode(true));
+        const newConfirmBtn = document.getElementById('confirmRoomBtn');
+        
+        newConfirmBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const code = roomInputField.value.trim().toUpperCase();
+            roomInputModal.classList.remove('active');
+            if (code.startsWith('ECL')) {
+                joinPrivateRoom(code);
+            } else {
+                showTransient('Invalid room code. Must start with ECL...', true);
+            }
+        });
+    }
+    
+    openCreateRoom.addEventListener('click', setupCreateRoom);
+    openJoinRoom.addEventListener('click', setupJoinRoom);
+    
+    cancelRoomBtn.addEventListener('click', () => {
+        roomInputModal.classList.remove('active');
+        roomInputField.value = '';
+    });
+    
+    roomInputField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            confirmRoomBtn.click();
+        }
+    });
+    
+    roomInputModal.addEventListener('click', (e) => {
+        if (e.target.id === 'roomInputModal') {
+            roomInputModal.classList.remove('active');
+        }
+    });
+}
+
+// ===== ONLINE USERS =====
 function updateOnlineUsers(members) {
     onlineUsers.clear();
     onlineUsersList.innerHTML = '';
@@ -1984,55 +2304,7 @@ function updateOnlineUsers(members) {
     userCountEl.textContent = members.length;
 }
 
-// ===== REACTIONS =====
-function attachReactionTriggers(msgEl) {
-    let longpressTimer = null;
-    
-    function openMenuAt(x, y, mid) {
-        reactionMenu.style.display = 'flex';
-        reactionMenu.style.left = (x - 8) + 'px';
-        reactionMenu.style.top = (y - 52) + 'px';
-        reactionMenu.setAttribute('data-mid', mid);
-    }
-    
-    function closeMenu() {
-        reactionMenu.style.display = 'none';
-        reactionMenu.removeAttribute('data-mid');
-    }
-    
-    msgEl.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        const mid = msgEl.getAttribute('data-mid');
-        openMenuAt(e.clientX, e.clientY, mid);
-    });
-    
-    msgEl.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 1) return;
-        const startCoords = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        longpressTimer = setTimeout(() => {
-            const mid = msgEl.getAttribute('data-mid');
-            openMenuAt(startCoords.x, startCoords.y, mid);
-        }, 600);
-    }, { passive: true });
-    
-    ['touchend', 'touchmove', 'touchcancel'].forEach(ev => 
-        msgEl.addEventListener(ev, () => {
-            if (longpressTimer) {
-                clearTimeout(longpressTimer);
-                longpressTimer = null;
-            }
-        }, { passive: true })
-    );
-    
-    const closeHandler = (e) => {
-        if (reactionMenu.style.display !== 'none' && !reactionMenu.contains(e.target)) closeMenu();
-    };
-    document.addEventListener('click', closeHandler);
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeMenu();
-    });
-}
-
+// ===== MESSAGES & REACTIONS =====
 function addMessageToDOM(data, isSelf = false) {
     if (!data || !data.id || seenMessageIds.has(data.id)) return;
     seenMessageIds.add(data.id);
@@ -2214,6 +2486,54 @@ function handleIncomingReaction(payload) {
     renderReactions(mid);
 }
 
+function attachReactionTriggers(msgEl) {
+    let longpressTimer = null;
+    
+    function openMenuAt(x, y, mid) {
+        reactionMenu.style.display = 'flex';
+        reactionMenu.style.left = (x - 8) + 'px';
+        reactionMenu.style.top = (y - 52) + 'px';
+        reactionMenu.setAttribute('data-mid', mid);
+    }
+    
+    function closeMenu() {
+        reactionMenu.style.display = 'none';
+        reactionMenu.removeAttribute('data-mid');
+    }
+    
+    msgEl.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const mid = msgEl.getAttribute('data-mid');
+        openMenuAt(e.clientX, e.clientY, mid);
+    });
+    
+    msgEl.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) return;
+        const startCoords = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        longpressTimer = setTimeout(() => {
+            const mid = msgEl.getAttribute('data-mid');
+            openMenuAt(startCoords.x, startCoords.y, mid);
+        }, 600);
+    }, { passive: true });
+    
+    ['touchend', 'touchmove', 'touchcancel'].forEach(ev => 
+        msgEl.addEventListener(ev, () => {
+            if (longpressTimer) {
+                clearTimeout(longpressTimer);
+                longpressTimer = null;
+            }
+        }, { passive: true })
+    );
+    
+    const closeHandler = (e) => {
+        if (reactionMenu.style.display !== 'none' && !reactionMenu.contains(e.target)) closeMenu();
+    };
+    document.addEventListener('click', closeHandler);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMenu();
+    });
+}
+
 // Reaction menu buttons
 document.querySelectorAll('.menu-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -2227,14 +2547,166 @@ document.querySelectorAll('.menu-btn').forEach(btn => {
     });
 });
 
-// Close reaction menu
 document.addEventListener('click', () => {
     if (reactionMenu.style.display !== 'none') {
         reactionMenu.style.display = 'none';
     }
 });
 
-// ===== CONNECTION =====
+// ===== CONNECTION & DATA HANDLER =====
+function setupPrivateRoomDataHandler() {
+    if (window.privateRoomHandlerSetup) return;
+    window.privateRoomHandlerSetup = true;
+    
+    if (!room) return;
+    
+    room.on('data', (data, member) => {
+        if (!data) return;
+
+        // PRIVATE ROOM MESSAGES - MUST COME FIRST
+        if (data.type === 'private-message' && data.channel) {
+            const code = data.channel.replace('private-', '');
+            const roomData = privateRooms.get(code);
+            
+            if (roomData) {
+                roomData.messages.push(data);
+                savePrivateRooms();
+                
+                if (currentPrivateRoom === code) {
+                    addMessageToDOM(data, data.name === userName);
+                }
+            }
+            return;
+        }
+        
+        // Room creation announcements
+        if (data.type === 'private-room-create') {
+            const { code, name, channel, creator } = data;
+            if (!privateRooms.has(code)) {
+                privateRooms.set(code, {
+                    name,
+                    code,
+                    users: [creator],
+                    messages: [],
+                    isPrivate: true,
+                    channel,
+                    isRealtime: true,
+                    createdAt: data.timestamp
+                });
+                updatePrivateRoomsUI();
+                if (creator !== userName) {
+                    showTransient(`🆕 New room: ${name} (${code}) by ${creator}`);
+                }
+            }
+            return;
+        }
+        
+        // Room join announcements
+        if (data.type === 'private-room-join') {
+            const { code, name: joinerName } = data;
+            const roomData = privateRooms.get(code);
+            if (roomData && !roomData.users.includes(joinerName)) {
+                roomData.users.push(joinerName);
+                savePrivateRooms();
+                updatePrivateRoomsUI();
+                
+                if (currentPrivateRoom === code && joinerName !== userName) {
+                    showTransient(`👋 ${joinerName} joined`);
+                }
+            }
+            return;
+        }
+        
+        // Room requests
+        if (data.type === 'private-room-request') {
+            const { code, requester } = data;
+            const roomData = privateRooms.get(code);
+            if (roomData) {
+                drone.publish({
+                    room: `observable-${roomCode}`,
+                    message: {
+                        type: 'private-room-info',
+                        code: code,
+                        name: roomData.name,
+                        channel: roomData.channel,
+                        users: roomData.users,
+                        requester: requester,
+                        timestamp: new Date().toISOString()
+                    }
+                });
+            }
+            return;
+        }
+        
+        // Room info responses
+        if (data.type === 'private-room-info') {
+            const { code, name, channel, users, requester } = data;
+            if (requester === userName && !privateRooms.has(code)) {
+                privateRooms.set(code, {
+                    name,
+                    code,
+                    users: [...users, userName],
+                    messages: [],
+                    isPrivate: true,
+                    channel,
+                    isRealtime: true
+                });
+                savePrivateRooms();
+                updatePrivateRoomsUI();
+                switchToPrivateRoom(code);
+                showTransient(`✅ Joined: ${name}`);
+            }
+            return;
+        }
+        
+        // REACTIONS
+        if (data.type === 'reaction') {
+            handleIncomingReaction(data);
+            return;
+        }
+        
+        // JOIN MESSAGES
+        if (data.type === 'join') {
+            showTransient(`${data.name} joined`);
+            return;
+        }
+        
+        // DM MESSAGES
+        if (data.type === 'dm') {
+            const senderName = data.name;
+            const targetName = data.target;
+            
+            if (targetName === userName || senderName === userName) {
+                const chatPartner = senderName === userName ? targetName : senderName;
+                
+                if (!dmConversations.has(chatPartner)) {
+                    addDMConversation(chatPartner);
+                }
+                
+                const dmMessage = { ...data, isDM: true };
+                dmConversations.get(chatPartner).push(dmMessage);
+                
+                if (currentChatType === 'dm' && currentChatId === chatPartner) {
+                    addMessageToDOM(dmMessage, senderName === userName);
+                } else {
+                    const currentUnread = unreadCounts.get(chatPartner) || 0;
+                    unreadCounts.set(chatPartner, currentUnread + 1);
+                    updateUnreadCount(chatPartner, currentUnread + 1);
+                    notifyNewMessage(dmMessage, false);
+                }
+            }
+            return;
+        }
+        
+        // REGULAR MESSAGES
+        if (data.id && data.text && data.name && !seenMessageIds.has(data.id)) {
+            if ((!data.type || data.type === 'message') && currentChatType === 'public' && !data.isDM) {
+                addMessageToDOM(data, data.name === userName);
+            }
+        }
+    });
+}
+
 function connectToRoom() {
     try {
         drone = new ScaleDrone(CLIENT_ID, {
@@ -2254,6 +2726,9 @@ function connectToRoom() {
                     showTransient('Room subscription error: ' + err, true);
                     return;
                 }
+                
+                setupPrivateRoomDataHandler();
+                
                 drone.publish({
                     room: `observable-${roomCode}`,
                     message: {
@@ -2262,58 +2737,8 @@ function connectToRoom() {
                         timestamp: new Date().toISOString()
                     }
                 });
-            });
-
-            room.on('data', (data, member) => {
-                if (!data) return;
-
-                if (data.type === 'reaction') {
-                    const payload = {
-                        messageId: data.messageId,
-                        reaction: data.reaction,
-                        actor: data.actor || member?.id || 'remote',
-                        timestamp: data.timestamp
-                    };
-                    handleIncomingReaction(payload);
-                    return;
-                }
-
-                if (data.type === 'join') {
-                    showTransient(`${data.name} joined`);
-                    return;
-                }
-
-                if (data.type === 'dm') {
-                    const senderName = data.name;
-                    const targetName = data.target;
-                    
-                    if (targetName === userName || senderName === userName) {
-                        const chatPartner = senderName === userName ? targetName : senderName;
-                        
-                        if (!dmConversations.has(chatPartner)) {
-                            addDMConversation(chatPartner);
-                        }
-                        
-                        const dmMessage = { ...data, isDM: true };
-                        dmConversations.get(chatPartner).push(dmMessage);
-                        
-                        if (currentChatType === 'dm' && currentChatId === chatPartner) {
-                            addMessageToDOM(dmMessage, senderName === userName);
-                        } else {
-                            const currentUnread = unreadCounts.get(chatPartner) || 0;
-                            unreadCounts.set(chatPartner, currentUnread + 1);
-                            updateUnreadCount(chatPartner, currentUnread + 1);
-                            notifyNewMessage(dmMessage, false);
-                        }
-                    }
-                    return;
-                }
-
-                if (data.id && data.text && data.name && !seenMessageIds.has(data.id)) {
-                    if ((!data.type || data.type === 'message') && currentChatType === 'public' && !data.isDM) {
-                        addMessageToDOM(data, data.name === userName);
-                    }
-                }
+                
+                updateDebugStatus();
             });
 
             room.on('member_join', (m) => updateOnlineUsers(room.members));
@@ -2323,10 +2748,12 @@ function connectToRoom() {
 
         drone.on('close', () => {
             showTransient('Disconnected', true);
+            updateDebugStatus();
         });
 
         drone.on('error', (err) => {
             showTransient('Connection error', true);
+            updateDebugStatus();
         });
 
     } catch (error) {
@@ -2376,9 +2803,19 @@ function sendMessage() {
     if (currentPrivateRoom) {
         const roomData = privateRooms.get(currentPrivateRoom);
         if (roomData) {
+            payload.type = 'private-message';
+            payload.channel = roomData.channel;
+            
             roomData.messages.push(payload);
             addMessageToDOM(payload, true);
             savePrivateRooms();
+            
+            if (drone && room && !room.closed) {
+                drone.publish({
+                    room: `observable-${roomCode}`,
+                    message: payload
+                });
+            }
         }
     } else if (currentChatType === 'dm') {
         payload.type = 'dm';
@@ -2452,206 +2889,7 @@ micBtn.addEventListener('click', () => {
     }
 });
 
-// ===== THEME SYSTEM =====
-function rgbToHex(r, g, b) {
-    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-}
-
-function adjustColor(hex, amount) {
-    const num = parseInt(hex.replace("#", ""), 16);
-    const amt = Math.round(2.55 * amount);
-    const R = (num >> 16) + amt;
-    const G = (num >> 8 & 0x00FF) + amt;
-    const B = (num & 0x0000FF) + amt;
-    return rgbToHex(
-        Math.max(0, Math.min(255, R)),
-        Math.max(0, Math.min(255, G)),
-        Math.max(0, Math.min(255, B))
-    );
-}
-
-async function generateCustomThemeFromImage(file) {
-    return new Promise((resolve, reject) => {
-        if (file.size > 5 * 1024 * 1024) {
-            reject(new Error('Image too large. Please use images under 5MB.'));
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const MAX_WIDTH = 1920;
-                const MAX_HEIGHT = 1080;
-                let { width, height } = img;
-                
-                if (width > MAX_WIDTH || height > MAX_HEIGHT) {
-                    const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
-                    width *= ratio;
-                    height *= ratio;
-                }
-                
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = width;
-                canvas.height = height;
-                
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imageData.data;
-                
-                const colorCounts = {};
-                const sampleSize = Math.max(1, Math.floor(canvas.width * canvas.height / 5000));
-                
-                for (let i = 0; i < data.length; i += sampleSize * 4) {
-                    const r = data[i];
-                    const g = data[i + 1];
-                    const b = data[i + 2];
-                    const alpha = data[i + 3];
-                    
-                    if (alpha > 128) {
-                        const colorKey = `${Math.round(r/16)*16},${Math.round(g/16)*16},${Math.round(b/16)*16}`;
-                        colorCounts[colorKey] = (colorCounts[colorKey] || 0) + 1;
-                    }
-                }
-                
-                const dominantColor = Object.keys(colorCounts).reduce((a, b) => 
-                    colorCounts[a] > colorCounts[b] ? a : b
-                );
-                
-                const [r, g, b] = dominantColor.split(',').map(Number);
-                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                
-                const themeColors = {
-                    primary: `rgb(${r}, ${g}, ${b})`,
-                    bg: luminance > 0.5 ? 
-                        `rgb(${Math.max(0, r-80)}, ${Math.max(0, g-80)}, ${Math.max(0, b-80)})` :
-                        `rgb(${r}, ${g}, ${b})`,
-                    surface: luminance > 0.5 ? 
-                        `rgb(${Math.max(0, r-60)}, ${Math.max(0, g-60)}, ${Math.max(0, b-60)})` :
-                        `rgb(${Math.min(255, r+40)}, ${Math.min(255, g+40)}, ${Math.min(255, b+40)})`,
-                    text: luminance > 0.5 ? '#1a1a2e' : '#e0e0e0',
-                    border: `rgb(${r}, ${g}, ${b})`,
-                    accent: `rgb(${Math.min(255, r+40)}, ${Math.min(255, g+40)}, ${Math.min(255, b+40)})`
-                };
-                
-                resolve({ 
-                    imageData: optimizedDataUrl, 
-                    themeColors,
-                    bgImage: `url(${optimizedDataUrl})`,
-                    canvas
-                });
-            };
-            img.onerror = reject;
-            img.src = e.target.result;
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-}
-
-async function applyCustomMessagesBackground(file) {
-    if (!file || !file.type.startsWith('image/')) {
-        showTransient('Please select a valid image file', true);
-        return;
-    }
-    
-    if (isApplyingCustomTheme) return;
-    isApplyingCustomTheme = true;
-    
-    try {
-        const result = await generateCustomThemeFromImage(file);
-        
-        const existingStyle = document.getElementById('custom-messages-styles');
-        if (existingStyle) existingStyle.remove();
-        
-        const primaryRgb = result.themeColors.primary.match(/\d+/g).map(Number);
-        const primaryHex = rgbToHex(primaryRgb[0], primaryRgb[1], primaryRgb[2]);
-        
-        const customCSS = `
-            :root.custom-messages-theme {
-                --eclipse-bg: ${result.themeColors.bg};
-                --eclipse-surface: ${result.themeColors.surface};
-                --eclipse-border: ${result.themeColors.border};
-                --eclipse-primary: ${result.themeColors.primary};
-                --eclipse-accent: ${result.themeColors.accent};
-                --eclipse-text: ${result.themeColors.text};
-                --eclipse-text-dim: ${adjustColor(primaryHex, -20)};
-                --eclipse-gradient: linear-gradient(135deg, ${result.themeColors.bg} 0%, ${result.themeColors.surface} 100%);
-            }
-            body.theme-custom {
-                background: var(--eclipse-gradient) !important;
-            }
-            body.theme-custom .messages-container {
-                --custom-messages-bg: ${result.bgImage};
-                background: var(--custom-messages-bg) !important;
-                background-size: cover !important;
-                background-position: center !important;
-                background-repeat: no-repeat !important;
-            }
-        `;
-        
-        const style = document.createElement('style');
-        style.id = 'custom-messages-styles';
-        style.textContent = customCSS;
-        document.head.appendChild(style);
-        
-        customBackgroundDataUrl = result.imageData;
-        localStorage.setItem('eclipse_custom_messages_bg', result.imageData);
-        
-        document.documentElement.classList.add('custom-messages-theme');
-        document.body.classList.add('theme-custom');
-        messagesEl.classList.add('with-custom-bg');
-        
-        if (bgPreview) {
-            bgPreview.style.backgroundImage = result.bgImage;
-            bgPreview.style.opacity = '1';
-            bgPreview.innerHTML = '';
-        }
-        if (removeBgBtn) removeBgBtn.style.display = 'block';
-        
-        currentTheme = 'custom';
-        localStorage.setItem('eclipse_chat_theme', 'custom');
-        
-        showTransient('Custom theme applied successfully! 🎨');
-        
-    } catch (error) {
-        console.error('Custom theme error:', error);
-        showTransient(error.message || 'Failed to process image', true);
-    } finally {
-        isApplyingCustomTheme = false;
-        customBgUpload.value = '';
-    }
-}
-
-function removeCustomBackground() {
-    const customStyle = document.getElementById('custom-messages-styles');
-    if (customStyle) customStyle.remove();
-    
-    messagesEl.classList.remove('with-custom-bg');
-    messagesEl.style.removeProperty('--custom-messages-bg');
-    
-    customBackgroundDataUrl = null;
-    localStorage.removeItem('eclipse_custom_messages_bg');
-    
-    if (removeBgBtn) removeBgBtn.style.display = 'none';
-    if (bgPreview) {
-        bgPreview.style.backgroundImage = '';
-        bgPreview.style.opacity = '0.7';
-    }
-    
-    const customOption = document.querySelector('[data-theme="custom"]');
-    if (customOption) customOption.classList.remove('active');
-    
-    const lastTheme = localStorage.getItem('eclipse_last_non_custom_theme') || 'dark';
-    applyTheme(lastTheme);
-    showTransient('Custom background removed');
-}
-
+// ===== THEME SYSTEM (ABBREVIATED) =====
 function applyTheme(theme) {
     document.body.className = '';
     document.documentElement.classList.remove('custom-messages-theme');
@@ -2681,18 +2919,7 @@ function initThemes() {
     currentTheme = localStorage.getItem('eclipse_chat_theme') || 'dark';
     customBackgroundDataUrl = localStorage.getItem('eclipse_custom_messages_bg');
     
-    if (customBackgroundDataUrl && currentTheme === 'custom') {
-        if (bgPreview) {
-            bgPreview.style.backgroundImage = `url(${customBackgroundDataUrl})`;
-            bgPreview.style.opacity = '1';
-        }
-        if (removeBgBtn) removeBgBtn.style.display = 'block';
-        messagesEl.classList.add('with-custom-bg');
-        messagesEl.style.setProperty('--custom-messages-bg', `url(${customBackgroundDataUrl})`);
-        applyTheme('custom');
-    } else {
-        applyTheme(currentTheme);
-    }
+    applyTheme(currentTheme);
     
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
@@ -2709,532 +2936,27 @@ function initThemes() {
     document.querySelectorAll('.theme-option:not([data-theme="custom"])').forEach(option => {
         option.addEventListener('click', () => {
             const theme = option.dataset.theme;
-            localStorage.setItem('eclipse_last_non_custom_theme', theme);
             applyTheme(theme);
             themeModal.classList.remove('active');
         });
     });
     
-    if (customBgUploadBtn) {
-        customBgUploadBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            customBgUpload.click();
-        });
-    }
-    
-    if (removeBgBtn) {
-        removeBgBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            removeCustomBackground();
-        });
-    }
-    
+    // Custom theme handlers (simplified)
     if (customBgUpload) {
         customBgUpload.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file && !isApplyingCustomTheme) {
-                e.target.value = '';
-                await applyCustomMessagesBackground(file);
-                themeModal.classList.remove('active');
-            }
+            // Custom background upload logic here
+            themeModal.classList.remove('active');
         });
     }
     
-    if (themeModal) {
-        themeModal.addEventListener('click', (e) => {
-            if (e.target.id === 'themeModal') {
-                e.target.classList.remove('active');
-            }
-        });
-    }
-}
-
-// ===== PRIVATE ROOMS =====
-function generateRoomCode() { 
-    return 'ECL' + Math.random().toString(36).substr(2,6).toUpperCase(); 
-}
-
-function createPrivateRoom(name, isPrivate = true) {
-    const code = generateRoomCode();
-    
-    privateRooms.set(code, { 
-        name, 
-        code, 
-        users: [userName], 
-        messages: [],
-        isPrivate,
-        scaledroneRoom: null
-    });
-    
-    currentPrivateRoom = code;
-    savePrivateRooms();
-    updatePrivateRoomsUI();
-    showTransient(`Created ${name} (${code})`);
-    switchToPrivateRoom(code);
-}
-
-// ===== REAL-TIME PRIVATE ROOMS WITH SCALEDRONE =====
-function createPrivateRoom(name, isPrivate = true) {
-    if (!drone || drone.closed) {
-        showTransient('❌ Connect to main chat first!', true);
-        return;
-    }
-    
-    const code = generateRoomCode();
-    
-    // Create room data
-    const roomData = { 
-        name, 
-        code, 
-        users: [userName], 
-        messages: [],
-        isPrivate,
-        channel: `private-${code}`, // Channel name for filtering
-        isRealtime: true // Always real-time
-    };
-    
-    privateRooms.set(code, roomData);
-    currentPrivateRoom = code;
-    savePrivateRooms();
-    
-    // Announce room creation to main room
-    drone.publish({
-        room: `observable-${roomCode}`,
-        message: {
-            type: 'private-room-create',
-            code: code,
-            name: name,
-            creator: userName,
-            channel: roomData.channel,
-            timestamp: new Date().toISOString()
-        }
-    });
-    
-    switchToPrivateRoom(code);
-    updatePrivateRoomsUI();
-    showTransient(`🟢 Created real-time room: ${name} (${code})`);
-}
-
-function joinPrivateRoom(code) {
-    if (!code || !code.startsWith('ECL')) {
-        showTransient('Invalid room code', true);
-        return;
-    }
-    
-    const roomData = privateRooms.get(code);
-    if (roomData) {
-        // Already exists - just join
-        if (!roomData.users.includes(userName)) {
-            roomData.users.push(userName);
-            // Announce join
-            drone.publish({
-                room: `observable-${roomCode}`,
-                message: {
-                    type: 'private-room-join',
-                    code: code,
-                    name: userName,
-                    channel: roomData.channel,
-                    timestamp: new Date().toISOString()
-                }
-            });
-            savePrivateRooms();
-        }
-        switchToPrivateRoom(code);
-        showTransient(`🟢 Joined ${roomData.name}`);
-    } else {
-        // Room doesn't exist locally - check if others know about it
-        showTransient(`🔍 Looking for room ${code}...`);
-        
-        // Request room info from others
-        drone.publish({
-            room: `observable-${roomCode}`,
-            message: {
-                type: 'private-room-request',
-                code: code,
-                requester: userName,
-                timestamp: new Date().toISOString()
-            }
-        });
-        
-        // Create locally as fallback after 3 seconds
-        setTimeout(() => {
-            if (!privateRooms.has(code)) {
-                privateRooms.set(code, {
-                    name: `Room ${code}`,
-                    code,
-                    users: [userName],
-                    messages: [],
-                    isPrivate: true,
-                    channel: `private-${code}`,
-                    isRealtime: true
-                });
-                savePrivateRooms();
-                switchToPrivateRoom(code);
-                updatePrivateRoomsUI();
-                showTransient(`⚠️ Created local fallback for ${code}`);
-            }
-        }, 3000);
-    }
-}
-
-// Update main room data handler to filter private messages
-function updateMainRoomDataHandler() {
-    if (!room) return;
-    
-    room.on('data', (data, member) => {
-        if (!data) return;
-
-        // Handle private room messages
-        if (data.type === 'private-message' && data.channel) {
-            const code = data.channel.replace('private-', '');
-            const roomData = privateRooms.get(code);
-            
-            if (roomData && currentPrivateRoom === code) {
-                // Show in current private room
-                addMessageToDOM(data, data.name === userName);
-                roomData.messages.push(data);
-                savePrivateRooms();
-            }
-            return;
-        }
-        
-        // Handle room creation announcements
-        if (data.type === 'private-room-create') {
-            const { code, name, channel } = data;
-            if (!privateRooms.has(code)) {
-                privateRooms.set(code, {
-                    name,
-                    code,
-                    users: [data.creator],
-                    messages: [],
-                    isPrivate: true,
-                    channel,
-                    isRealtime: true
-                });
-                updatePrivateRoomsUI();
-                showTransient(`New room created: ${name} (${code})`);
-            }
-            return;
-        }
-        
-        // Handle room join announcements
-        if (data.type === 'private-room-join') {
-            const { code, name } = data;
-            const roomData = privateRooms.get(code);
-            if (roomData && !roomData.users.includes(name)) {
-                roomData.users.push(name);
-                savePrivateRooms();
-                if (currentPrivateRoom === code) {
-                    showTransient(`${name} joined the room`);
-                }
-                updatePrivateRoomsUI();
-            }
-            return;
-        }
-        
-        // Handle room requests
-        if (data.type === 'private-room-request') {
-            const { code } = data;
-            const roomData = privateRooms.get(code);
-            if (roomData) {
-                // Share room info with requester
-                drone.publish({
-                    room: `observable-${roomCode}`,
-                    message: {
-                        type: 'private-room-info',
-                        code: code,
-                        name: roomData.name,
-                        channel: roomData.channel,
-                        users: roomData.users,
-                        timestamp: new Date().toISOString()
-                    }
-                });
-            }
-            return;
-        }
-        
-        // Handle room info responses
-        if (data.type === 'private-room-info') {
-            const { code, name, channel, users } = data;
-            if (!privateRooms.has(code)) {
-                privateRooms.set(code, {
-                    name,
-                    code,
-                    users: [...users, userName], // Add self
-                    messages: [],
-                    isPrivate: true,
-                    channel,
-                    isRealtime: true
-                });
-                savePrivateRooms();
-                switchToPrivateRoom(code);
-                updatePrivateRoomsUI();
-                showTransient(`🟢 Joined existing room: ${name}`);
-            }
-            return;
-        }
-        
-        // Existing public/DM handling...
-        if (data.type === 'reaction') {
-            handleIncomingReaction(data);
-            return;
-        }
-        
-        if (data.type === 'join') {
-            showTransient(`${data.name} joined`);
-            return;
-        }
-        
-        if (data.type === 'dm') {
-            // Existing DM logic...
-            return;
-        }
-        
-        if (data.id && data.text && data.name && !seenMessageIds.has(data.id)) {
-            if ((!data.type || data.type === 'message') && currentChatType === 'public' && !data.isDM) {
-                addMessageToDOM(data, data.name === userName);
-            }
+    themeModal.addEventListener('click', (e) => {
+        if (e.target.id === 'themeModal') {
+            e.target.classList.remove('active');
         }
     });
 }
 
-// Update sendMessage for private rooms
-function sendMessage() {
-    const text = messageInput.value.trim();
-    if (!text) return;
-
-    const id = uid();
-    const timestamp = new Date().toISOString();
-    const payload = {
-        id,
-        text,
-        name: userName,
-        timestamp
-    };
-
-    messageInput.value = '';
-
-    if (currentPrivateRoom) {
-        // Send to private room via main channel
-        const roomData = privateRooms.get(currentPrivateRoom);
-        if (roomData) {
-            payload.type = 'private-message';
-            payload.channel = roomData.channel;
-            
-            roomData.messages.push(payload);
-            addMessageToDOM(payload, true);
-            savePrivateRooms();
-            
-            // Broadcast via main room
-            if (drone && room && !room.closed) {
-                drone.publish({
-                    room: `observable-${roomCode}`,
-                    message: payload
-                });
-            }
-        }
-    } else if (currentChatType === 'dm') {
-        // Existing DM logic
-        payload.type = 'dm';
-        payload.target = currentChatId;
-        payload.isDM = true;
-        if (drone && room) {
-            drone.publish({ room: `observable-${roomCode}`, message: payload });
-        }
-        addMessageToDOM(payload, true);
-    } else {
-        // Public chat
-        if (drone && room) {
-            drone.publish({ room: `observable-${roomCode}`, message: payload });
-        }
-        addMessageToDOM(payload, true);
-    }
-
-    if (currentReplyTo) clearReplyState();
-    messageInput.focus();
-}
-
-// Update connectToRoom to use new data handler
-function connectToRoom() {
-    try {
-        drone = new ScaleDrone(CLIENT_ID, {
-            data: { name: userName }
-        });
-
-        drone.on('open', (err) => {
-            if (err) {
-                showTransient('Connection error: ' + err, true);
-                return;
-            }
-            clientId = drone.clientId;
-            room = drone.subscribe(`observable-${roomCode}`);
-            
-            room.on('open', (err) => {
-                if (err) {
-                    showTransient('Room subscription error: ' + err, true);
-                    return;
-                }
-                // Use the new unified data handler
-                updateMainRoomDataHandler();
-                
-                drone.publish({
-                    room: `observable-${roomCode}`,
-                    message: {
-                        type: 'join',
-                        name: userName,
-                        timestamp: new Date().toISOString()
-                    }
-                });
-            });
-
-            // Rest of connection handlers...
-            room.on('member_join', (m) => updateOnlineUsers(room.members));
-            room.on('member_leave', (m) => updateOnlineUsers(room.members));
-            room.on('members', (m) => updateOnlineUsers(m));
-        });
-
-        // Error handlers...
-    } catch (error) {
-        showTransient('Failed to connect', true);
-    }
-}
-
-// Simplified status - always green for real-time
-function updatePrivateRoomsUI() {
-    const list = document.getElementById('privateRoomList');
-    if (!list) return;
-    
-    list.innerHTML = '';
-    
-    privateRooms.forEach((room, code) => {
-        if (room.users.includes(userName)) {
-            const item = document.createElement('div');
-            item.className = 'chat-item';
-            item.setAttribute('data-chat-type', 'private');
-            item.setAttribute('data-chat-id', code);
-            
-            item.innerHTML = `
-                <div class="chat-icon">
-                    <i class="fas ${room.isPrivate ? 'fa-lock' : 'fa-globe'}"></i>
-                </div>
-                <div class="chat-name">
-                    ${room.name} 🟢 
-                    <span style="font-size:11px;color:#aaa;">(${code})</span>
-                </div>
-            `;
-            
-            item.onclick = () => switchToPrivateRoom(code);
-            list.appendChild(item);
-        }
-    });
-}
-
-// ===== ROOM MODAL HANDLERS =====
-// ===== FIXED ROOM MODAL HANDLERS =====
-document.addEventListener('DOMContentLoaded', () => {
-    // ... existing code ...
-    
-    const openCreateRoom = document.getElementById('openCreateRoom');
-    const openJoinRoom = document.getElementById('openJoinRoom');
-    const cancelRoomBtn = document.getElementById('cancelRoomBtn');
-    const roomInputModal = document.getElementById('roomInputModal');
-    const confirmRoomBtn = document.getElementById('confirmRoomBtn');
-    const roomInputField = document.getElementById('roomInputField');
-    const roomInputTitle = document.getElementById('roomInputTitle');
-    const roomPrivacyToggle = document.getElementById('roomPrivacyToggle');
-    
-    if (!openCreateRoom || !openJoinRoom || !confirmRoomBtn) {
-        console.error('Missing room modal elements');
-        return;
-    }
-    
-    function setupCreateRoom() {
-        roomInputTitle.textContent = 'Create Private Room';
-        roomInputField.placeholder = 'Enter room name';
-        confirmRoomBtn.textContent = 'Create Room';
-        roomInputField.value = '';
-        roomPrivacyToggle.checked = true;
-        roomInputModal.classList.add('active');
-        roomInputField.focus();
-        
-        // Clear previous handler
-        confirmRoomBtn.replaceWith(confirmRoomBtn.cloneNode(true));
-        const newConfirmBtn = document.getElementById('confirmRoomBtn');
-        
-        newConfirmBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const name = roomInputField.value.trim();
-            if (!name) {
-                showTransient('Please enter a room name', true);
-                return;
-            }
-            roomInputModal.classList.remove('active');
-            createPrivateRoom(name, true); // Always private + real-time
-        });
-    }
-    
-    function setupJoinRoom() {
-        roomInputTitle.textContent = 'Join Room';
-        roomInputField.placeholder = 'Enter ECL... room code';
-        confirmRoomBtn.textContent = 'Join Room';
-        roomInputField.value = '';
-        roomInputModal.classList.add('active');
-        roomInputField.focus();
-        
-        confirmRoomBtn.replaceWith(confirmRoomBtn.cloneNode(true));
-        const newConfirmBtn = document.getElementById('confirmRoomBtn');
-        
-        newConfirmBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const code = roomInputField.value.trim().toUpperCase();
-            roomInputModal.classList.remove('active');
-            if (code.startsWith('ECL')) {
-                joinPrivateRoom(code);
-            } else {
-                showTransient('Invalid room code. Must start with ECL...', true);
-            }
-        });
-    }
-    
-    openCreateRoom.addEventListener('click', setupCreateRoom);
-    openJoinRoom.addEventListener('click', setupJoinRoom);
-    
-    cancelRoomBtn.addEventListener('click', () => {
-        roomInputModal.classList.remove('active');
-        roomInputField.value = '';
-    });
-    
-    // Enter key
-    roomInputField.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            confirmRoomBtn.click();
-        }
-    });
-    
-    // Click outside to close
-    roomInputModal.addEventListener('click', (e) => {
-        if (e.target.id === 'roomInputModal') {
-            roomInputModal.classList.remove('active');
-        }
-    });
-});
-        loadPrivateRooms(); // Add this line
-
-// ===== INITIALIZE =====
-window.addEventListener('load', () => {
-    if (joinModal.style.display === 'flex') {
-        addMessageToDOM({
-            id: uid(),
-            name: 'System',
-            text: 'Welcome to Eclipse Chat! Click users to start DMs. Right-click messages to react. Use theme toggle for custom backgrounds!',
-            timestamp: new Date().toISOString(),
-            type: 'system'
-        }, false);
-    }
-});
-        // Add after connectToRoom() function
+// ===== DEBUG STATUS =====
 function updateDebugStatus() {
     const statusEl = document.getElementById('statusText');
     const droneEl = document.getElementById('droneStatus');
@@ -3260,9 +2982,21 @@ function updateDebugStatus() {
     }
 }
 
-// Update status every 2 seconds
 setInterval(updateDebugStatus, 2000);
-updateDebugStatus(); // Initial call
+updateDebugStatus();
+
+// ===== INITIALIZE ON LOAD =====
+window.addEventListener('load', () => {
+    if (joinModal && joinModal.style.display === 'flex') {
+        addMessageToDOM({
+            id: uid(),
+            name: 'System',
+            text: 'Welcome to Eclipse Chat! Click users to start DMs. Right-click messages to react. Use theme toggle for custom backgrounds!',
+            timestamp: new Date().toISOString(),
+            type: 'system'
+        }, false);
+    }
+});
                 </script>
 </body>
 </html>
