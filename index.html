@@ -1604,22 +1604,14 @@
             </div>
         </div>
     </div>
-   
-    <script>
+   <script>
 // --- Constants and Variables ---
 const APP_VERSION = "2.1.2";
 let moviesData = [];
 let filteredData = [];
 let displayedCount = 0;
 const MOVIES_PER_PAGE = 42;
-let currentProvider = localStorage.getItem('eclipse_provider') || 'godriveplayer.com';
 let autoScrollOnSearch = false;
-
-// List of providers that use the about:blank format
-const VIDFAST_PROVIDERS = [
-    'vidfast.pro', 'vidfast.in', 'vidfast.io', 'vidfast.me', 
-    'vidfast.net', 'vidfast.pm', 'vidfast.xyz'
-];
 
 // --- DOM Elements ---
 let searchInput, searchBtn, voiceSearchBtn, filters, resultsGrid, loadingIndicator;
@@ -1631,7 +1623,6 @@ let themeOptions, incognitoToggle, workModeToggle, studyModeToggle, classroomTog
 // --- Initialize the application ---
 document.addEventListener('DOMContentLoaded', function() {
     initializeDOMElements();
-    initializeProvider();
     loadMoviesData();
     setupEventListeners();
     loadSettings();
@@ -1658,8 +1649,6 @@ function initializeDOMElements() {
     loadMoreBtn = document.getElementById('loadMoreBtn');
     resultsInfo = document.getElementById('resultsInfo');
     downloadBtn = document.getElementById('downloadBtn');
-    providerSelect = document.getElementById('providerSelect');
-    providerInfo = document.getElementById('providerInfo');
     settingsBtn = document.getElementById('settingsBtn');
     settingsModal = document.getElementById('settingsModal');
     closeSettings = document.getElementById('closeSettings');
@@ -1672,45 +1661,17 @@ function initializeDOMElements() {
     stealthToggle = document.getElementById('stealthToggle');
 }
 
-// --- Provider initialization ---
-function initializeProvider() {
-    if (providerSelect) {
-        providerSelect.value = currentProvider;
-        providerInfo.textContent = currentProvider;
-        
-        providerSelect.addEventListener('change', function() {
-            currentProvider = providerSelect.value;
-            providerInfo.textContent = currentProvider;
-            localStorage.setItem('eclipse_provider', currentProvider);
-        });
-    }
-}
-
 // --- Bookmark logic ---
 function getBookmarks() {
-    try {
-        return JSON.parse(localStorage.getItem('eclipse_bookmarks') || '[]');
-    } catch (e) {
-        return [];
-    }
+    try { return JSON.parse(localStorage.getItem('eclipse_bookmarks') || '[]'); }
+    catch (e) { return []; }
 }
-
-function saveBookmarks(arr) {
-    localStorage.setItem('eclipse_bookmarks', JSON.stringify(arr));
-}
-
-function isBookmarked(imdbId) {
-    return getBookmarks().includes(imdbId);
-}
-
+function saveBookmarks(arr) { localStorage.setItem('eclipse_bookmarks', JSON.stringify(arr)); }
+function isBookmarked(imdbId) { return getBookmarks().includes(imdbId); }
 function toggleBookmark(imdbId) {
-    let bookmarks = getBookmarks();
-    if (bookmarks.includes(imdbId)) {
-        bookmarks = bookmarks.filter(id => id !== imdbId);
-    } else {
-        bookmarks.push(imdbId);
-    }
-    saveBookmarks(bookmarks);
+    let b = getBookmarks();
+    b = b.includes(imdbId) ? b.filter(id => id !== imdbId) : [...b, imdbId];
+    saveBookmarks(b);
 }
 
 // --- Load movies data ---
@@ -1718,36 +1679,28 @@ async function loadMoviesData() {
     try {
         playerStatus.textContent = 'Loading database...';
         loadingIndicator.style.display = 'block';
-        
-        // Use sample data instead of external APIs to avoid CORS issues
-    const [moviesResponse, tvResponse] = await Promise.all([
-                    fetch('https://7-7-7-15.github.io/Movies.json'),
-                    fetch('https://7-7-7-15.github.io/Tv.json')
-                ]);
-                
-                let movies = [];
-                let tvShows = [];
-                
-                if (moviesResponse.ok) {
-                    movies = await moviesResponse.json();
-                }
-                if (tvResponse.ok) {
-                    tvShows = await tvResponse.json();
-                }
-                
-                moviesData = [
-                    ...movies.map(item => ({ ...item, type: "movie" })),
-                    ...tvShows.map(item => ({ ...item, type: "tv" }))
-                ];
-        
-        playerStatus.textContent = 'Database loaded successfully';
-    } catch (error) {
-        console.error('Error loading movies:', error);
-        showError('Could not load external database. Using sample data instead.', false);
+
+        const [moviesResp, tvResp] = await Promise.all([
+            fetch('https://7-7-7-15.github.io/Movies.json'),
+            fetch('https://7-7-7-15.github.io/Tv.json')
+        ]);
+
+        let movies = moviesResp.ok ? await moviesResp.json() : [];
+        let tvShows = tvResp.ok ? await tvResp.json() : [];
+
+        moviesData = [
+            ...movies.map(m => ({ ...m, type: "movie" })),
+            ...tvShows.map(m => ({ ...m, type: "tv" }))
+        ];
+
+        playerStatus.textContent = 'Database loaded';
+    } catch (e) {
+        console.error(e);
+        showError('Using sample data', false);
         moviesData = getSampleMovies();
-        playerStatus.textContent = 'Using sample data';
+        playerStatus.textContent = 'Sample data';
     }
-    
+
     filteredData = [...moviesData];
     displayedCount = 0;
     updateStats();
@@ -1756,486 +1709,258 @@ async function loadMoviesData() {
     loadingIndicator.style.display = 'none';
 }
 
-// --- Sample movies data ---
 function getSampleMovies() {
     return [
         { title: "The Matrix", imdb: "tt0133093", type: "movie", year: "1999", tmdb: "603" },
         { title: "Inception", imdb: "tt1375666", type: "movie", year: "2010", tmdb: "27205" },
-        { title: "Interstellar", imdb: "tt0816692", type: "movie", year: "2014", tmdb: "157336" },
-        { title: "The Dark Knight", imdb: "tt0468569", type: "movie", year: "2008", tmdb: "155" },
         { title: "Breaking Bad", imdb: "tt0903747", type: "tv", year: "2008-2013", tmdb: "1396" },
-        { title: "Stranger Things", imdb: "tt4574334", type: "tv", year: "2016-", tmdb: "66732" },
-        { title: "Pulp Fiction", imdb: "tt0110912", type: "movie", year: "1994", tmdb: "680" },
-        { title: "The Shawshank Redemption", imdb: "tt0111161", type: "movie", year: "1994", tmdb: "278" },
-        { title: "Game of Thrones", imdb: "tt0944947", type: "tv", year: "2011-2019", tmdb: "1399" },
-        { title: "The Godfather", imdb: "tt0068646", type: "movie", year: "1972", tmdb: "238" }
+        { title: "The Shawshank Redemption", imdb: "tt0111161", type: "movie", year: "1994", tmdb: "278" }
     ];
 }
 
-// --- Show error message ---
-function showError(message, isFatal = false) {
+function showError(msg, fatal = false) {
     errorContainer.innerHTML = `
         <div class="error-message">
             <i class="fas fa-exclamation-triangle"></i>
-            <h3>${isFatal ? 'Fatal Error' : 'Notice'}</h3>
-            <p>${message}</p>
-            ${isFatal ? '<button onclick="location.reload()" class="search-btn">Retry</button>' : ''}
-        </div>
-    `;
+            <h3>${fatal ? 'Fatal' : 'Notice'}</h3>
+            <p>${msg}</p>
+            ${fatal ? '<button onclick="location.reload()" class="search-btn">Retry</button>' : ''}
+        </div>`;
 }
 
-// --- Set up event listeners ---
+// --- Event Listeners ---
 function setupEventListeners() {
-    // Search functionality
-    if (searchBtn) {
-        searchBtn.addEventListener('click', function() {
-            autoScrollOnSearch = true;
-            performSearch();
-        });
-    }
-    
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                autoScrollOnSearch = true;
-                performSearch();
-            }
-        });
-    }
-    
-    // Voice search
-    if (voiceSearchBtn) {
-        voiceSearchBtn.addEventListener('click', function() {
-            autoScrollOnSearch = true;
-            startVoiceSearch();
-        });
-    }
-    
-    // Filters
-    if (filters && filters.length > 0) {
-        filters.forEach(filter => {
-            filter.addEventListener('click', function() {
-                this.classList.toggle('active');
-                autoScrollOnSearch = true;
-                performSearch();
-            });
-        });
-    }
-    
-    // Player
-    if (closePlayer) {
-        closePlayer.addEventListener('click', function() {
-            playerModal.classList.remove('active');
-            playerFrame.src = '';
-            playerStatus.textContent = 'Player closed';
-        });
-    }
-    
-    // Load more
-    if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', loadMoreMovies);
-    }
-    
-    // Download
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', downloadAsChronosFile);
-    }
-    
-    // Settings button
-    if (settingsBtn) {
-        settingsBtn.addEventListener('click', openSettings);
-    }
-    
-    // Close settings button
-    if (closeSettings) {
-        closeSettings.addEventListener('click', closeSettingsModal);
-    }
-    
-    // Save settings button
-    if (saveSettingsBtn) {
-        saveSettingsBtn.addEventListener('click', saveSettings);
-    }
-    
-    // Theme selection
-    if (themeOptions && themeOptions.length > 0) {
-        themeOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                themeOptions.forEach(opt => opt.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-    }
-    
-    // Event delegation for dynamically created elements
-    document.addEventListener('click', function(e) {
-        // Play buttons
+    searchBtn?.addEventListener('click', () => { autoScrollOnSearch = true; performSearch(); });
+    searchInput?.addEventListener('keypress', e => { if (e.key === 'Enter') { autoScrollOnSearch = true; performSearch(); } });
+    voiceSearchBtn?.addEventListener('click', () => { autoScrollOnSearch = true; startVoiceSearch(); });
+    filters.forEach(f => f.addEventListener('click', () => { f.classList.toggle('active'); autoScrollOnSearch = true; performSearch(); }));
+    closePlayer?.addEventListener('click', () => { playerModal.classList.remove('active'); playerFrame.src = ''; playerStatus.textContent = 'Closed'; });
+    loadMoreBtn?.addEventListener('click', loadMoreMovies);
+    downloadBtn?.addEventListener('click', downloadAsChronosFile);
+    settingsBtn?.addEventListener('click', openSettings);
+    closeSettings?.addEventListener('click', closeSettingsModal);
+    saveSettingsBtn?.addEventListener('click', saveSettings);
+    themeOptions.forEach(o => o.addEventListener('click', () => { themeOptions.forEach(t => t.classList.remove('active')); o.classList.add('active'); }));
+
+    document.addEventListener('click', e => {
+        // Play
         if (e.target.closest('.play-btn')) {
-            const playBtn = e.target.closest('.play-btn');
-            const movieCard = playBtn.closest('.movie-card');
-            const movieId = movieCard.getAttribute('data-id');
-            const movie = moviesData.find(m => m.imdb === movieId);
-            
-            if (movie) {
-                playMovie(movie.imdb, movie.type, 1, 1, movie.tmdb || '');
-            }
+            const card = e.target.closest('.movie-card');
+            const imdb = card.dataset.id;
+            const movie = moviesData.find(m => m.imdb === imdb);
+            if (movie) playMovie(movie.imdb, movie.type, 1, 1, movie.tmdb || '');
         }
-        
-        // Bookmark buttons
+        // Bookmark
         if (e.target.closest('.bookmark-btn')) {
-            const bookmarkBtn = e.target.closest('.bookmark-btn');
-            const imdbId = bookmarkBtn.getAttribute('data-imdb');
-            toggleBookmark(imdbId);
-            bookmarkBtn.classList.toggle('bookmarked', isBookmarked(imdbId));
+            const btn = e.target.closest('.bookmark-btn');
+            const imdb = btn.dataset.imdb;
+            toggleBookmark(imdb);
+            btn.classList.toggle('bookmarked', isBookmarked(imdb));
         }
     });
-    
+
     // Update popup
-    const dismissBtn = document.getElementById('dismiss-update-popup');
-    if (dismissBtn) {
-        dismissBtn.addEventListener('click', dismissUpdatePopup);
-    }
-    
-    const learnMoreBtn = document.getElementById('learnMoreBtn');
-    if (learnMoreBtn) {
-        learnMoreBtn.addEventListener('click', learnMore);
-    }
-    
-    const changelogToggleBtn = document.getElementById('changelogToggle');
-    const fullChangelogDiv = document.getElementById('fullChangelog');
-    if (changelogToggleBtn && fullChangelogDiv) {
-        changelogToggleBtn.addEventListener('click', function() {
-            fullChangelogDiv.classList.toggle('expanded');
-            changelogToggleBtn.textContent = fullChangelogDiv.classList.contains('expanded') ? 
-                'Hide Full Changelog' : 'View Full Changelog';
-        });
-    }
+    document.getElementById('dismiss-update-popup')?.addEventListener('click', dismissUpdatePopup);
+    document.getElementById('learnMoreBtn')?.addEventListener('click', learnMore);
+    document.getElementById('changelogToggle')?.addEventListener('click', () => {
+        const log = document.getElementById('fullChangelog');
+        log.classList.toggle('expanded');
+        document.getElementById('changelogToggle').textContent = log.classList.contains('expanded') ? 'Hide' : 'View Full Changelog';
+    });
 }
 
-// --- Search functionality ---
+// --- Search & Display ---
 function performSearch() {
-    const query = searchInput.value.trim().toLowerCase();
-    displayedCount = 0;
-    
-    if (query === '') {
-        filteredData = [...moviesData];
-    } else {
-        filteredData = moviesData.filter(movie => 
-            movie.title.toLowerCase().includes(query)
-        );
-    }
-    
+    const q = searchInput.value.trim().toLowerCase();
+    filteredData = q ? moviesData.filter(m => m.title.toLowerCase().includes(q)) : [...moviesData];
     applyFilters();
+    displayedCount = 0;
     displayMovies();
     playerStatus.textContent = `Found ${filteredData.length} results`;
-    
-    if (autoScrollOnSearch && filteredData.length > 0) {
-        slowScrollTo(resultsGrid, 800);
-    }
+    if (autoScrollOnSearch && filteredData.length) slowScrollTo(resultsGrid, 800);
 }
-
 function applyFilters() {
-    const activeTypeFilters = [];
-    const activeGenreFilters = [];
-    
-    document.querySelectorAll('.filter.active').forEach(filter => {
-        if (filter.dataset.type) {
-            activeTypeFilters.push(filter.dataset.type);
-        } else if (filter.dataset.genre) {
-            activeGenreFilters.push(filter.dataset.genre);
-        }
-    });
-    
-    if (activeTypeFilters.length === 0) {
-        activeTypeFilters.push('movie', 'tv');
-    }
-    
-    filteredData = filteredData.filter(movie => 
-        activeTypeFilters.includes(movie.type)
-    );
-    
-    if (activeGenreFilters.length > 0) {
-        filteredData = filteredData.filter(movie => 
-            activeGenreFilters.some(genre => 
-                movie.title.toLowerCase().includes(genre) || 
-                (movie.genre && movie.genre.toLowerCase().includes(genre))
-            )
-        );
-    }
+    const types = Array.from(document.querySelectorAll('.filter.active[data-type]')).map(f => f.dataset.type);
+    if (types.length === 0) types.push('movie', 'tv');
+    filteredData = filteredData.filter(m => types.includes(m.type));
 }
-
-// --- Display movies ---
 function displayMovies() {
-    if (filteredData.length === 0) {
-        resultsGrid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #888;">
-                <i class="fas fa-film" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                <h3>No movies found</h3>
-                <p>Try a different search or filter</p>
-            </div>
-        `;
+    if (!filteredData.length) {
+        resultsGrid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#888;">
+            <i class="fas fa-film" style="font-size:3rem;margin-bottom:20px;"></i>
+            <h3>No results</h3><p>Try different search</p>
+        </div>`;
         loadMoreBtn.style.display = 'none';
         resultsInfo.textContent = '';
         return;
     }
-    
-    const moviesToShow = Math.min(displayedCount + MOVIES_PER_PAGE, filteredData.length);
-    const moviesToDisplay = filteredData.slice(0, moviesToShow);
-    
-    resultsGrid.innerHTML = moviesToDisplay.map(movie => `
-        <div class="movie-card" data-id="${movie.imdb}">
-            <div class="movie-poster">
-                <i class="fas fa-film"></i>
-            </div>
+    const toShow = Math.min(displayedCount + MOVIES_PER_PAGE, filteredData.length);
+    const slice = filteredData.slice(0, toShow);
+    resultsGrid.innerHTML = slice.map(m => `
+        <div class="movie-card" data-id="${m.imdb}">
+            <div class="movie-poster"><i class="fas fa-film"></i></div>
             <div class="movie-info">
-                <h3 class="movie-title">${movie.title}</h3>
-                <div class="movie-type">${movie.type === 'movie' ? 'Movie' : 'TV Show'} ${movie.year ? `(${movie.year})` : ''}</div>
+                <h3 class="movie-title">${m.title}</h3>
+                <div class="movie-type">${m.type === 'movie' ? 'Movie' : 'TV'} ${m.year||''}</div>
                 <div class="movie-actions">
-                    <button class="play-btn" data-imdb="${movie.imdb}">
-                        <i class="fas fa-play"></i> Play
-                    </button>
-                    <button class="bookmark-btn${isBookmarked(movie.imdb) ? ' bookmarked' : ''}" data-imdb="${movie.imdb}">
-                        <i class="fas fa-bookmark"></i> Save
-                    </button>
+                    <button class="play-btn" data-imdb="${m.imdb}"><i class="fas fa-play"></i> Play</button>
+                    <button class="bookmark-btn${isBookmarked(m.imdb)?' bookmarked':''}" data-imdb="${m.imdb}"><i class="fas fa-bookmark"></i> Save</button>
                 </div>
             </div>
         </div>
     `).join('');
-    
-    displayedCount = moviesToShow;
-    resultsInfo.textContent = `Showing ${displayedCount} of ${filteredData.length} results`;
-    
-    if (displayedCount < filteredData.length) {
-        loadMoreBtn.style.display = 'block';
-        loadMoreBtn.disabled = false;
+    displayedCount = toShow;
+    resultsInfo.textContent = `Showing ${displayedCount} of ${filteredData.length}`;
+    loadMoreBtn.style.display = displayedCount < filteredData.length ? 'block' : 'none';
+}
+function loadMoreMovies() { displayMovies(); }
+
+// --- TURBOVID PLAYER ---
+async function playMovie(imdb, type, season = 1, episode = 1, tmdb = '') {
+    playerStatus.textContent = 'Fetching TurboVid...';
+    let apiPath = '';
+    const args = { LOCALE: 'en', ENFORCE_REDIRECT: false };
+
+    if (type === 'movie') {
+        apiPath = `movie/${imdb || tmdb}`;
     } else {
-        loadMoreBtn.style.display = 'none';
+        if (!tmdb) { showError('TMDB ID required for TV', false); return; }
+        apiPath = `tv/${tmdb}/${season}/${episode}`;
+        // Optional: set next episode URL (example)
+        // args.next_episode_url = `https://yourdomain.com/episode/${tmdb}/${season}/${episode+1}`;
+    }
+
+    const argB64 = Object.keys(args).length ? '/' + btoa(JSON.stringify(args)) : '';
+    const apiUrl = `https://turbovid.eu/api/req/${apiPath}${argB64}`;
+
+    try {
+        const resp = await fetch(apiUrl);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        const embed = data.embed || data.player_url || data.url;
+        if (!embed) throw new Error('No embed URL');
+
+        playerFrame.src = embed;
+        playerModal.classList.add('active');
+        const movie = moviesData.find(m => m.imdb === imdb);
+        playerTitle.textContent = movie?.title || 'Playing...';
+        playerStatus.textContent = 'Playing';
+    } catch (e) {
+        console.error(e);
+        showError('Failed to load TurboVid stream', false);
+        playerStatus.textContent = 'Error';
     }
 }
 
-function loadMoreMovies() {
-    displayMovies();
-}
-
-// --- Play movie ---
-function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
-    playerStatus.textContent = 'Loading player...';
-    let url = '';
-
-    // Check if provider is a VidFast provider
-    const isVidFastProvider = VIDFAST_PROVIDERS.includes(currentProvider);
-    
-    if (isVidFastProvider) {
-        // Use the VidFast format: https://vidfast.pro/movie/{tmdb}
-        if (!tmdbId) {
-            showError('TMDB ID required for VidFast providers', false);
-            return;
-        }
-        url = `https://${currentProvider}/movie/${tmdbId}`;
-        
-        // Open in about:blank
-        const aboutBlank = window.open('about:blank', '_blank');
-        if (aboutBlank) {
-            aboutBlank.location.href = url;
-            playerStatus.textContent = 'Opened in new tab';
-        } else {
-            showError('Popup blocked. Please allow popups for this site.', false);
-            playerStatus.textContent = 'Popup blocked';
-        }
-        return;
-    } 
-    else if (currentProvider.includes('godriveplayer.com')) {
-        if (type === 'movie') {
-            url = `https://godriveplayer.com/player.php?imdb=${id}`;
-        } else {
-            if (!tmdbId) {
-                showError('TMDB ID required for TV shows with this provider', false);
-                return;
-            }
-            url = `https://godriveplayer.com/player.php?type=series&tmdb=${tmdbId}&season=${season}&episode=${episode}`;
-        }
-    } 
-    else if (currentProvider.includes('watch.lonelil.org')) {
-        if (!tmdbId) {
-            showError('TMDB ID required for this provider', false);
-            return;
-        }
-        if (type === 'movie') {
-            url = `https://watch.lonelil.org/watch/movie/${tmdbId}`;
-        } else {
-            url = `https://watch.lonelil.org/watch/show/${tmdbId}.${season}.${episode}`;
-        }
-    } 
-    else {
-        url = `https://${currentProvider}/player.php?imdb=${id}`;
-    }
-
-    playerFrame.src = url;
-    playerModal.classList.add('active');
-
-    const movie = moviesData.find(m => m.imdb === id || m.tmdb === tmdbId);
-    if (movie) {
-        playerTitle.textContent = movie.title;
-    }
-
-    playerStatus.textContent = 'Playing';
-}
-
-// --- Voice search ---
+// --- Voice Search ---
 function startVoiceSearch() {
-    if (!('webkitSpeechRecognition' in window)) {
-        alert('Voice search is not supported in your browser');
-        return;
-    }
-    
+    if (!('webkitSpeechRecognition' in window)) return alert('Voice not supported');
     voiceSearchBtn.classList.add('listening');
     voiceSearchBtn.innerHTML = '<i class="fas fa-microphone-slash"></i> Listening...';
-    
-    const recognition = new webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-    recognition.start();
-    
-    recognition.onresult = function(event) {
-        const transcript = event.results[0][0].transcript;
-        searchInput.value = transcript;
+    const rec = new webkitSpeechRecognition();
+    rec.lang = 'en-US';
+    rec.onresult = e => {
+        searchInput.value = e.results[0][0].transcript;
         voiceSearchBtn.classList.remove('listening');
         voiceSearchBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice';
         performSearch();
     };
-    
-    recognition.onerror = function() {
+    rec.onerror = rec.onend = () => {
         voiceSearchBtn.classList.remove('listening');
         voiceSearchBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice';
     };
-    
-    recognition.onend = function() {
-        voiceSearchBtn.classList.remove('listening');
-        voiceSearchBtn.innerHTML = '<i class="fas fa-microphone"></i> Voice';
-    };
+    rec.start();
 }
 
-// --- Update statistics ---
+// --- Stats & Download ---
 function updateStats() {
-    const movieCount = moviesData.filter(m => m.type === 'movie').length;
-    const tvCountVal = moviesData.filter(m => m.type === 'tv').length;
-    moviesCount.textContent = movieCount;
-    tvCount.textContent = tvCountVal;
+    const mc = moviesData.filter(m => m.type === 'movie').length;
+    const tc = moviesData.filter(m => m.type === 'tv').length;
+    moviesCount.textContent = mc;
+    tvCount.textContent = tc;
     totalCount.textContent = moviesData.length;
 }
-
-// --- Download as Chronos file ---
 function downloadAsChronosFile() {
-    const htmlContent = document.documentElement.outerHTML;
-    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'EclipseTV.chronos.html';
-    document.body.appendChild(a);
     a.click();
-    
-    setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
-    }, 100);
-    
-    playerStatus.textContent = 'Downloaded as Chronos file';
+    setTimeout(() => URL.revokeObjectURL(a.href), 100);
+    playerStatus.textContent = 'Downloaded';
 }
 
-// --- Settings functions ---
-function openSettings() {
-    settingsModal.classList.add('active');
-}
-
-function closeSettingsModal() {
-    settingsModal.classList.remove('active');
-}
-
+// --- Settings ---
+function openSettings() { settingsModal.classList.add('active'); }
+function closeSettingsModal() { settingsModal.classList.remove('active'); }
 function loadSettings() {
-    // Load theme
-    const savedTheme = localStorage.getItem('eclipse_theme') || 'dark';
-    themeOptions.forEach(option => {
-        if (option.dataset.theme === savedTheme) {
-            option.classList.add('active');
-        }
-    });
-    applyTheme(savedTheme);
-    
-    // Load cloaking settings
+    const theme = localStorage.getItem('eclipse_theme') || 'dark';
+    themeOptions.forEach(o => o.classList.toggle('active', o.dataset.theme === theme));
+    applyTheme(theme);
     incognitoToggle.checked = localStorage.getItem('eclipse_incognito') === 'true';
     workModeToggle.checked = localStorage.getItem('eclipse_workmode') === 'true';
     studyModeToggle.checked = localStorage.getItem('eclipse_studymode') === 'true';
     classroomToggle.checked = localStorage.getItem('eclipse_classroom') === 'true';
     stealthToggle.checked = localStorage.getItem('eclipse_stealth') === 'true';
 }
-
 function saveSettings() {
-    // Save theme
-    const selectedTheme = document.querySelector('.theme-option.active').dataset.theme;
-    localStorage.setItem('eclipse_theme', selectedTheme);
-    
-    // Save cloaking settings
+    const theme = document.querySelector('.theme-option.active').dataset.theme;
+    localStorage.setItem('eclipse_theme', theme);
     localStorage.setItem('eclipse_incognito', incognitoToggle.checked);
     localStorage.setItem('eclipse_workmode', workModeToggle.checked);
     localStorage.setItem('eclipse_studymode', studyModeToggle.checked);
     localStorage.setItem('eclipse_classroom', classroomToggle.checked);
     localStorage.setItem('eclipse_stealth', stealthToggle.checked);
-    
-    // Apply settings
-    applyTheme(selectedTheme);
-    
-    // Close modal
+    applyTheme(theme);
     closeSettingsModal();
-    
-    // Update status
     playerStatus.textContent = 'Settings saved';
 }
+function applyTheme(t) { document.body.className = `theme-${t}`; }
 
-function applyTheme(theme) {
-    document.body.className = '';
-    document.body.classList.add(`theme-${theme}`);
-}
-
-// --- Update popup functions ---
+// --- Update Popup ---
 function maybeShowUpdatePopup() {
-    const lastSeen = localStorage.getItem("lastSeenAppVersion");
-    if (lastSeen !== APP_VERSION) {
+    if (localStorage.getItem("lastSeenAppVersion") !== APP_VERSION) {
         document.getElementById("update-popup").style.display = "flex";
     }
 }
-
 function dismissUpdatePopup() {
     localStorage.setItem("lastSeenAppVersion", APP_VERSION);
     document.getElementById("update-popup").style.display = "none";
 }
+function learnMore() { window.open('https://7-7-7-10.github.io/MoviePlayer/updates.html', '_blank'); }
 
-function learnMore() {
-    window.open('https://7-7-7-10.github.io/MoviePlayer/updates.html', '_blank');
-}
-
-// --- Utility functions ---
-function slowScrollTo(element, duration = 1200) {
-    const rect = element.getBoundingClientRect();
-    const targetY = rect.top + window.pageYOffset;
-    const startY = window.pageYOffset;
-    const distance = targetY - startY;
-    let startTime = null;
-
-    function step(currentTime) {
-        if (!startTime) startTime = currentTime;
-        const timeElapsed = currentTime - startTime;
-        const ease = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
-        const progress = Math.min(timeElapsed / duration, 1);
-        window.scrollTo(0, startY + distance * ease(progress));
-        if (progress < 1) {
-            requestAnimationFrame(step);
-        }
+// --- Scroll ---
+function slowScrollTo(el, dur = 1200) {
+    const start = window.pageYOffset;
+    const end = el.getBoundingClientRect().top + start;
+    const dist = end - start;
+    let time = null;
+    const ease = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+    function step(now) {
+        time ??= now;
+        const p = Math.min((now - time) / dur, 1);
+        window.scrollTo(0, start + dist * ease(p));
+        if (p < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
 }
 
-// Expose playMovie globally for inline event handler
+// --- TurboVid Message Listener (Next Episode & Time) ---
+window.addEventListener('message', e => {
+    if (e.origin !== 'https://turbovid.eu') return;
+    const msg = e.data;
+    if (msg === 'NEXT_CONTENT') {
+        console.log('Next episode requested');
+        // Optionally redirect if ENFORCE_REDIRECT = false
+    }
+    if (typeof msg === 'string' && msg.startsWith('time:')) {
+        const secs = parseFloat(msg.split(':')[1]);
+        if (!isNaN(secs)) console.log('Playback time:', secs, 's');
+    }
+});
+
+// Expose for inline
 window.playMovie = playMovie;
-    </script>
+</script>
 </body>
 </html>
