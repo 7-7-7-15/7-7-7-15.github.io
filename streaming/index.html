@@ -2,27 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fast TV Browser (10 cards max)</title>
+<title>TV Browser – Pure Iframe</title>
 <style>
   :root{--bg:#141414;--card:#221f1f;--txt:#fff;--acc:#e50914}
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--txt);font-family:Helvetica,Arial,sans-serif}
   header{padding:1rem 2rem;background:rgba(0,0,0,.7);position:sticky;top:0;z-index:10}
   #search{width:100%;max-width:500px;padding:.6rem 1rem;font-size:1rem;border-radius:4px;border:none;background:#333;color:#fff}
-  #search::placeholder{color:#aaa}
   main{padding:2rem}
   #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-  .card{
-    height:300px;background:#000 center/cover no-repeat;border-radius:8px;cursor:pointer;
-    position:relative;overflow:hidden;transition:transform .2s
-  }
+  .card{height:300px;background:#000 center/cover no-repeat;border-radius:8px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s}
   .card:hover{transform:scale(1.05)}
-  .card::after{
-    content:attr(data-title);position:absolute;bottom:0;left:0;right:0;
-    background:linear-gradient(transparent,rgba(0,0,0,.8));
-    padding:1rem .5rem .5rem;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
-  }
-  #player-container{margin-top:2rem;text-align:center;display:none}
+  .card::after{content:attr(data-title);position:absolute;bottom:0;left:0;right:0;
+    background:linear-gradient(transparent,rgba(0,0,0,.8));padding:1rem .5rem .5rem;
+    font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #player-box{margin-top:2rem;text-align:center;display:none}
   iframe{border:none}
   .no-results{color:#aaa;font-style:italic;margin:1rem 0}
 </style>
@@ -37,86 +31,76 @@
   <div id="grid"></div>
   <p id="no-results" class="no-results" style="display:none">No titles found.</p>
 
-  <section id="player-container">
-    <h2 id="playing-title"></h2>
+  <section id="player-box">
+    <h2 id="title"></h2>
     <iframe id="player" width="800" height="600"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation">
+    </iframe>
   </section>
 </main>
 
 <script>
   // --------------------------------------------------------------
-  // 1. Load JSON once
+  // 1. Load JSON
   // --------------------------------------------------------------
-  let db = [];                     // full list
-  const MAX_CARDS = 10;            // <-- change if you want more/less
+  let db = [];
+  const MAX = 10;
 
   fetch('https://7-7-7-15.github.io/Tv.json')
     .then(r => r.json())
     .then(data => { db = data; render([]); })
-    .catch(e => console.error('Tv.json error', e));
+    .catch(e => console.error(e));
 
   // --------------------------------------------------------------
-  // 2. Search (debounced 200 ms)
+  // 2. Search
   // --------------------------------------------------------------
-  const searchInp = document.getElementById('search');
+  const search = document.getElementById('search');
   let timer;
-  searchInp.addEventListener('input', () => {
+  search.addEventListener('input', () => {
     clearTimeout(timer);
     timer = setTimeout(() => {
-      const term = searchInp.value.trim().toLowerCase();
-      const matches = term
-        ? db.filter(i => i.title.toLowerCase().includes(term))
-        : db;
-      render(matches.slice(0, MAX_CARDS));
+      const term = search.value.trim().toLowerCase();
+      const list = term ? db.filter(i => i.title.toLowerCase().includes(term)) : db;
+      render(list.slice(0, MAX));
     }, 200);
   });
 
   // --------------------------------------------------------------
-  // 3. Render only the first N cards
+  // 3. Render cards
   // --------------------------------------------------------------
   const grid = document.getElementById('grid');
-  const noRes = document.getElementById('no-results');
+  const no = document.getElementById('no-results');
 
   function render(list) {
     grid.innerHTML = '';
-    if (list.length === 0) {
-      noRes.style.display = 'block';
-      return;
-    }
-    noRes.style.display = 'none';
+    if (!list.length) { no.style.display='block'; return; }
+    no.style.display='none';
 
     list.forEach(item => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.dataset.title = item.title;
-      card.dataset.imdb  = item.imdb;
-      card.dataset.tmdb  = item.tmdb;
-
-      // optional TMDB poster – fallback to dark background
-      const poster = `https://image.tmdb.org/t/p/w300_and_h450_bestv2/${item.tmdb}.jpg`;
-      card.style.backgroundImage = `url(${poster})`;
-
-      card.addEventListener('click', () => play(item));
-      grid.appendChild(card);
+      const c = document.createElement('div');
+      c.className='card';
+      c.dataset.title = item.title;
+      c.dataset.tmdb  = item.tmdb;
+      c.style.backgroundImage = `ur[](https://image.tmdb.org/t/p/w300_and_h450_bestv2/${item.tmdb}.jpg)`;
+      c.addEventListener('click', () => play(item));
+      grid.appendChild(c);
     });
   }
 
   // --------------------------------------------------------------
-  // 4. Player
+  // 4. PLAYER – JUST AN IFRAME
   // --------------------------------------------------------------
-  const playerBox   = document.getElementById('player-container');
-  const playerFrame = document.getElementById('player');
-  const titleEl     = document.getElementById('playing-title');
+  const box    = document.getElementById('player-box');
+  const iframe = document.getElementById('player');
+  const title  = document.getElementById('title');
 
   function play(item) {
-    const src = `https://turbovid.eu/api/req/tv/${item.imdb}/1/1`;
-    playerFrame.src = src;
-    titleEl.textContent = item.title;
-    playerBox.style.display = 'block';
-    playerBox.scrollIntoView({behavior:'smooth'});
+    const url = `https://turbovid.eu/api/req/tv/${item.tmdb}/1/1`;
+    iframe.src = url;                     // ← pure iframe
+    title.textContent = item.title;
+    box.style.display = 'block';
+    box.scrollIntoView({behavior:'smooth'});
   }
 </script>
-
 </body>
 </html>
