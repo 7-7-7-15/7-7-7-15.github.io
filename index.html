@@ -1402,6 +1402,118 @@
 #fullscreenBtn.active i::before {
     content: "\f78d"; /* compress icon */
 }
+        /* Server Status Styles */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.status-online {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-offline {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-checking {
+    background: rgba(234, 179, 8, 0.2);
+    color: #eab308;
+    border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-online .status-dot {
+    background: #22c55e;
+}
+
+.status-offline .status-dot {
+    background: #ef4444;
+}
+
+.status-checking .status-dot {
+    background: #eab308;
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.status-popup {
+    position: absolute;
+    background: rgba(17, 17, 17, 0.95);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 12px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    min-width: 200px;
+    font-size: 0.85rem;
+}
+
+.status-popup h4 {
+    margin: 0 0 8px 0;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+}
+
+.status-server {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid #252525;
+}
+
+.status-server:last-child {
+    border-bottom: none;
+}
+
+.status-server-name {
+    color: #aaa;
+}
+
+.status-check-all {
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: #252525;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #e0e0e0;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.status-check-all:hover {
+    background: #2a2a2a;
+    border-color: #444;
+}
+
+.server-status-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
     </style>
 </head>
 <body class="theme-dark">
@@ -1416,24 +1528,36 @@
                 <button class="voice-btn" id="voiceSearchBtn"><i class="fas fa-microphone"></i> Voice</button>
             </div>
             <!-- Provider Dropdown -->
-            <div class="provider-container">
-                <label for="providerSelect" class="provider-label"><i class="fas fa-server"></i> Server:</label>
-                <select id="providerSelect" class="provider-select">
-                    <option value="Eclipse">Eclipse+</option>
-                    <option value="Horizon">Horizon{ADS}</option>
-                    <option value="Alpha">Alpha{Movies Only}</option>
-                    <option value="Beta">Beta{ADS}</option>
-                     <option value=Cobra">Cobra{ADS}</option>
-                    <option value="Charlie">Charlie{ADS}</option>
-                    <option value="Delta">Delta{ADS}</option>
-                    <option value="Ranger">Ranger{ADS}</option>
-                    <option value="Echo">Echo{ADS}</option>
-                    <option value="Fury">Fury{ADS}</option>
-                    <option value="Iron">Iron{ADS}</option>
-                    <option value="Viper">Viper{ADS}</option>
-                </select>
-                <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
-            </div>
+            <!-- Provider Dropdown -->
+<div class="provider-container">
+    <label for="providerSelect" class="provider-label"><i class="fas fa-server"></i> Server:</label>
+    <div class="server-status-container">
+        <select id="providerSelect" class="provider-select">
+            <option value="Eclipse">Eclipse+</option>
+            <option value="Horizon">Horizon{ADS}</option>
+            <option value="Alpha">Alpha{Movies Only}</option>
+            <option value="Beta">Beta{ADS}</option>
+            <option value="Cobra">Cobra{ADS}</option>
+            <option value="Charlie">Charlie{ADS}</option>
+            <option value="Delta">Delta{ADS}</option>
+            <option value="Ranger">Ranger{ADS}</option>
+            <option value="Echo">Echo{ADS}</option>
+            <option value="Fury">Fury{ADS}</option>
+            <option value="Iron">Iron{ADS}</option>
+            <option value="Viper">Viper{ADS}</option>
+        </select>
+        <div id="serverStatusIndicator" class="status-indicator status-checking">
+            <span class="status-dot"></span>
+            <span>Checking...</span>
+        </div>
+        <div id="statusPopup" class="status-popup" style="display: none;">
+            <h4>Server Status</h4>
+            <div id="serverStatusList"></div>
+            <button class="status-check-all" id="checkAllServers">Check All Servers</button>
+        </div>
+    </div>
+    <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
+</div>
         </header>
        
         <div class="loading" id="loadingIndicator">
@@ -1684,6 +1808,10 @@ let displayedCount = 0;
 const MOVIES_PER_PAGE = 42;
 let currentProvider = localStorage.getItem('eclipse_provider') || 'Eclipse';
 let autoScrollOnSearch = false;
+// Server Status Variables
+let serverStatus = {};
+let statusCheckInProgress = false;
+let serverStatusIndicator, statusPopup, serverStatusList, checkAllServersBtn;
 // List of providers that use the about:blank format
 const VIDFAST_PROVIDERS = [
 ];
@@ -1740,6 +1868,11 @@ function initializeDOMElements() {
     aboutBlankBtn = document.getElementById('aboutBlankBtn');
     downloadChronosBtn = document.getElementById('downloadChronosBtn');
     fullscreenBtn = document.getElementById('fullscreenBtn');
+    // Server Status Elements
+serverStatusIndicator = document.getElementById('serverStatusIndicator');
+statusPopup = document.getElementById('statusPopup');
+serverStatusList = document.getElementById('serverStatusList');
+checkAllServers = document.getElementById('checkAllServers');
 }
 // --- Provider initialization ---
 function initializeProvider() {
@@ -1751,6 +1884,7 @@ function initializeProvider() {
             currentProvider = providerSelect.value;
             providerInfo.textContent = currentProvider;
             localStorage.setItem('eclipse_provider', currentProvider);
+              checkServerStatus(currentProvider);
         });
     }
 }
@@ -1844,6 +1978,10 @@ async function loadMoviesData() {
     autoScrollOnSearch = false;
     performSearch();
     loadingIndicator.style.display = 'none';
+    // Check server status after loading movies
+setTimeout(() => {
+    checkServerStatus(currentProvider);
+}, 1000);
 }
 // --- Sample movies data ---
 function getSampleMovies() {
@@ -1908,6 +2046,23 @@ function setupEventListeners() {
             });
         });
     }
+    // Server Status Events
+if (serverStatusIndicator) {
+    serverStatusIndicator.addEventListener('click', toggleStatusPopup);
+}
+
+if (checkAllServers) {
+    checkAllServers.addEventListener('click', checkAllServerStatus);
+}
+
+// Close status popup when clicking outside
+document.addEventListener('click', function(e) {
+    if (statusPopup && statusPopup.style.display !== 'none' && 
+        !serverStatusIndicator.contains(e.target) && 
+        !statusPopup.contains(e.target)) {
+        statusPopup.style.display = 'none';
+    }
+});
    
     // Player
     if (closePlayer) {
@@ -2102,6 +2257,249 @@ function performSearch() {
         slowScrollTo(resultsGrid, 800);
     }
 }
+        // --- Server Status Functions ---
+async function checkServerStatus(serverName) {
+    if (statusCheckInProgress) return;
+    
+    statusCheckInProgress = true;
+    updateStatusIndicator('checking', 'Checking...');
+    
+    const testUrls = {
+        'Eclipse': 'https://turbovid.eu/api/req/movie/603', // Matrix movie
+        'Horizon': 'https://vidrock.net/movie/603',
+        'Alpha': 'https://play.123embed.net/mv/tt0133093',
+        'Beta': 'https://godriveplayer.com/player.php?imdb=tt0133093',
+        'Cobra': 'https://vidsrc.cc/v2/embed/movie/603',
+        'Charlie': 'https://player.embed-api.stream/?id=603',
+        'Delta': 'https://111movies.com/movie/603',
+        'Ranger': 'https://www.2embed.stream/embed/movie/603',
+        'Echo': 'https://www.rivestream.app/detail?type=movie&id=603',
+        'Fury': 'https://tmovie.tv/movie/603',
+        'Iron': 'https://player.vidify.top/embed/movie/603',
+        'Viper': 'https://watch.coen.ovh/watch/movie/603'
+    };
+
+    const currentServer = serverName || currentProvider;
+    const testUrl = testUrls[currentServer];
+    
+    if (!testUrl) {
+        updateServerStatus(currentServer, false, 'No test URL configured');
+        statusCheckInProgress = false;
+        return;
+    }
+
+    try {
+        // Use a more reliable method to check server status
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(testUrl, {
+            method: 'HEAD',
+            mode: 'no-cors',
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        updateServerStatus(currentServer, true, 'Online');
+        
+    } catch (error) {
+        // Try alternative method with CORS proxy
+        try {
+            const corsProxy = 'https://corsproxy.io/?';
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            await fetch(corsProxy + encodeURIComponent(testUrl), {
+                method: 'HEAD',
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            updateServerStatus(currentServer, true, 'Online (via proxy)');
+        } catch (proxyError) {
+            updateServerStatus(currentServer, false, `Offline: ${error.message}`);
+        }
+    }
+    
+    statusCheckInProgress = false;
+}
+
+function updateServerStatus(serverName, isOnline, message) {
+    serverStatus[serverName] = {
+        online: isOnline,
+        message: message,
+        lastChecked: new Date().toLocaleTimeString()
+    };
+    
+    // Update current server indicator
+    if (serverName === currentProvider) {
+        if (isOnline) {
+            updateStatusIndicator('online', 'Online');
+        } else {
+            updateStatusIndicator('offline', 'Offline');
+        }
+    }
+    
+    // Update popup if open
+    updateStatusPopup();
+}
+
+function updateStatusIndicator(status, text) {
+    if (!serverStatusIndicator) return;
+    
+    serverStatusIndicator.className = `status-indicator status-${status}`;
+    serverStatusIndicator.innerHTML = `
+        <span class="status-dot"></span>
+        <span>${text}</span>
+    `;
+}
+
+function toggleStatusPopup() {
+    if (!statusPopup) return;
+    
+    if (statusPopup.style.display === 'block') {
+        statusPopup.style.display = 'none';
+    } else {
+        updateStatusPopup();
+        statusPopup.style.display = 'block';
+        
+        // Position the popup
+        const rect = serverStatusIndicator.getBoundingClientRect();
+        statusPopup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+        statusPopup.style.left = `${rect.left + window.scrollX}px`;
+    }
+}
+
+function updateStatusPopup() {
+    if (!serverStatusList) return;
+    
+    const servers = [
+        'Eclipse', 'Horizon', 'Alpha', 'Beta', 'Cobra', 
+        'Charlie', 'Delta', 'Ranger', 'Echo', 'Fury', 
+        'Iron', 'Viper'
+    ];
+    
+    serverStatusList.innerHTML = servers.map(server => {
+        const status = serverStatus[server];
+        const statusClass = status ? (status.online ? 'status-online' : 'status-offline') : 'status-checking';
+        const statusText = status ? (status.online ? 'Online' : 'Offline') : 'Not Checked';
+        const lastChecked = status ? status.lastChecked : 'Never';
+        
+        return `
+            <div class="status-server">
+                <span class="status-server-name">${server}</span>
+                <span class="${statusClass}" style="padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">
+                    ${statusText}
+                </span>
+            </div>
+        `;
+    }).join('');
+}
+
+async function checkAllServerStatus() {
+    const servers = [
+        'Eclipse', 'Horizon', 'Alpha', 'Beta', 'Cobra', 
+        'Charlie', 'Delta', 'Ranger', 'Echo', 'Fury', 
+        'Iron', 'Viper'
+    ];
+    
+    for (const server of servers) {
+        await checkServerStatus(server);
+        // Small delay between checks to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+}
+
+// Enhanced server status check with multiple methods
+async function robustServerCheck(serverName) {
+    const testMethods = [
+        // Method 1: HEAD request (fastest)
+        async () => {
+            const testUrls = {
+                'Eclipse': 'https://turbovid.eu/api/req/movie/603',
+                'Horizon': 'https://vidrock.net/movie/603',
+                'Alpha': 'https://play.123embed.net/mv/tt0133093',
+                'Beta': 'https://godriveplayer.com/player.php?imdb=tt0133093',
+                'Cobra': 'https://vidsrc.cc/v2/embed/movie/603',
+                'Charlie': 'https://player.embed-api.stream/?id=603',
+                'Delta': 'https://111movies.com/movie/603',
+                'Ranger': 'https://www.2embed.stream/embed/movie/603',
+                'Echo': 'https://www.rivestream.app/detail?type=movie&id=603',
+                'Fury': 'https://tmovie.tv/movie/603',
+                'Iron': 'https://player.vidify.top/embed/movie/603',
+                'Viper': 'https://watch.coen.ovh/watch/movie/603'
+            };
+            
+            const url = testUrls[serverName];
+            if (!url) throw new Error('No test URL');
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            
+            try {
+                const response = await fetch(url, { 
+                    method: 'HEAD', 
+                    mode: 'no-cors',
+                    signal: controller.signal 
+                });
+                clearTimeout(timeoutId);
+                return true;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        },
+        
+        // Method 2: Image load check
+        async () => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = `https://${serverName.toLowerCase()}.com/favicon.ico?t=${Date.now()}`;
+                setTimeout(() => resolve(false), 2000);
+            });
+        },
+        
+        // Method 3: CORS proxy check
+        async () => {
+            try {
+                const testUrls = {
+                    'Eclipse': 'https://turbovid.eu/api/req/movie/603',
+                    // Add other URLs as needed
+                };
+                
+                const url = testUrls[serverName];
+                if (!url) throw new Error('No test URL for proxy');
+                
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(proxyUrl, { 
+                    method: 'GET',
+                    signal: controller.signal 
+                });
+                
+                clearTimeout(timeoutId);
+                return response.ok;
+            } catch (error) {
+                throw error;
+            }
+        }
+    ];
+    
+    for (const method of testMethods) {
+        try {
+            const result = await method();
+            if (result) return { online: true, message: 'Online' };
+        } catch (error) {
+            continue;
+        }
+    }
+    
+    return { online: false, message: 'All check methods failed' };
+}
 function applyFilters() {
     const activeTypeFilters = [];
     const activeGenreFilters = [];
@@ -2183,7 +2581,16 @@ function loadMoreMovies() {
     displayMovies();
 }
 // --- Play movie ---
+// --- Play movie ---
 function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
+    // FIX: Use the global serverStatus object, don't declare a new variable
+    const currentServerStatus = serverStatus[currentProvider];
+    if (currentServerStatus && !currentServerStatus.online) {
+        showError(`Server ${currentProvider} appears to be offline. Please try another server.`, false);
+        playerStatus.textContent = 'Server offline';
+        return;
+    }
+    
     playerStatus.textContent = 'Loading player...';
     let url = '';
     // Check if provider is a VidFast provider
@@ -2219,7 +2626,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://turbovid.eu/api/req/tv/${tmdbId}/${season}/${episode}`;
         }
     }
-           else if (currentProvider.includes('Cobra')) {
+    else if (currentProvider.includes('Cobra')) {
         if (type === 'movie') {
             url = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
         } else {
@@ -2230,7 +2637,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${season}/${episode}`;
         }
     }
-                else if (currentProvider.includes('Charlie')) {
+    else if (currentProvider.includes('Charlie')) {
         if (type === 'movie') {
             url = `https://player.embed-api.stream/?id=${tmdbId}`;
         } else {
@@ -2241,7 +2648,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://player.embed-api.stream/?id=${tmdbId}&s=${season}&e=${episode}`;
         }
     }
-                       else if (currentProvider.includes('Delta')) {
+    else if (currentProvider.includes('Delta')) {
         if (type === 'movie') {
             url = `https://111movies.com/movie/${tmdbId}`;
         } else {
@@ -2252,7 +2659,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://111movies.com/tv/240411/${tmdbId}/${season}/${episode}`;
         }
     }
-                                      else if (currentProvider.includes('Ranger')) {
+    else if (currentProvider.includes('Ranger')) {
         if (type === 'movie') {
             url = `https://www.2embed.stream/embed/movie/${tmdbId}`;
         } else {
@@ -2263,7 +2670,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://www.2embed.stream/embed/tv/${tmdbId}/${season}/${episode}`;
         }
     }
-                       else if (currentProvider.includes('Echo')) {
+    else if (currentProvider.includes('Echo')) {
         if (type === 'movie') {
             url = `https://www.rivestream.app/detail?type=movie&id=${tmdbId}`;
         } else {
@@ -2274,7 +2681,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://www.rivestream.app/watch?type=tv&id=${tmdbId}&season=${season}&episode=${episode}`;
         }
     }
-                                    else if (currentProvider.includes('Fury')) {
+    else if (currentProvider.includes('Fury')) {
         if (type === 'movie') {
             url = `https://tmovie.tv/movie/${tmdbId}?watch=1`;
         } else {
@@ -2285,7 +2692,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://tmovie.tv/tv/${tmdbId}?watch=1&season=${season}&episode=${episode}`;
         }
     }
-                else if (currentProvider.includes('Iron')) {
+    else if (currentProvider.includes('Iron')) {
         if (type === 'movie') {
             url = `https://player.vidify.top/embed/movie/${tmdbId}?autoplay=true&poster=true&chromecast=true&servericon=true&setting=true&pip=true&download=true&logourl=https%3A%2F%2Fi.ibb.co%2F67wTJd9R%2Fpngimg-com-netflix-PNG11.png&font=Roboto&fontcolor=6f63ff&fontsize=20&opacity=0.5&primarycolor=3b82f6&secondarycolor=1f2937&iconcolor=ffffff`;
         } else {
@@ -2296,7 +2703,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://player.vidify.top/embed/tv/${tmdbId}/${season}/${episode}?autoplay=true&poster=true&chromecast=true&servericon=true&setting=true&pip=true&download=true&logourl=https%3A%2F%2Fi.ibb.co%2F67wTJd9R%2Fpngimg-com-netflix-PNG11.png&font=Roboto&fontcolor=6f63ff&fontsize=20&opacity=0.5&primarycolor=3b82f6&secondarycolor=1f2937&iconcolor=ffffff`;
         }
     }
-                       else if (currentProvider.includes('Viper')) {
+    else if (currentProvider.includes('Viper')) {
         if (type === 'movie') {
             url = `https://watch.coen.ovh/watch/movie/${tmdbId}`;
         } else {
@@ -2307,7 +2714,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://watch.coen.ovh/watch/tv/${tmdbId}/${season}/${episode}`;
         }
     }
-         else if (currentProvider.includes('Horizon')) {
+    else if (currentProvider.includes('Horizon')) {
         if (!tmdbId) {
             showError('TMDB ID required for this provider', false);
             return;
@@ -2318,7 +2725,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://vidrock.net/tv/${tmdbId}/${season}/${episode}`;
         }
     }
-               else if (currentProvider.includes('Beta')) {
+    else if (currentProvider.includes('Beta')) {
         if (!tmdbId) {
             showError('TMDB ID required for this provider', false);
             return;
@@ -2343,12 +2750,13 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
     else {
         url = `https://${currentProvider}/player.php?imdb=${id}`;
     }
-  playerFrame.dataset.imdb = id;
-playerFrame.dataset.type = type;
-playerFrame.dataset.season = season;
-playerFrame.dataset.episode = episode;
-playerFrame.dataset.tmdb = tmdbId || '';
-playerFrame.src = url;
+    
+    playerFrame.dataset.imdb = id;
+    playerFrame.dataset.type = type;
+    playerFrame.dataset.season = season;
+    playerFrame.dataset.episode = episode;
+    playerFrame.dataset.tmdb = tmdbId || '';
+    playerFrame.src = url;
     playerModal.classList.add('active');
     const movie = moviesData.find(m => m.imdb === id || m.tmdb === tmdbId);
     if (movie) {
