@@ -1371,15 +1371,16 @@
             <div class="provider-container">
                 <label for="providerSelect" class="provider-label"><i class="fas fa-server"></i> Provider:</label>
                 <select id="providerSelect" class="provider-select">
-                    <option value="godriveplayer.com">GoDrivePlayer</option>
-                    <option value="watch.lonelil.org">LoneLil</option>
-                    <option value="vidfast.pro">VidFast {ADS} (pro)</option>
-                    <option value="vidfast.in">VidFast {ADS} (in)</option>
-                    <option value="vidfast.io">VidFast {ADS} (io)</option>
-                    <option value="vidfast.me">VidFast {ADS} (me)</option>
-                    <option value="vidfast.net">VidFast {ADS} (net)</option>
-                    <option value="vidfast.pm">VidFast {ADS} (pm)</option>
-                    <option value="vidfast.xyz">VidFast {ADS} (xyz)</option>
+                    <option value="godriveplayer.com">Eclipse+</option>
+                    <option value="Horizon">Horizon</option>
+                    <option value="watch.lonelil.org">Alpha {ADS}</option>
+                    <option value="vidfast.pro">Beta</option>
+                    <option value="vidfast.in">Charlie</option>
+                    <option value="vidfast.io">Cobra</option>
+                    <option value="vidfast.me">Delta</option>
+                    <option value="vidfast.net">Ranger</option>
+                    <option value="vidfast.pm">Echo</option>
+                    <option value="vidfast.xyz">Fury</option>
                 </select>
                 <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
             </div>
@@ -1613,7 +1614,7 @@ let currentProvider = localStorage.getItem('eclipse_provider') || 'godriveplayer
 let autoScrollOnSearch = false;
 // List of providers that use the about:blank format
 const VIDFAST_PROVIDERS = [
-    'vidfast.pro', 'vidfast.in', 'vidfast.io', 'vidfast.me',
+    'vidfast.pro', 'vidfast.in', 'Horizon', 'vidfast.io', 'vidfast.me',
     'vidfast.net', 'vidfast.pm', 'vidfast.xyz'
 ];
 // --- DOM Elements ---
@@ -2030,6 +2031,17 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
                 return;
             }
             url = `https://turbovid.eu/api/req/tv/${tmdbId}/${season}/${episode}`;
+        }
+    }
+         else if (currentProvider.includes('Horizon')) {
+        if (!tmdbId) {
+            showError('TMDB ID required for this provider', false);
+            return;
+        }
+        if (type === 'movie') {
+            url = `https://vidrock.net/movie/${tmdbId}`;
+        } else {
+            url = `https://vidrock.net/tv/${tmdbId}/${season}/${episode}`;
         }
     }
     else if (currentProvider.includes('watch.lonelil.org')) {
