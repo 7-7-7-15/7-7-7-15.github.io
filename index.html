@@ -1686,6 +1686,10 @@
     height: calc(100% - 40px);
     border: none;
 }
+        #searchQuery::placeholder {
+    color: #888;
+    font-style: italic;
+}
         
     </style>
 </head>
@@ -2311,22 +2315,19 @@ function showError(message, isFatal = false) {
 }
 // --- Set up event listeners ---
 function setupEventListeners() {
-    // Search functionality
-    if (searchBtn) {
-        searchBtn.addEventListener('click', function() {
-            autoScrollOnSearch = true;
-            performSearch();
-        });
-    }
-   
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                autoScrollOnSearch = true;
-                performSearch();
-            }
-        });
-    }
+  // === REPLACED SEARCH LOGIC (auto-detect ID vs title) ===
+if (searchBtn) {
+    searchBtn.addEventListener('click', () => handleSearchOrPlayId());
+}
+
+if (searchInput) {
+    searchInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault();           // prevent double-trigger
+            handleSearchOrPlayId();
+        }
+    });
+}
    
     // Voice search
     if (voiceSearchBtn) {
@@ -2715,6 +2716,43 @@ function toggleStatusPopup() {
         statusPopup.style.top = `${rect.bottom + window.scrollY + 5}px`;
         statusPopup.style.left = `${rect.left + window.scrollX}px`;
     }
+}
+        function handleSearchOrPlayId() {
+    const query = searchInput.value.trim();
+
+    if (!query) return;
+
+    // ---- 1. TMDB ID (only digits) ----
+    if (/^\d+$/.test(query)) {
+        const tmdbId = query;
+        const movie = moviesData.find(m => m.tmdb == tmdbId);
+        if (movie) {
+            searchInput.value = '';                     // clear box
+            playMovie(movie.imdb, movie.type, 1, 1, movie.tmdb, movie.title);
+            return;
+        } else {
+            alert('TMDB ID not found in the database.');
+            return;
+        }
+    }
+
+    // ---- 2. IMDb ID (tt + numbers) ----
+    if (/^tt\d+$/i.test(query)) {
+        const imdbId = query.toLowerCase();
+        const movie = moviesData.find(m => m.imdb.toLowerCase() === imdbId);
+        if (movie) {
+            searchInput.value = '';
+            playMovie(movie.imdb, movie.type, 1, 1, movie.tmdb, movie.title);
+            return;
+        } else {
+            alert('IMDb ID not found in the database.');
+            return;
+        }
+    }
+
+    // ---- 3. Normal title search (fallback) ----
+    autoScrollOnSearch = true;
+    performSearch();          // your original title-search function
 }
 
 function updateStatusPopup() {
