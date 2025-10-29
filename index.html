@@ -1420,15 +1420,15 @@
                 <label for="providerSelect" class="provider-label"><i class="fas fa-server"></i> Server:</label>
                 <select id="providerSelect" class="provider-select">
                     <option value="Eclipse">Eclipse+</option>
-                    <option value="Horizon">Horizon</option>
-                    <option value="Alpha">Alpha {Movies Only}</option>
-                    <option value="Beta">Beta {ADS}</option>
-                    <option value="Charlie">Charlie</option>
-                    <option value=Cobra">Cobra {ADS}</option>
-                    <option value="Delta">Delta</option>
-                    <option value="Ranger">Ranger</option>
-                    <option value="Echo">Echo</option>
-                    <option value="Fury">Fury</option>
+                    <option value="Horizon">Horizon{ADS}</option>
+                    <option value="Alpha">Alpha{Movies Only}</option>
+                    <option value="Beta">Beta{ADS}</option>
+                     <option value=Cobra">Cobra{ADS}</option>
+                    <option value="Charlie">Charlie{ADS}</option>
+                    <option value="Delta">Delta{ADS}</option>
+                    <option value="Ranger">Ranger{ADS}</option>
+                    <option value="Echo">Echo{ADS}</option>
+                    <option value="Fury">Fury{ADS}</option>
                 </select>
                 <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
             </div>
@@ -2237,6 +2237,17 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://vidrock.net/movie/${tmdbId}`;
         } else {
             url = `https://vidrock.net/tv/${tmdbId}/${season}/${episode}`;
+        }
+    }
+               else if (currentProvider.includes('Beta')) {
+        if (!tmdbId) {
+            showError('TMDB ID required for this provider', false);
+            return;
+        }
+        if (type === 'movie') {
+            url = `https://godriveplayer.com/player.php?imdb=${id}`;
+        } else {
+            url = `https://godriveplayer.com/player.php?type=series&tmdb=${tmdbId}&season=${season}&episode=${episode}`;
         }
     }
     else if (currentProvider.includes('Alpha')) {
