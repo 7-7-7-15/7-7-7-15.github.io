@@ -1514,6 +1514,29 @@
     display: inline-flex;
     align-items: center;
 }
+        /* Player Title Container */
+.player-title-container {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.player-title {
+    color: #e0e0e0;
+    font-size: 1.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px;
+}
+
+/* Player Status Indicator */
+#playerServerStatus {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    flex-shrink: 0;
+}
     </style>
 </head>
 <body class="theme-dark">
@@ -1695,10 +1718,17 @@
     </div>
    
   <!-- Player Modal -->
+<!-- Player Modal -->
 <div class="player-modal" id="playerModal">
     <div class="player-container">
         <div class="player-header">
-            <div class="player-title" id="playerTitle">Movie Title</div>
+            <div class="player-title-container">
+                <div class="player-title" id="playerTitle">Movie Title</div>
+                <div id="playerServerStatus" class="status-indicator status-checking" style="margin-left: 10px;">
+                    <span class="status-dot"></span>
+                    <span>Checking...</span>
+                </div>
+            </div>
             <div class="player-controls">
                 <!-- Server Switcher -->
                 <select id="playerProviderSelect" class="provider-select player-provider"></select>
@@ -1815,13 +1845,14 @@ let serverStatusIndicator, statusPopup, serverStatusList, checkAllServersBtn;
 // List of providers that use the about:blank format
 const VIDFAST_PROVIDERS = [
 ];
-// --- DOM Elements ---
+
+        // --- DOM Elements ---
 let searchInput, searchBtn, voiceSearchBtn, filters, resultsGrid, loadingIndicator;
 let errorContainer, playerModal, playerFrame, playerTitle, closePlayer, moviesCount;
 let tvCount, totalCount, playerStatus, loadMoreBtn, resultsInfo, downloadBtn;
 let providerSelect, providerInfo, settingsBtn, settingsModal, closeSettings, saveSettingsBtn;
 let themeOptions, incognitoToggle, workModeToggle, studyModeToggle, classroomToggle, stealthToggle;
-let playerProviderSelect, aboutBlankBtn, downloadChronosBtn, fullscreenBtn;
+let playerProviderSelect, aboutBlankBtn, downloadChronosBtn, fullscreenBtn, playerServerStatus; // Added playerServerStatus
 // --- Initialize the application ---
 document.addEventListener('DOMContentLoaded', function() {
     initializeDOMElements();
@@ -1873,6 +1904,7 @@ serverStatusIndicator = document.getElementById('serverStatusIndicator');
 statusPopup = document.getElementById('statusPopup');
 serverStatusList = document.getElementById('serverStatusList');
 checkAllServers = document.getElementById('checkAllServers');
+     playerServerStatus = document.getElementById('playerServerStatus');
 }
 // --- Provider initialization ---
 function initializeProvider() {
@@ -1889,6 +1921,7 @@ function initializeProvider() {
     }
 }
         // Sync player provider dropdown with main one
+// Sync player provider dropdown with main one
 function syncPlayerProviderSelect() {
     if (!playerProviderSelect) return;
     playerProviderSelect.innerHTML = providerSelect.innerHTML;
@@ -1899,6 +1932,20 @@ function syncPlayerProviderSelect() {
         providerSelect.value = currentProvider;
         providerInfo.textContent = currentProvider;
         localStorage.setItem('eclipse_provider', currentProvider);
+        
+        // Update player status indicator
+        const currentServerStatus = serverStatus[currentProvider];
+        if (currentServerStatus) {
+            if (currentServerStatus.online) {
+                updatePlayerStatusIndicator('online', 'Online');
+            } else {
+                updatePlayerStatusIndicator('offline', 'Offline');
+            }
+        } else {
+            updatePlayerStatusIndicator('checking', 'Checking...');
+            // Check status of newly selected server
+            checkServerStatus(currentProvider);
+        }
         
         // Reload current movie with new provider
         const currentSrc = playerFrame.src;
@@ -2065,13 +2112,14 @@ document.addEventListener('click', function(e) {
 });
    
     // Player
-    if (closePlayer) {
-        closePlayer.addEventListener('click', function() {
-            playerModal.classList.remove('active');
-            playerFrame.src = '';
-            playerStatus.textContent = 'Player closed';
-        });
-    }
+if (closePlayer) {
+    closePlayer.addEventListener('click', function() {
+        playerModal.classList.remove('active');
+        playerFrame.src = '';
+        playerStatus.textContent = 'Player closed';
+        stopPlayerStatusMonitoring(); // Add this line
+    });
+}
    
     // Load more
     if (loadMoreBtn) {
@@ -2335,15 +2383,26 @@ function updateServerStatus(serverName, isOnline, message) {
     if (serverName === currentProvider) {
         if (isOnline) {
             updateStatusIndicator('online', 'Online');
+            updatePlayerStatusIndicator('online', 'Online');
         } else {
             updateStatusIndicator('offline', 'Offline');
+            updatePlayerStatusIndicator('offline', 'Offline');
         }
     }
     
     // Update popup if open
     updateStatusPopup();
 }
-
+        // Add this new function for player status updates
+function updatePlayerStatusIndicator(status, text) {
+    if (!playerServerStatus) return;
+    
+    playerServerStatus.className = `status-indicator status-${status}`;
+    playerServerStatus.innerHTML = `
+        <span class="status-dot"></span>
+        <span>${text}</span>
+    `;
+}
 function updateStatusIndicator(status, text) {
     if (!serverStatusIndicator) return;
     
@@ -2580,11 +2639,48 @@ function displayMovies() {
 function loadMoreMovies() {
     displayMovies();
 }
+        // Enhanced server monitoring for player
+let playerStatusCheckInterval = null;
+
+function startPlayerStatusMonitoring() {
+    // Clear any existing interval
+    if (playerStatusCheckInterval) {
+        clearInterval(playerStatusCheckInterval);
+    }
+    
+    // Check status every 30 seconds while player is open
+    playerStatusCheckInterval = setInterval(() => {
+        if (playerModal.classList.contains('active')) {
+            checkServerStatus(currentProvider);
+        }
+    }, 30000);
+}
+
+function stopPlayerStatusMonitoring() {
+    if (playerStatusCheckInterval) {
+        clearInterval(playerStatusCheckInterval);
+        playerStatusCheckInterval = null;
+    }
+}
+// --- Play movie ---
+// --- Play movie ---
 // --- Play movie ---
 // --- Play movie ---
 function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
-    // FIX: Use the global serverStatus object, don't declare a new variable
+    // Check server status
     const currentServerStatus = serverStatus[currentProvider];
+    
+    // Update player status indicator immediately
+    if (currentServerStatus) {
+        if (currentServerStatus.online) {
+            updatePlayerStatusIndicator('online', 'Online');
+        } else {
+            updatePlayerStatusIndicator('offline', 'Offline');
+        }
+    } else {
+        updatePlayerStatusIndicator('checking', 'Checking...');
+    }
+    
     if (currentServerStatus && !currentServerStatus.online) {
         showError(`Server ${currentProvider} appears to be offline. Please try another server.`, false);
         playerStatus.textContent = 'Server offline';
@@ -2758,6 +2854,10 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
     playerFrame.dataset.tmdb = tmdbId || '';
     playerFrame.src = url;
     playerModal.classList.add('active');
+    
+    // Start monitoring server status while player is open
+    startPlayerStatusMonitoring();
+    
     const movie = moviesData.find(m => m.imdb === id || m.tmdb === tmdbId);
     if (movie) {
         playerTitle.textContent = movie.title;
