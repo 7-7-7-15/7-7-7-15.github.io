@@ -1354,6 +1354,54 @@
         .full-changelog li {
             margin-bottom: 8px;
         }
+        /* Player Controls Layout */
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.player-provider {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    min-width: 120px;
+}
+
+.player-btn {
+    background: rgba(30, 30, 30, 0.7);
+    border: 1px solid #333;
+    color: #aaa;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.player-btn:hover {
+    background: rgba(50, 50, 50, 0.9);
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+.download-chronos-btn {
+    position: relative;
+}
+
+.info-icon {
+    font-size: 0.8rem;
+    color: #ff6b6b;
+    margin-left: 2px;
+}
+
+/* Fullscreen icon change */
+#fullscreenBtn.active i::before {
+    content: "\f78d"; /* compress icon */
+}
     </style>
 </head>
 <body class="theme-dark">
@@ -1369,7 +1417,7 @@
             </div>
             <!-- Provider Dropdown -->
             <div class="provider-container">
-                <label for="providerSelect" class="provider-label"><i class="fas fa-server"></i> Provider:</label>
+                <label for="providerSelect" class="provider-label"><i class="fas fa-server"></i> Server:</label>
                 <select id="providerSelect" class="provider-select">
                     <option value="godriveplayer.com">Eclipse+</option>
                     <option value="Horizon">Horizon</option>
@@ -1520,16 +1568,38 @@
         </div>
     </div>
    
-    <!-- Player Modal -->
-    <div class="player-modal" id="playerModal">
-        <div class="player-container">
-            <div class="player-header">
-                <div class="player-title" id="playerTitle">Movie Title</div>
+  <!-- Player Modal -->
+<div class="player-modal" id="playerModal">
+    <div class="player-container">
+        <div class="player-header">
+            <div class="player-title" id="playerTitle">Movie Title</div>
+            <div class="player-controls">
+                <!-- Server Switcher -->
+                <select id="playerProviderSelect" class="provider-select player-provider"></select>
+
+                <!-- About Blank Button -->
+                <button class="player-btn" id="aboutBlankBtn" title="Open in about:blank">
+                    <i class="fas fa-external-link-alt"></i>
+                </button>
+
+                <!-- Download Chronos Button -->
+                <button class="player-btn download-chronos-btn" id="downloadChronosBtn" title="Download as Chronos File">
+                    <i class="fas fa-download"></i>
+                    <i class="fas fa-info-circle info-icon" title="NOT OFFLINE DOWNLOAD!"></i>
+                </button>
+
+                <!-- Fullscreen Button -->
+                <button class="player-btn" id="fullscreenBtn" title="Fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
+
+                <!-- Close Button -->
                 <button class="close-player" id="closePlayer">&times;</button>
             </div>
-            <iframe class="player-iframe" id="playerFrame" allowfullscreen></iframe>
         </div>
+        <iframe class="player-iframe" id="playerFrame" allowfullscreen></iframe>
     </div>
+</div>
    
     <!-- Settings Modal -->
     <div class="settings-modal" id="settingsModal">
@@ -1621,10 +1691,12 @@ let errorContainer, playerModal, playerFrame, playerTitle, closePlayer, moviesCo
 let tvCount, totalCount, playerStatus, loadMoreBtn, resultsInfo, downloadBtn;
 let providerSelect, providerInfo, settingsBtn, settingsModal, closeSettings, saveSettingsBtn;
 let themeOptions, incognitoToggle, workModeToggle, studyModeToggle, classroomToggle, stealthToggle;
+let playerProviderSelect, aboutBlankBtn, downloadChronosBtn, fullscreenBtn;
 // --- Initialize the application ---
 document.addEventListener('DOMContentLoaded', function() {
     initializeDOMElements();
     initializeProvider();
+    syncPlayerProviderSelect();
     loadMoviesData();
     setupEventListeners();
     loadSettings();
@@ -1662,6 +1734,10 @@ function initializeDOMElements() {
     studyModeToggle = document.getElementById('studyModeToggle');
     classroomToggle = document.getElementById('classroomToggle');
     stealthToggle = document.getElementById('stealthToggle');
+    playerProviderSelect = document.getElementById('playerProviderSelect');
+    aboutBlankBtn = document.getElementById('aboutBlankBtn');
+    downloadChronosBtn = document.getElementById('downloadChronosBtn');
+    fullscreenBtn = document.getElementById('fullscreenBtn');
 }
 // --- Provider initialization ---
 function initializeProvider() {
@@ -1675,6 +1751,32 @@ function initializeProvider() {
             localStorage.setItem('eclipse_provider', currentProvider);
         });
     }
+}
+        // Sync player provider dropdown with main one
+function syncPlayerProviderSelect() {
+    if (!playerProviderSelect) return;
+    playerProviderSelect.innerHTML = providerSelect.innerHTML;
+    playerProviderSelect.value = currentProvider;
+
+    playerProviderSelect.addEventListener('change', function() {
+        currentProvider = this.value;
+        providerSelect.value = currentProvider;
+        providerInfo.textContent = currentProvider;
+        localStorage.setItem('eclipse_provider', currentProvider);
+        
+        // Reload current movie with new provider
+        const currentSrc = playerFrame.src;
+        if (currentSrc) {
+            const movieData = {
+                imdb: playerFrame.dataset.imdb || '',
+                type: playerFrame.dataset.type || 'movie',
+                season: playerFrame.dataset.season || 1,
+                episode: playerFrame.dataset.episode || 1,
+                tmdb: playerFrame.dataset.tmdb || ''
+            };
+            playMovie(movieData.imdb, movieData.type, movieData.season, movieData.episode, movieData.tmdb);
+        }
+    });
 }
 // --- Bookmark logic ---
 function getBookmarks() {
@@ -1871,6 +1973,90 @@ function setupEventListeners() {
             bookmarkBtn.classList.toggle('bookmarked', isBookmarked(imdbId));
         }
     });
+  // About Blank
+if (aboutBlankBtn) {
+    aboutBlankBtn.addEventListener('click', function() {
+        const url = playerFrame.src;
+        if (!url || url === 'about:blank') return;
+        const win = window.open('about:blank', '_blank');
+        if (win) {
+            win.document.write(`
+                <!DOCTYPE html>
+                <html><head><title>${playerTitle.textContent}</title>
+                <style>body,html{margin:0;height:100%;overflow:hidden}
+                iframe{width:100%;height:100%;border:none}</style>
+                </head>
+                <body><iframe src="${url}" allowfullscreen></iframe></body>
+                </html>
+            `);
+            win.document.close();
+        } else {
+            alert('Popup blocked! Allow popups to use about:blank.');
+        }
+    });
+}
+
+// Download Chronos File (from player)
+if (downloadChronosBtn) {
+    downloadChronosBtn.addEventListener('click', function() {
+        const title = playerTitle.textContent || 'Eclipse_Movie';
+        const cleanTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const iframeSrc = playerFrame.src || '';
+
+        const chronosHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} - Chronos Player</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body, html { height:100%; background:#000; overflow:hidden; }
+        iframe { width:100%; height:100%; border:none; }
+        .warning { position:absolute; top:10px; left:10px; background:rgba(255,0,0,0.8); color:white; padding:8px 12px; border-radius:6px; font-family:Arial; font-size:14px; z-index:1000; }
+    </style>
+</head>
+<body>
+    <div class="warning">NOT OFFLINE DOWNLOAD!</div>
+    <iframe src="${iframeSrc}" allowfullscreen></iframe>
+</body>
+</html>`;
+
+        const blob = new Blob([chronosHTML], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${cleanTitle}.chronos.html`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    });
+}
+
+// Fullscreen Toggle
+if (fullscreenBtn && playerFrame) {
+    fullscreenBtn.addEventListener('click', function() {
+        if (!document.fullscreenElement) {
+            playerFrame.requestFullscreen().catch(() => {
+                playerContainer.requestFullscreen();
+            });
+            this.classList.add('active');
+        } else {
+            document.exitFullscreen();
+            this.classList.remove('active');
+        }
+    });
+
+    // Update button on fullscreen change
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+            fullscreenBtn.classList.add('active');
+            fullscreenBtn.querySelector('i').className = 'fas fa-compress';
+        } else {
+            fullscreenBtn.classList.remove('active');
+            fullscreenBtn.querySelector('i').className = 'fas fa-expand';
+        }
+    });
+}  
    
     // Update popup
     const dismissBtn = document.getElementById('dismiss-update-popup');
@@ -2056,7 +2242,12 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
     else {
         url = `https://${currentProvider}/player.php?imdb=${id}`;
     }
-    playerFrame.src = url;
+  playerFrame.dataset.imdb = id;
+playerFrame.dataset.type = type;
+playerFrame.dataset.season = season;
+playerFrame.dataset.episode = episode;
+playerFrame.dataset.tmdb = tmdbId || '';
+playerFrame.src = url;
     playerModal.classList.add('active');
     const movie = moviesData.find(m => m.imdb === id || m.tmdb === tmdbId);
     if (movie) {
