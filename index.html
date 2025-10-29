@@ -2239,6 +2239,17 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://player.embed-api.stream/?id=${tmdbId}&s=${season}&e=${episode}`;
         }
     }
+                       else if (currentProvider.includes('Delta')) {
+        if (type === 'movie') {
+            url = `https://111movies.com/movie/${tmdbId}`;
+        } else {
+            if (!tmdbId) {
+                showError('TMDB ID required for TV shows with this provider', false);
+                return;
+            }
+            url = `https://111movies.com/tv/240411/${tmdbId}/${season}/${episode}`;
+        }
+    }
          else if (currentProvider.includes('Horizon')) {
         if (!tmdbId) {
             showError('TMDB ID required for this provider', false);
