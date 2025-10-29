@@ -9,6 +9,71 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Base styles */
+        /* Add this at the top of your style section, after the base styles */
+:root {
+    --player-bg: #111;
+    --player-border: #333;
+    --player-header-bg: #151515;
+    --player-text: #e0e0e0;
+    --player-btn-bg: rgba(30, 30, 30, 0.7);
+    --player-btn-border: #333;
+    --player-btn-text: #aaa;
+    --player-btn-hover-bg: rgba(50, 50, 50, 0.9);
+    --player-btn-hover-text: #e0e0e0;
+    --player-select-bg: #151515;
+    --player-select-border: #252525;
+    --player-select-text: #e0e0e0;
+}
+
+/* Player Modal Theme Integration */
+.player-modal {
+    background: rgba(0, 0, 0, 0.95);
+}
+
+.player-container {
+    background: var(--player-bg);
+    border: 1px solid var(--player-border);
+}
+
+.player-header {
+    background: var(--player-header-bg);
+    border-bottom: 1px solid var(--player-border);
+}
+
+.player-title {
+    color: var(--player-text);
+}
+
+.player-controls .player-btn {
+    background: var(--player-btn-bg);
+    border: 1px solid var(--player-btn-border);
+    color: var(--player-btn-text);
+}
+
+.player-controls .player-btn:hover {
+    background: var(--player-btn-hover-bg);
+    color: var(--player-btn-hover-text);
+    border-color: #555;
+}
+
+.player-provider, .episode-select {
+    background: var(--player-select-bg);
+    border: 1px solid var(--player-select-border);
+    color: var(--player-select-text);
+}
+
+.season-episode-controls {
+    background: var(--player-btn-bg);
+    border: 1px solid var(--player-btn-border);
+}
+
+.close-player, .close-settings {
+    color: var(--player-btn-text);
+}
+
+.close-player:hover, .close-settings:hover {
+    color: var(--player-btn-hover-text);
+}
         * {
             box-sizing: border-box;
             margin: 0;
@@ -1924,6 +1989,416 @@
 }
 .watchlist-section .search-btn:hover {
     background: #333;
+}
+        /* Add to each theme section, here's the pattern: */
+
+/* Example for Sunset theme */
+body.theme-sunset {
+    --player-bg: rgba(79, 50, 37, 0.95);
+    --player-border: #e2725b;
+    --player-header-bg: rgba(79, 50, 37, 0.98);
+    --player-text: #fff8e1;
+    --player-btn-bg: rgba(179, 101, 75, 0.7);
+    --player-btn-border: #e2725b;
+    --player-btn-text: #ffccbc;
+    --player-btn-hover-bg: rgba(255, 138, 101, 0.8);
+    --player-btn-hover-text: #3e2723;
+    --player-select-bg: rgba(79, 50, 37, 0.9);
+    --player-select-border: #e2725b;
+    --player-select-text: #fff8e1;
+}
+
+/* Blue Sunset */
+body.theme-blue-sunset {
+    --player-bg: rgba(30, 50, 80, 0.95);
+    --player-border: #5b8de2;
+    --player-header-bg: rgba(30, 50, 80, 0.98);
+    --player-text: #e0f0ff;
+    --player-btn-bg: rgba(75, 101, 179, 0.7);
+    --player-btn-border: #5b8de2;
+    --player-btn-text: #bcd4ff;
+    --player-btn-hover-bg: rgba(101, 160, 255, 0.8);
+    --player-btn-hover-text: #1a2337;
+    --player-select-bg: rgba(30, 50, 80, 0.9);
+    --player-select-border: #5b8de2;
+    --player-select-text: #e0f0ff;
+}
+
+/* Gray Theme */
+body.theme-gray {
+    --player-bg: rgba(20, 20, 30, 0.95);
+    --player-border: #8a7fff;
+    --player-header-bg: rgba(20, 20, 30, 0.98);
+    --player-text: #e0e0e0;
+    --player-btn-bg: rgba(60, 50, 100, 0.7);
+    --player-btn-border: #8a7fff;
+    --player-btn-text: #c0b8ff;
+    --player-btn-hover-bg: rgba(138, 126, 255, 0.8);
+    --player-btn-hover-text: #ffffff;
+    --player-select-bg: rgba(20, 20, 30, 0.9);
+    --player-select-border: #8a7fff;
+    --player-select-text: #e0e0e0;
+}
+
+/* Midnight Theme */
+body.theme-midnight {
+    --player-bg: rgba(10, 10, 42, 0.95);
+    --player-border: #4a4a8a;
+    --player-header-bg: rgba(10, 10, 42, 0.98);
+    --player-text: #e0e0ff;
+    --player-btn-bg: rgba(40, 40, 120, 0.7);
+    --player-btn-border: #4a4a8a;
+    --player-btn-text: #a0a0ff;
+    --player-btn-hover-bg: rgba(74, 74, 186, 0.8);
+    --player-btn-hover-text: #ffffff;
+    --player-select-bg: rgba(10, 10, 42, 0.9);
+    --player-select-border: #4a4a8a;
+    --player-select-text: #e0e0ff;
+}
+
+/* Neon Theme */
+body.theme-neon {
+    --player-bg: rgba(15, 12, 41, 0.95);
+    --player-border: #4a3de0;
+    --player-header-bg: rgba(15, 12, 41, 0.98);
+    --player-text: #e0f7fa;
+    --player-btn-bg: rgba(60, 50, 150, 0.7);
+    --player-btn-border: #4a3de0;
+    --player-btn-text: #b0a8ff;
+    --player-btn-hover-bg: rgba(138, 126, 255, 0.8);
+    --player-btn-hover-text: #ffffff;
+    --player-select-bg: rgba(15, 12, 41, 0.9);
+    --player-select-border: #4a3de0;
+    --player-select-text: #e0f7fa;
+}
+
+/* Forest Theme */
+body.theme-forest {
+    --player-bg: rgba(29, 151, 108, 0.95);
+    --player-border: #93f9b9;
+    --player-header-bg: rgba(29, 151, 108, 0.98);
+    --player-text: #003314;
+    --player-btn-bg: rgba(43, 196, 141, 0.7);
+    --player-btn-border: #93f9b9;
+    --player-btn-text: #00220e;
+    --player-btn-hover-bg: rgba(59, 232, 168, 0.8);
+    --player-btn-hover-text: white;
+    --player-select-bg: rgba(29, 151, 108, 0.9);
+    --player-select-border: #93f9b9;
+    --player-select-text: #003314;
+}
+
+/* Continue this pattern for all your themes... */
+
+/* Cyber Theme */
+body.theme-cyber {
+    --player-bg: rgba(0, 0, 0, 0.95);
+    --player-border: #00ff9d;
+    --player-header-bg: rgba(0, 0, 0, 0.98);
+    --player-text: #00ff9d;
+    --player-btn-bg: rgba(0, 80, 50, 0.7);
+    --player-btn-border: #00ff9d;
+    --player-btn-text: #00cc7d;
+    --player-btn-hover-bg: rgba(0, 255, 157, 0.2);
+    --player-btn-hover-text: #00ff9d;
+    --player-select-bg: rgba(0, 0, 0, 0.9);
+    --player-select-border: #00ff9d;
+    --player-select-text: #00ff9d;
+}
+
+/* Lavender Theme */
+body.theme-lavender {
+    --player-bg: rgba(167, 139, 250, 0.95);
+    --player-border: #c4b5fd;
+    --player-header-bg: rgba(167, 139, 250, 0.98);
+    --player-text: #4c1d95;
+    --player-btn-bg: rgba(185, 155, 252, 0.7);
+    --player-btn-border: #c4b5fd;
+    --player-btn-text: #3a1670;
+    --player-btn-hover-bg: rgba(203, 171, 254, 0.8);
+    --player-btn-hover-text: white;
+    --player-select-bg: rgba(167, 139, 250, 0.9);
+    --player-select-border: #c4b5fd;
+    --player-select-text: #4c1d95;
+}
+
+/* Crimson Theme */
+body.theme-crimson {
+    --player-bg: rgba(142, 14, 0, 0.95);
+    --player-border: #ff6b6b;
+    --player-header-bg: rgba(142, 14, 0, 0.98);
+    --player-text: #ffcccb;
+    --player-btn-bg: rgba(178, 34, 34, 0.7);
+    --player-btn-border: #ff6b6b;
+    --player-btn-text: #ff9d9d;
+    --player-btn-hover-bg: rgba(220, 20, 60, 0.8);
+    --player-btn-hover-text: white;
+    --player-select-bg: rgba(142, 14, 0, 0.9);
+    --player-select-border: #ff6b6b;
+    --player-select-text: #ffcccb;
+}
+
+/* Ocean Theme */
+body.theme-ocean {
+    --player-bg: rgba(0, 50, 100, 0.95);
+    --player-border: #0088ff;
+    --player-header-bg: rgba(0, 50, 100, 0.98);
+    --player-text: #e0f7ff;
+    --player-btn-bg: rgba(0, 100, 200, 0.7);
+    --player-btn-border: #0088ff;
+    --player-btn-text: #a0dfff;
+    --player-btn-hover-bg: rgba(0, 204, 255, 0.8);
+    --player-btn-hover-text: white;
+    --player-select-bg: rgba(0, 50, 100, 0.9);
+    --player-select-border: #0088ff;
+    --player-select-text: #e0f7ff;
+}
+
+/* Purple Rain Theme */
+body.theme-purple-rain {
+    --player-bg: rgba(50, 0, 100, 0.95);
+    --player-border: #aa00ff;
+    --player-header-bg: rgba(50, 0, 100, 0.98);
+    --player-text: #e0d0ff;
+    --player-btn-bg: rgba(100, 0, 200, 0.7);
+    --player-btn-border: #aa00ff;
+    --player-btn-text: #d0a0ff;
+    --player-btn-hover-bg: rgba(204, 0, 255, 0.8);
+    --player-btn-hover-text: white;
+    --player-select-bg: rgba(50, 0, 100, 0.9);
+    --player-select-border: #aa00ff;
+    --player-select-text: #e0d0ff;
+}
+        /* Update the existing dark theme */
+body.theme-dark {
+    --player-bg: #111;
+    --player-border: #333;
+    --player-header-bg: #151515;
+    --player-text: #e0e0e0;
+    --player-btn-bg: rgba(30, 30, 30, 0.7);
+    --player-btn-border: #333;
+    --player-btn-text: #aaa;
+    --player-btn-hover-bg: rgba(50, 50, 50, 0.9);
+    --player-btn-hover-text: #e0e0e0;
+    --player-select-bg: #151515;
+    --player-select-border: #252525;
+    --player-select-text: #e0e0e0;
+}
+        /* Replace the existing player-header styles */
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: var(--player-header-bg);
+    border-bottom: 1px solid var(--player-border);
+}
+
+.player-title-container {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.player-title {
+    color: var(--player-text);
+    font-size: 1.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px;
+}
+
+/* Replace the existing player-controls styles */
+.player-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.player-provider {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    min-width: 120px;
+    background: var(--player-select-bg);
+    border: 1px solid var(--player-select-border);
+    color: var(--player-select-text);
+    border-radius: 6px;
+}
+
+.player-btn {
+    background: var(--player-btn-bg);
+    border: 1px solid var(--player-btn-border);
+    color: var(--player-btn-text);
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.player-btn:hover {
+    background: var(--player-btn-hover-bg);
+    color: var(--player-btn-hover-text);
+    border-color: var(--player-btn-hover-text);
+}
+
+/* Season/Episode Controls */
+.season-episode-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--player-btn-bg);
+    border: 1px solid var(--player-btn-border);
+    border-radius: 6px;
+    padding: 4px 8px;
+}
+
+.season-control label, .episode-control label {
+    color: var(--player-btn-text);
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.episode-select {
+    background: var(--player-select-bg);
+    border: 1px solid var(--player-select-border);
+    border-radius: 4px;
+    color: var(--player-select-text);
+    padding: 2px 6px;
+    font-size: 0.8rem;
+    min-width: 50px;
+}
+
+.episode-select:focus {
+    outline: none;
+    border-color: var(--player-btn-hover-text);
+}
+
+#applyEpisodeBtn {
+    padding: 4px 8px;
+    background: var(--player-btn-bg);
+    border: 1px solid var(--player-btn-border);
+    border-radius: 4px;
+    color: var(--player-btn-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#applyEpisodeBtn:hover {
+    background: var(--player-btn-hover-bg);
+    color: var(--player-btn-hover-text);
+    transform: translateY(-1px);
+}
+
+/* Close button */
+.close-player {
+    background: none;
+    border: none;
+    color: var(--player-btn-text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: all 0.2s ease;
+}
+
+.close-player:hover {
+    color: var(--player-btn-hover-text);
+    transform: scale(1.1);
+}
+        /* Active states for player buttons */
+#fullscreenBtn.active,
+#pipBtn.active {
+    background: var(--player-btn-hover-bg);
+    border-color: var(--player-btn-hover-text);
+    color: var(--player-btn-hover-text);
+}
+
+.download-chronos-btn {
+    position: relative;
+}
+
+.info-icon {
+    font-size: 0.8rem;
+    color: var(--player-btn-text);
+    margin-left: 2px;
+}
+
+.download-chronos-btn:hover .info-icon {
+    color: var(--player-btn-hover-text);
+}
+
+/* Fullscreen icon change */
+#fullscreenBtn.active i::before {
+    content: "\f78d"; /* compress icon */
+    color: var(--player-btn-hover-text);
+}
+        /* Status indicators */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 8px;
+    border: 1px solid var(--player-btn-border);
+}
+
+.status-online {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.status-offline {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.status-checking {
+    background: rgba(234, 179, 8, 0.2);
+    color: #eab308;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-online .status-dot {
+    background: #22c55e;
+}
+
+.status-offline .status-dot {
+    background: #ef4444;
+}
+
+.status-checking .status-dot {
+    background: #eab308;
+    animation: blink 1.5s infinite;
+}
+        /* Add this at the very top of your CSS if you haven't added variables yet */
+:root {
+    --player-bg: #111;
+    --player-border: #333;
+    --player-header-bg: #151515;
+    --player-text: #e0e0e0;
+    --player-btn-bg: rgba(30, 30, 30, 0.7);
+    --player-btn-border: #333;
+    --player-btn-text: #aaa;
+    --player-btn-hover-bg: rgba(50, 50, 50, 0.9);
+    --player-btn-hover-text: #e0e0e0;
+    --player-select-bg: #151515;
+    --player-select-border: #252525;
+    --player-select-text: #e0e0e0;
 }
     </style>
 </head>
