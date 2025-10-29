@@ -1429,6 +1429,8 @@
                     <option value="Ranger">Ranger{ADS}</option>
                     <option value="Echo">Echo{ADS}</option>
                     <option value="Fury">Fury{ADS}</option>
+                    <option value="Iron">Iron{ADS}</option>
+                    <option value="Viper">Viper{ADS}</option>
                 </select>
                 <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
             </div>
@@ -2281,6 +2283,28 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
                 return;
             }
             url = `https://tmovie.tv/tv/${tmdbId}?watch=1&season=${season}&episode=${episode}`;
+        }
+    }
+                else if (currentProvider.includes('Iron')) {
+        if (type === 'movie') {
+            url = `https://player.vidify.top/embed/movie/${tmdbId}?autoplay=true&poster=true&chromecast=true&servericon=true&setting=true&pip=true&download=true&logourl=https%3A%2F%2Fi.ibb.co%2F67wTJd9R%2Fpngimg-com-netflix-PNG11.png&font=Roboto&fontcolor=6f63ff&fontsize=20&opacity=0.5&primarycolor=3b82f6&secondarycolor=1f2937&iconcolor=ffffff`;
+        } else {
+            if (!tmdbId) {
+                showError('TMDB ID required for TV shows with this provider', false);
+                return;
+            }
+            url = `https://player.vidify.top/embed/tv/${tmdbId}/${season}/${episode}?autoplay=true&poster=true&chromecast=true&servericon=true&setting=true&pip=true&download=true&logourl=https%3A%2F%2Fi.ibb.co%2F67wTJd9R%2Fpngimg-com-netflix-PNG11.png&font=Roboto&fontcolor=6f63ff&fontsize=20&opacity=0.5&primarycolor=3b82f6&secondarycolor=1f2937&iconcolor=ffffff`;
+        }
+    }
+                       else if (currentProvider.includes('Viper')) {
+        if (type === 'movie') {
+            url = `https://watch.coen.ovh/watch/movie/${tmdbId}`;
+        } else {
+            if (!tmdbId) {
+                showError('TMDB ID required for TV shows with this provider', false);
+                return;
+            }
+            url = `https://watch.coen.ovh/watch/tv/${tmdbId}/${season}/${episode}`;
         }
     }
          else if (currentProvider.includes('Horizon')) {
