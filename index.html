@@ -2023,13 +2023,13 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
     }
     else if (currentProvider.includes('godriveplayer.com')) {
         if (type === 'movie') {
-            url = `https://turbovid.eu/api/req/tv/${id}`;
+            url = `https://turbovid.eu/api/req/movie/${tmdbId}`;
         } else {
             if (!tmdbId) {
                 showError('TMDB ID required for TV shows with this provider', false);
                 return;
             }
-            url = `https://turbovid.eu/api/req/tv/${id}/${season}/${episode}`;
+            url = `https://turbovid.eu/api/req/tv/${tmdbId}/${season}/${episode}`;
         }
     }
     else if (currentProvider.includes('watch.lonelil.org')) {
