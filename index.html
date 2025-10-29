@@ -1419,16 +1419,16 @@
             <div class="provider-container">
                 <label for="providerSelect" class="provider-label"><i class="fas fa-server"></i> Server:</label>
                 <select id="providerSelect" class="provider-select">
-                    <option value="godriveplayer.com">Eclipse+</option>
+                    <option value="Eclipse">Eclipse+</option>
                     <option value="Horizon">Horizon</option>
-                    <option value="watch.lonelil.org">Alpha {ADS}</option>
-                    <option value="vidfast.pro">Beta</option>
-                    <option value="vidfast.in">Charlie</option>
-                    <option value="vidfast.io">Cobra</option>
-                    <option value="vidfast.me">Delta</option>
-                    <option value="vidfast.net">Ranger</option>
-                    <option value="vidfast.pm">Echo</option>
-                    <option value="vidfast.xyz">Fury</option>
+                    <option value="Alpha">Alpha {Movies Only}</option>
+                    <option value="Beta">Beta {ADS}</option>
+                    <option value="Charlie">Charlie</option>
+                    <option value=Cobra">Cobra {ADS}</option>
+                    <option value="Delta">Delta</option>
+                    <option value="Ranger">Ranger</option>
+                    <option value="Echo">Echo</option>
+                    <option value="Fury">Fury</option>
                 </select>
                 <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
             </div>
@@ -1680,7 +1680,7 @@ let moviesData = [];
 let filteredData = [];
 let displayedCount = 0;
 const MOVIES_PER_PAGE = 42;
-let currentProvider = localStorage.getItem('eclipse_provider') || 'godriveplayer.com';
+let currentProvider = localStorage.getItem('eclipse_provider') || 'Eclipse';
 let autoScrollOnSearch = false;
 // List of providers that use the about:blank format
 const VIDFAST_PROVIDERS = [
@@ -2206,7 +2206,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
         }
         return;
     }
-    else if (currentProvider.includes('godriveplayer.com')) {
+    else if (currentProvider.includes('Eclipse')) {
         if (type === 'movie') {
             url = `https://turbovid.eu/api/req/movie/${tmdbId}`;
         } else {
@@ -2215,6 +2215,17 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
                 return;
             }
             url = `https://turbovid.eu/api/req/tv/${tmdbId}/${season}/${episode}`;
+        }
+    }
+           else if (currentProvider.includes('Cobra')) {
+        if (type === 'movie') {
+            url = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
+        } else {
+            if (!tmdbId) {
+                showError('TMDB ID required for TV shows with this provider', false);
+                return;
+            }
+            url = `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${season}/${episode}`;
         }
     }
          else if (currentProvider.includes('Horizon')) {
@@ -2228,15 +2239,15 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://vidrock.net/tv/${tmdbId}/${season}/${episode}`;
         }
     }
-    else if (currentProvider.includes('watch.lonelil.org')) {
+    else if (currentProvider.includes('Alpha')) {
         if (!tmdbId) {
             showError('TMDB ID required for this provider', false);
             return;
         }
         if (type === 'movie') {
-            url = `https://watch.lonelil.org/watch/movie/${tmdbId}`;
+            url = `https://play.123embed.net/mv/${id}`;
         } else {
-            url = `https://watch.lonelil.org/watch/show/${tmdbId}.${season}.${episode}`;
+            url = `https://play.123embed.net/mv/${id}`;
         }
     }
     else {
