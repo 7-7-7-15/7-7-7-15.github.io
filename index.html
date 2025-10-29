@@ -1874,10 +1874,7 @@
         <div class="player-header">
             <div class="player-title-container">
                 <div class="player-title" id="playerTitle">Movie Title</div>
-                <div id="playerServerStatus" class="status-indicator status-checking" style="margin-left: 10px;">
-                    <span class="status-dot"></span>
-                    <span>Checking...</span>
-                </div>
+                
             </div>
             <div class="player-controls">
                 <!-- Season/Episode Controls -->
@@ -1901,6 +1898,10 @@
 
                 <!-- Server Switcher -->
                 <select id="playerProviderSelect" class="provider-select player-provider"></select>
+                <div id="playerServerStatus" class="status-indicator status-checking" style="margin-left: 10px;">
+                    <span class="status-dot"></span>
+                    <span>Checking...</span>
+                </div>
 
                 <!-- About Blank Button -->
                 <button class="player-btn" id="aboutBlankBtn" title="Open in about:blank">
@@ -2194,16 +2195,16 @@ function toggleBookmark(imdbId, title = '', type = 'movie') {
 }
     document.addEventListener('click', function(e) {
     // Play buttons
-    if (e.target.closest('.play-btn')) {
-        const playBtn = e.target.closest('.play-btn');
-        const movieCard = playBtn.closest('.movie-card');
-        const movieId = movieCard.getAttribute('data-id');
-        const movie = moviesData.find(m => m.imdb === movieId);
-       
-        if (movie) {
-            playMovie(movie.imdb, movie.type, 1, 1, movie.tmdb || '', movie.title);
-        }
+   if (e.target.closest('.play-btn')) {
+    const playBtn = e.target.closest('.play-btn');
+    const movieCard = playBtn.closest('.movie-card');
+    const movieId = movieCard.getAttribute('data-id');
+    const movie = moviesData.find(m => m.imdb === movieId);
+   
+    if (movie) {
+        playMovie(movie.imdb, movie.type, 1, 1, movie.tmdb || '', movie.title);
     }
+}
    
     // Bookmark buttons - FIXED
     if (e.target.closest('.bookmark-btn')) {
@@ -2363,6 +2364,7 @@ document.addEventListener('click', function(e) {
     }
 });
     // Event delegation for dynamically created elements
+// In your event delegation for play buttons - replace the existing one
 document.addEventListener('click', function(e) {
     // Play buttons
     if (e.target.closest('.play-btn')) {
@@ -3041,6 +3043,15 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null, title = '')
         currentEpisode: episode
     };
     
+    // If title is empty, try to find it from the moviesData
+    if (!title) {
+        const movie = moviesData.find(m => m.imdb === id);
+        if (movie) {
+            title = movie.title;
+            currentMovieData.title = movie.title;
+        }
+    }
+    
     // Show/hide episode controls
     toggleEpisodeControls(type === 'tv');
     
@@ -3238,14 +3249,20 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null, title = '')
     playerFrame.dataset.episode = episode;
     playerFrame.dataset.tmdb = tmdbId || '';
     playerFrame.src = url;
-    playerModal.classList.add('active');
     
     // Update player title with season/episode info for TV shows
-    let displayTitle = title;
+    let displayTitle = title || 'Unknown Title';
     if (type === 'tv' && title) {
         displayTitle = `${title} - S${season.toString().padStart(2, '0')}E${episode.toString().padStart(2, '0')}`;
     }
+    
+    // Final fallback if title is still empty
+    if (!displayTitle || displayTitle === 'Unknown Title') {
+        displayTitle = `Content (${type === 'movie' ? 'Movie' : 'TV Show'})`;
+    }
+    
     playerTitle.textContent = displayTitle;
+    playerModal.classList.add('active');
     
     // Start monitoring server status while player is open
     startPlayerStatusMonitoring();
