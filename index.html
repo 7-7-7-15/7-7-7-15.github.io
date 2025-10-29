@@ -1537,6 +1537,74 @@
     padding: 3px 8px;
     flex-shrink: 0;
 }
+        /* Season/Episode Controls */
+.season-episode-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(30, 30, 30, 0.7);
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 4px 8px;
+}
+
+.season-control, .episode-control {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.season-control label, .episode-control label {
+    color: #aaa;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.episode-select {
+    background: #151515;
+    border: 1px solid #252525;
+    border-radius: 4px;
+    color: #e0e0e0;
+    padding: 2px 6px;
+    font-size: 0.8rem;
+    min-width: 50px;
+}
+
+.episode-select:focus {
+    outline: none;
+    border-color: #666;
+}
+
+#applyEpisodeBtn {
+    padding: 4px 8px;
+    background: linear-gradient(135deg, #444 0%, #555 100%);
+    border: none;
+    border-radius: 4px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#applyEpisodeBtn:hover {
+    background: linear-gradient(135deg, #555 0%, #666 100%);
+    transform: translateY(-1px);
+}
+
+/* Responsive design for player controls */
+@media (max-width: 768px) {
+    .season-episode-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .player-controls {
+        gap: 4px;
+    }
+    
+    .player-provider {
+        min-width: 100px;
+    }
+}
     </style>
 </head>
 <body class="theme-dark">
@@ -1730,6 +1798,25 @@
                 </div>
             </div>
             <div class="player-controls">
+                <!-- Season/Episode Controls -->
+                <div class="season-episode-controls" id="seasonEpisodeControls" style="display: none;">
+                    <div class="season-control">
+                        <label for="seasonSelect">Season:</label>
+                        <select id="seasonSelect" class="episode-select">
+                            <option value="1">1</option>
+                        </select>
+                    </div>
+                    <div class="episode-control">
+                        <label for="episodeSelect">Episode:</label>
+                        <select id="episodeSelect" class="episode-select">
+                            <option value="1">1</option>
+                        </select>
+                    </div>
+                    <button class="player-btn" id="applyEpisodeBtn" title="Load Episode">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+
                 <!-- Server Switcher -->
                 <select id="playerProviderSelect" class="provider-select player-provider"></select>
 
@@ -1847,12 +1934,14 @@ const VIDFAST_PROVIDERS = [
 ];
 
         // --- DOM Elements ---
+// --- DOM Elements ---
 let searchInput, searchBtn, voiceSearchBtn, filters, resultsGrid, loadingIndicator;
 let errorContainer, playerModal, playerFrame, playerTitle, closePlayer, moviesCount;
 let tvCount, totalCount, playerStatus, loadMoreBtn, resultsInfo, downloadBtn;
 let providerSelect, providerInfo, settingsBtn, settingsModal, closeSettings, saveSettingsBtn;
 let themeOptions, incognitoToggle, workModeToggle, studyModeToggle, classroomToggle, stealthToggle;
-let playerProviderSelect, aboutBlankBtn, downloadChronosBtn, fullscreenBtn, playerServerStatus; // Added playerServerStatus
+let playerProviderSelect, aboutBlankBtn, downloadChronosBtn, fullscreenBtn, playerServerStatus;
+let seasonEpisodeControls, seasonSelect, episodeSelect, applyEpisodeBtn; // Added episode controls
 // --- Initialize the application ---
 document.addEventListener('DOMContentLoaded', function() {
     initializeDOMElements();
@@ -1905,6 +1994,10 @@ statusPopup = document.getElementById('statusPopup');
 serverStatusList = document.getElementById('serverStatusList');
 checkAllServers = document.getElementById('checkAllServers');
      playerServerStatus = document.getElementById('playerServerStatus');
+      seasonEpisodeControls = document.getElementById('seasonEpisodeControls');
+    seasonSelect = document.getElementById('seasonSelect');
+    episodeSelect = document.getElementById('episodeSelect');
+    applyEpisodeBtn = document.getElementById('applyEpisodeBtn');
 }
 // --- Provider initialization ---
 function initializeProvider() {
@@ -2110,6 +2203,38 @@ document.addEventListener('click', function(e) {
         statusPopup.style.display = 'none';
     }
 });
+    // Event delegation for dynamically created elements
+document.addEventListener('click', function(e) {
+    // Play buttons
+    if (e.target.closest('.play-btn')) {
+        const playBtn = e.target.closest('.play-btn');
+        const movieCard = playBtn.closest('.movie-card');
+        const movieId = movieCard.getAttribute('data-id');
+        const movie = moviesData.find(m => m.imdb === movieId);
+       
+        if (movie) {
+            playMovie(movie.imdb, movie.type, 1, 1, movie.tmdb || '', movie.title);
+        }
+    }
+   
+    // Bookmark buttons
+    if (e.target.closest('.bookmark-btn')) {
+        const bookmarkBtn = e.target.closest('.bookmark-btn');
+        const imdbId = bookmarkBtn.getAttribute('data-imdb');
+        toggleBookmark(imdbId);
+        bookmarkBtn.classList.toggle('bookmarked', isBookmarked(imdbId));
+    }
+});
+    // In setupEventListeners function, add:
+if (applyEpisodeBtn) {
+    applyEpisodeBtn.addEventListener('click', loadSelectedEpisode);
+}
+
+if (seasonSelect) {
+    seasonSelect.addEventListener('change', function() {
+        updateEpisodeList(this.value);
+    });
+}
    
     // Player
 if (closePlayer) {
@@ -2662,11 +2787,105 @@ function stopPlayerStatusMonitoring() {
         playerStatusCheckInterval = null;
     }
 }
+        // --- Episode/Season Management ---
+let currentMovieData = {
+    imdb: '',
+    type: '',
+    tmdb: '',
+    title: '',
+    totalSeasons: 1,
+    currentSeason: 1,
+    currentEpisode: 1
+};
+
+// Show/hide episode controls based on content type
+function toggleEpisodeControls(isTVShow) {
+    if (!seasonEpisodeControls) return;
+    
+    if (isTVShow) {
+        seasonEpisodeControls.style.display = 'flex';
+    } else {
+        seasonEpisodeControls.style.display = 'none';
+    }
+}
+
+// Update season dropdown
+function updateSeasonList(totalSeasons) {
+    if (!seasonSelect) return;
+    
+    seasonSelect.innerHTML = '';
+    for (let i = 1; i <= totalSeasons; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        seasonSelect.appendChild(option);
+    }
+    seasonSelect.value = currentMovieData.currentSeason;
+}
+
+// Update episode dropdown based on selected season
+function updateEpisodeList(seasonNumber) {
+    if (!episodeSelect) return;
+    
+    // For now, we'll assume 20 episodes per season
+    // In a real implementation, you'd fetch this data from an API
+    const episodesPerSeason = 20;
+    
+    episodeSelect.innerHTML = '';
+    for (let i = 1; i <= episodesPerSeason; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        episodeSelect.appendChild(option);
+    }
+    episodeSelect.value = currentMovieData.currentEpisode;
+}
+
+// Load the selected episode
+function loadSelectedEpisode() {
+    const selectedSeason = parseInt(seasonSelect.value) || 1;
+    const selectedEpisode = parseInt(episodeSelect.value) || 1;
+    
+    // Update current movie data
+    currentMovieData.currentSeason = selectedSeason;
+    currentMovieData.currentEpisode = selectedEpisode;
+    
+    // Reload the player with new season/episode
+    playMovie(
+        currentMovieData.imdb,
+        currentMovieData.type,
+        selectedSeason,
+        selectedEpisode,
+        currentMovieData.tmdb
+    );
+}
 // --- Play movie ---
 // --- Play movie ---
 // --- Play movie ---
 // --- Play movie ---
-function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
+function playMovie(id, type, season = 1, episode = 1, tmdbId = null, title = '') {
+    // Store current movie data
+    currentMovieData = {
+        imdb: id,
+        type: type,
+        tmdb: tmdbId || '',
+        title: title || '',
+        totalSeasons: 10, // Default value, you can fetch this from API
+        currentSeason: season,
+        currentEpisode: episode
+    };
+    
+    // Show/hide episode controls
+    toggleEpisodeControls(type === 'tv');
+    
+    // Update season/episode dropdowns for TV shows
+    if (type === 'tv') {
+        updateSeasonList(currentMovieData.totalSeasons);
+        updateEpisodeList(season);
+        seasonSelect.value = season;
+        episodeSelect.value = episode;
+    }
+    
     // Check server status
     const currentServerStatus = serverStatus[currentProvider];
     
@@ -2855,13 +3074,16 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
     playerFrame.src = url;
     playerModal.classList.add('active');
     
+    // Update player title with season/episode info for TV shows
+    let displayTitle = title;
+    if (type === 'tv' && title) {
+        displayTitle = `${title} - S${season.toString().padStart(2, '0')}E${episode.toString().padStart(2, '0')}`;
+    }
+    playerTitle.textContent = displayTitle;
+    
     // Start monitoring server status while player is open
     startPlayerStatusMonitoring();
     
-    const movie = moviesData.find(m => m.imdb === id || m.tmdb === tmdbId);
-    if (movie) {
-        playerTitle.textContent = movie.title;
-    }
     playerStatus.textContent = 'Playing';
 }
 // --- Voice search ---
