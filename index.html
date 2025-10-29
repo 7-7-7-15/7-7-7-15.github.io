@@ -2272,6 +2272,17 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null) {
             url = `https://www.rivestream.app/watch?type=tv&id=${tmdbId}&season=${season}&episode=${episode}`;
         }
     }
+                                    else if (currentProvider.includes('Fury')) {
+        if (type === 'movie') {
+            url = `https://tmovie.tv/movie/${tmdbId}?watch=1`;
+        } else {
+            if (!tmdbId) {
+                showError('TMDB ID required for TV shows with this provider', false);
+                return;
+            }
+            url = `https://tmovie.tv/tv/${tmdbId}?watch=1&season=${season}&episode=${episode}`;
+        }
+    }
          else if (currentProvider.includes('Horizon')) {
         if (!tmdbId) {
             showError('TMDB ID required for this provider', false);
