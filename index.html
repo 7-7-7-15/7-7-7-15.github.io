@@ -1605,6 +1605,88 @@
         min-width: 100px;
     }
 }
+        /* Cloaking Status Indicator */
+.cloaking-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    z-index: 10000;
+    border: 1px solid #333;
+    backdrop-filter: blur(10px);
+}
+
+.cloaking-status.hidden {
+    display: none;
+}
+        /* PiP Button Styles */
+#pipBtn.active {
+    background: rgba(74, 123, 228, 0.3);
+    border-color: #4a7be4;
+    color: #4a7be4;
+}
+
+/* PiP Container */
+.pip-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    height: 200px;
+    background: #000;
+    border: 2px solid #333;
+    border-radius: 8px;
+    z-index: 1001;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    overflow: hidden;
+    display: none;
+}
+
+.pip-container.active {
+    display: block;
+}
+
+.pip-header {
+    background: rgba(0,0,0,0.8);
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+}
+
+.pip-title {
+    color: #e0e0e0;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.pip-close {
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    padding: 2px 6px;
+    margin-left: 8px;
+}
+
+.pip-close:hover {
+    color: #e0e0e0;
+}
+
+.pip-iframe {
+    width: 100%;
+    height: calc(100% - 40px);
+    border: none;
+}
+        
     </style>
 </head>
 <body class="theme-dark">
@@ -1830,6 +1912,10 @@
                     <i class="fas fa-download"></i>
                     <i class="fas fa-info-circle info-icon" title="NOT OFFLINE DOWNLOAD!"></i>
                 </button>
+                <!-- Add this button with the other player controls -->
+<button class="player-btn" id="pipBtn" title="Picture-in-Picture">
+    <i class="fas fa-compress"></i>
+</button>
 
                 <!-- Fullscreen Button -->
                 <button class="player-btn" id="fullscreenBtn" title="Fullscreen">
@@ -1871,44 +1957,45 @@
                 </div>
                
                 <div class="settings-section">
-                    <h3>Cloaking Features</h3>
-                    <div class="cloaking-options">
-                        <div class="cloaking-option">
-                            <span>Incognito Mode</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="incognitoToggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="cloaking-option">
-                            <span>Work Mode (Google Docs)</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="workModeToggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="cloaking-option">
-                            <span>Study Mode (Wikipedia)</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="studyModeToggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="cloaking-option">
-                            <span>Google Classroom</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="classroomToggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="cloaking-option">
-                            <span>Stealth Player (Minimal UI)</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="stealthToggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
+    <h3>Cloaking Features</h3>
+    <div class="cloaking-options">
+        <div class="cloaking-option">
+            <span>Incognito Mode (about:blank)</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="incognitoToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="cloaking-option">
+            <span>Work Mode (Google Docs)</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="workModeToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="cloaking-option">
+            <span>Study Mode (Wikipedia)</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="studyModeToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="cloaking-option">
+            <span>Google Classroom</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="classroomToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="cloaking-option">
+            <span>Stealth Mode (Blank Tab)</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="stealthToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+</div>
                 </div>
                
                 <button class="save-settings-btn" id="saveSettingsBtn">Save Settings</button>
@@ -1946,6 +2033,7 @@ let seasonEpisodeControls, seasonSelect, episodeSelect, applyEpisodeBtn; // Adde
 document.addEventListener('DOMContentLoaded', function() {
     initializeDOMElements();
     initializeProvider();
+    initializePiP();
     syncPlayerProviderSelect();
     loadMoviesData();
     setupEventListeners();
@@ -2059,23 +2147,94 @@ function getBookmarks() {
     try {
         return JSON.parse(localStorage.getItem('eclipse_bookmarks') || '[]');
     } catch (e) {
+        console.error('Error loading bookmarks:', e);
         return [];
     }
 }
 function saveBookmarks(arr) {
-    localStorage.setItem('eclipse_bookmarks', JSON.stringify(arr));
+    try {
+        localStorage.setItem('eclipse_bookmarks', JSON.stringify(arr));
+        return true;
+    } catch (e) {
+        console.error('Error saving bookmarks:', e);
+        return false;
+    }
 }
 function isBookmarked(imdbId) {
-    return getBookmarks().includes(imdbId);
+    const bookmarks = getBookmarks();
+    return bookmarks.some(bookmark => bookmark.id === imdbId);
 }
-function toggleBookmark(imdbId) {
+
+function toggleBookmark(imdbId, title = '', type = 'movie') {
     let bookmarks = getBookmarks();
-    if (bookmarks.includes(imdbId)) {
-        bookmarks = bookmarks.filter(id => id !== imdbId);
+    const existingIndex = bookmarks.findIndex(bookmark => bookmark.id === imdbId);
+    
+    if (existingIndex > -1) {
+        // Remove bookmark
+        bookmarks.splice(existingIndex, 1);
     } else {
-        bookmarks.push(imdbId);
+        // Add bookmark
+        const movie = moviesData.find(m => m.imdb === imdbId) || { title, type };
+        bookmarks.push({
+            id: imdbId,
+            title: movie.title || title,
+            type: movie.type || type,
+            year: movie.year || '',
+            dateAdded: new Date().toISOString()
+        });
     }
-    saveBookmarks(bookmarks);
+    function updateBookmarkButton(imdbId) {
+    const bookmarkButtons = document.querySelectorAll(`.bookmark-btn[data-imdb="${imdbId}"]`);
+    bookmarkButtons.forEach(btn => {
+        btn.classList.toggle('bookmarked', isBookmarked(imdbId));
+        btn.innerHTML = isBookmarked(imdbId) ? 
+            '<i class="fas fa-bookmark"></i> Saved' : 
+            '<i class="far fa-bookmark"></i> Save';
+    });
+}
+    document.addEventListener('click', function(e) {
+    // Play buttons
+    if (e.target.closest('.play-btn')) {
+        const playBtn = e.target.closest('.play-btn');
+        const movieCard = playBtn.closest('.movie-card');
+        const movieId = movieCard.getAttribute('data-id');
+        const movie = moviesData.find(m => m.imdb === movieId);
+       
+        if (movie) {
+            playMovie(movie.imdb, movie.type, 1, 1, movie.tmdb || '', movie.title);
+        }
+    }
+   
+    // Bookmark buttons - FIXED
+    if (e.target.closest('.bookmark-btn')) {
+        const bookmarkBtn = e.target.closest('.bookmark-btn');
+        const imdbId = bookmarkBtn.getAttribute('data-imdb');
+        const movieCard = bookmarkBtn.closest('.movie-card');
+        const movieTitle = movieCard.querySelector('.movie-title').textContent;
+        const movieType = movieCard.querySelector('.movie-type').textContent.includes('TV') ? 'tv' : 'movie';
+        
+        const success = toggleBookmark(imdbId, movieTitle, movieType);
+        
+        if (success) {
+            // Show temporary feedback
+            const originalText = bookmarkBtn.innerHTML;
+            bookmarkBtn.innerHTML = isBookmarked(imdbId) ? 
+                '<i class="fas fa-check"></i> Saved!' : 
+                '<i class="fas fa-times"></i> Removed!';
+            
+            setTimeout(() => {
+                updateBookmarkButton(imdbId);
+            }, 1000);
+        }
+    }
+});
+    
+    const success = saveBookmarks(bookmarks);
+    
+    // Update UI immediately
+    updateBookmarkButton(imdbId);
+    
+    return success;
 }
 // --- Load movies data ---
 async function loadMoviesData() {
@@ -2243,6 +2402,8 @@ if (closePlayer) {
         playerFrame.src = '';
         playerStatus.textContent = 'Player closed';
         stopPlayerStatusMonitoring(); // Add this line
+         closePlayerWithPiP(); // This now handles PiP cleanup
+        stopPlayerStatusMonitoring();
     });
 }
    
@@ -2714,6 +2875,7 @@ function applyFilters() {
     }
 }
 // --- Display movies ---
+// Update displayMovies function to properly initialize bookmarks
 function displayMovies() {
     if (filteredData.length === 0) {
         resultsGrid.innerHTML = `
@@ -2731,7 +2893,9 @@ function displayMovies() {
     const moviesToShow = Math.min(displayedCount + MOVIES_PER_PAGE, filteredData.length);
     const moviesToDisplay = filteredData.slice(0, moviesToShow);
    
-    resultsGrid.innerHTML = moviesToDisplay.map(movie => `
+    resultsGrid.innerHTML = moviesToDisplay.map(movie => {
+        const isSaved = isBookmarked(movie.imdb);
+        return `
         <div class="movie-card" data-id="${movie.imdb}">
             <div class="movie-poster">
                 <i class="fas fa-film"></i>
@@ -2743,13 +2907,14 @@ function displayMovies() {
                     <button class="play-btn" data-imdb="${movie.imdb}">
                         <i class="fas fa-play"></i> Play
                     </button>
-                    <button class="bookmark-btn${isBookmarked(movie.imdb) ? ' bookmarked' : ''}" data-imdb="${movie.imdb}">
-                        <i class="fas fa-bookmark"></i> Save
+                    <button class="bookmark-btn ${isSaved ? 'bookmarked' : ''}" data-imdb="${movie.imdb}">
+                        <i class="${isSaved ? 'fas' : 'far'} fa-bookmark"></i> ${isSaved ? 'Saved' : 'Save'}
                     </button>
                 </div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
    
     displayedCount = moviesToShow;
     resultsInfo.textContent = `Showing ${displayedCount} of ${filteredData.length} results`;
@@ -2761,6 +2926,7 @@ function displayMovies() {
         loadMoreBtn.style.display = 'none';
     }
 }
+
 function loadMoreMovies() {
     displayMovies();
 }
@@ -3145,6 +3311,109 @@ function downloadAsChronosFile() {
    
     playerStatus.textContent = 'Downloaded as Chronos file';
 }
+        // PiP Variables
+let pipContainer = null;
+let pipFrame = null;
+let isPiPMode = false;
+
+// Initialize PiP elements
+function initializePiP() {
+    pipContainer = document.createElement('div');
+    pipContainer.className = 'pip-container';
+    pipContainer.innerHTML = `
+        <div class="pip-header">
+            <div class="pip-title" id="pipTitle">PiP Player</div>
+            <button class="pip-close" id="closePip">&times;</button>
+        </div>
+        <iframe class="pip-iframe" id="pipFrame" allowfullscreen></iframe>
+    `;
+    document.body.appendChild(pipContainer);
+    
+    pipFrame = document.getElementById('pipFrame');
+    const pipTitle = document.getElementById('pipTitle');
+    const closePip = document.getElementById('closePip');
+    
+    // PiP event listeners
+    closePip.addEventListener('click', closePiP);
+    
+    // PiP button in main player
+    const pipBtn = document.getElementById('pipBtn');
+    if (pipBtn) {
+        pipBtn.addEventListener('click', togglePiP);
+    }
+}
+
+// Toggle PiP mode
+function togglePiP() {
+    if (isPiPMode) {
+        closePiP();
+    } else {
+        openPiP();
+    }
+}
+
+// Open PiP mode
+function openPiP() {
+    if (!pipContainer || !pipFrame) return;
+    
+    const currentSrc = playerFrame.src;
+    if (!currentSrc) return;
+    
+    pipFrame.src = currentSrc;
+    pipTitle.textContent = playerTitle.textContent;
+    pipContainer.classList.add('active');
+    isPiPMode = true;
+    
+    // Update PiP button state
+    const pipBtn = document.getElementById('pipBtn');
+    if (pipBtn) {
+        pipBtn.classList.add('active');
+        pipBtn.innerHTML = '<i class="fas fa-expand"></i>';
+    }
+    
+    // Hide main player iframe temporarily
+    playerFrame.style.visibility = 'hidden';
+    
+    playerStatus.textContent = 'Entered Picture-in-Picture mode';
+}
+
+// Close PiP mode
+function closePiP() {
+    if (!pipContainer || !pipFrame) return;
+    
+    // Restore main player
+    if (playerFrame && pipFrame.src) {
+        playerFrame.src = pipFrame.src;
+    }
+    
+    pipFrame.src = '';
+    pipContainer.classList.remove('active');
+    isPiPMode = false;
+    
+    // Update PiP button state
+    const pipBtn = document.getElementById('pipBtn');
+    if (pipBtn) {
+        pipBtn.classList.remove('active');
+        pipBtn.innerHTML = '<i class="fas fa-compress"></i>';
+    }
+    
+    // Show main player iframe
+    if (playerFrame) {
+        playerFrame.style.visibility = 'visible';
+    }
+    
+    playerStatus.textContent = 'Exited Picture-in-Picture mode';
+}
+
+// Close PiP when main player closes
+function closePlayerWithPiP() {
+    if (isPiPMode) {
+        closePiP();
+    }
+    playerModal.classList.remove('active');
+    playerFrame.src = '';
+    playerStatus.textContent = 'Player closed';
+}
 // --- Settings functions ---
 function openSettings() {
     settingsModal.classList.add('active');
@@ -3229,6 +3498,7 @@ function slowScrollTo(element, duration = 1200) {
 }
 // Expose playMovie globally for inline event handler
 window.playMovie = playMovie;
+        
     </script>
 </body>
 </html>
