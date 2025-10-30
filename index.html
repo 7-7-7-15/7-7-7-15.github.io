@@ -2805,12 +2805,10 @@ let seasonEpisodeControls, seasonSelect, episodeSelect, applyEpisodeBtn; // Adde
 document.addEventListener('DOMContentLoaded', function() {
     initializeDOMElements();
     initializeProvider();
-    initializePiP();
-    syncPlayerProviderSelect();
     loadMoviesData();
+    syncPlayerProviderSelect();
     setupEventListeners();
     loadSettings();
-    initializeCloaking(); // Add this line
     maybeShowUpdatePopup();
 });
 // Initialize DOM elements
@@ -4247,46 +4245,47 @@ function closeSettingsModal() {
 function loadSettings() {
     // Load theme
     const savedTheme = localStorage.getItem('eclipse_theme') || 'dark';
+    
+    // Update theme options UI
     themeOptions.forEach(option => {
+        option.classList.remove('active');
         if (option.dataset.theme === savedTheme) {
             option.classList.add('active');
         }
     });
+    
+    // Apply the theme
     applyTheme(savedTheme);
-  
-    // Load cloaking settings
-    incognitoToggle.checked = localStorage.getItem('eclipse_incognito') === 'true';
-    workModeToggle.checked = localStorage.getItem('eclipse_workmode') === 'true';
-    studyModeToggle.checked = localStorage.getItem('eclipse_studymode') === 'true';
-    classroomToggle.checked = localStorage.getItem('eclipse_classroom') === 'true';
-    stealthToggle.checked = localStorage.getItem('eclipse_stealth') === 'true';
-      initializeCloaking();
 }
 function saveSettings() {
     // Save theme
     const selectedTheme = document.querySelector('.theme-option.active').dataset.theme;
     localStorage.setItem('eclipse_theme', selectedTheme);
-  
-    // Save cloaking settings
-    localStorage.setItem('eclipse_incognito', incognitoToggle.checked);
-    localStorage.setItem('eclipse_workmode', workModeToggle.checked);
-    localStorage.setItem('eclipse_studymode', studyModeToggle.checked);
-    localStorage.setItem('eclipse_classroom', classroomToggle.checked);
-    localStorage.setItem('eclipse_stealth', stealthToggle.checked);
-  
-    // Apply settings
+    
+    // Apply theme immediately
     applyTheme(selectedTheme);
-  
+    
     // Close modal
     closeSettingsModal();
-  
+    
     // Update status
     playerStatus.textContent = 'Settings saved';
-     
+    
+    // Force a small delay to ensure theme is applied
+    setTimeout(() => {
+        document.body.className = '';
+        document.body.classList.add(`theme-${selectedTheme}`);
+    }, 100);
 }
 function applyTheme(theme) {
+    // Remove all theme classes
     document.body.className = '';
+    
+    // Add the selected theme class
     document.body.classList.add(`theme-${theme}`);
+    
+    // Force reflow to ensure CSS updates
+    document.body.offsetHeight;
 }
 // --- Update popup functions ---
 function maybeShowUpdatePopup() {
@@ -4563,154 +4562,6 @@ function showMessage(text) {
 
 
 
-
-    // SIMPLE CLOAKING - Works immediately on toggle
-const cloakPresets = {
-    'docs': {
-        title: 'Essay Draft - Google Docs',
-        favicon: 'https://docs.google.com/favicon.ico'
-    },
-    'classroom': {
-        title: 'Biology 101 - Google Classroom',
-        favicon: 'https://classroom.google.com/favicon.ico'
-    },
-    'wiki': {
-        title: 'Quantum Physics - Wikipedia',
-        favicon: 'https://en.wikipedia.org/static/favicon/wikipedia.ico'
-    },
-    'gmail': {
-        title: 'Inbox (127) - Gmail',
-        favicon: 'https://mail.google.com/favicon.ico'
-    },
-    'sheets': {
-        title: 'Financial Budget - Google Sheets',
-        favicon: 'https://docs.google.com/spreadsheets/favicon.ico'
-    },
-    'drive': {
-        title: 'My Drive - Google Drive',
-        favicon: 'https://drive.google.com/favicon.ico'
-    },
-    'canvas': {
-        title: 'Course Materials - Canvas',
-        favicon: 'https://instructure-uploads.s3.amazonaws.com/account_168550000000000001/attachments/535/favicon.ico'
-    },
-    'notion': {
-        title: 'Project Notes - Notion',
-        favicon: 'https://www.notion.so/images/favicon.ico'
-    }
-};
-
-let originalTitle = document.title;
-let originalFavicon = '/assets/logo/logo.png';
-
-function initializeCloaking() {
-    setupCloakingEventListeners();
-    loadCloakSettings();
-}
-
-function setupCloakingEventListeners() {
-    const cloakToggle = document.getElementById('cloakMasterToggle');
-    const cloakSelect = document.getElementById('cloakModeSelect');
-    
-    // When toggle is switched
-    cloakToggle.addEventListener('change', function() {
-        if (this.checked) {
-            // Get selected mode
-            const selectedMode = cloakSelect.value;
-            if (selectedMode === 'inactive') {
-                alert('Please select a cloaking preset first!');
-                this.checked = false;
-                return;
-            }
-            applyCloaking(selectedMode);
-        } else {
-            removeCloaking();
-        }
-    });
-    
-    // When dropdown changes
-    cloakSelect.addEventListener('change', function() {
-        // If cloaking is active and user selects a new mode, apply it immediately
-        if (cloakToggle.checked && this.value !== 'inactive') {
-            applyCloaking(this.value);
-        }
-    });
-}
-
-function applyCloaking(mode) {
-    const preset = cloakPresets[mode];
-    if (!preset) return;
-    
-    // Change title immediately
-    document.title = preset.title;
-    
-    // Change favicon immediately
-    updateFavicon(preset.favicon);
-    
-    // Update status display
-    updateCloakStatus(true, mode);
-    
-    // Save settings
-    localStorage.setItem('eclipse_cloak_active', 'true');
-    localStorage.setItem('eclipse_cloak_mode', mode);
-}
-
-function removeCloaking() {
-    // Restore original title and favicon
-    document.title = originalTitle;
-    updateFavicon(originalFavicon);
-    
-    // Update status display
-    updateCloakStatus(false, 'inactive');
-    
-    // Save settings
-    localStorage.setItem('eclipse_cloak_active', 'false');
-}
-
-function updateFavicon(url) {
-    // Remove all existing favicons
-    const oldIcons = document.querySelectorAll("link[rel*='icon']");
-    oldIcons.forEach(icon => icon.remove());
-    
-    // Create new favicon
-    const newIcon = document.createElement('link');
-    newIcon.rel = 'icon';
-    newIcon.type = 'image/x-icon';
-    newIcon.href = url;
-    document.head.appendChild(newIcon);
-}
-
-function updateCloakStatus(isActive, mode) {
-    const statusEl = document.getElementById('cloakingStatus');
-    const modeEl = document.getElementById('cloakMode');
-    
-    if (isActive) {
-        statusEl.classList.add('active');
-        modeEl.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
-    } else {
-        statusEl.classList.remove('active');
-        modeEl.textContent = 'Inactive';
-    }
-}
-
-function loadCloakSettings() {
-    const wasActive = localStorage.getItem('eclipse_cloak_active') === 'true';
-    const savedMode = localStorage.getItem('eclipse_cloak_mode') || 'inactive';
-    
-    // Update UI to match saved state
-    document.getElementById('cloakModeSelect').value = savedMode;
-    document.getElementById('cloakMasterToggle').checked = wasActive;
-    
-    // If it was active, apply cloaking now
-    if (wasActive && savedMode !== 'inactive') {
-        applyCloaking(savedMode);
-    }
-}
-
-// Initialize cloaking when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    initializeCloaking();
-});
 // END OF SCRIPT
 </script>
 </body>
