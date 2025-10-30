@@ -18,6 +18,14 @@ const FILES_TO_CACHE = [
    '/assets/backgrounds/search.jpg',
    '/assets/backgrounds/sunset.png',
    '/assets/backgrounds/sunsetblue.png',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
+  '/EclipseGames.html',
+    '/Tv.json',
+  '/Movies.json',
+    '/games.json',
+     '/sw.js',
+   '/Spelunky',
   // Add other important files here
 ];
 
