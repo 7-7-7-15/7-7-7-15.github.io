@@ -2400,9 +2400,28 @@ body.theme-dark {
     --player-select-border: #252525;
     --player-select-text: #e0e0e0;
 }
+        .cloaking-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #00ff00;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    z-index: 10000;
+    border: 1px solid #00ff00;
+    backdrop-filter: blur(10px);
+    display: none;
+}
+
+.cloaking-status.active {
+    display: block;
+}
     </style>
 </head>
 <body class="theme-dark">
+    
     <div class="container">
         <header>
             <h1>Eclipse V.3.1.2</h1>
@@ -2442,7 +2461,12 @@ body.theme-dark {
             <button class="status-check-all" id="checkAllServers">Check All Servers</button>
         </div>
     </div>
+    <!-- ADD this near the top of body -->
+
     <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
+</div>
+            <div class="cloaking-status" id="cloakingStatus">
+    <i class="fas fa-mask"></i> Cloaking: <span id="cloakMode">Inactive</span>
 </div>
         </header>
        
@@ -2692,46 +2716,48 @@ body.theme-dark {
                     </div>
                 </div>
                
-                <div class="settings-section">
-    <h3>Cloaking Features</h3>
+             <!-- REPLACE the entire cloaking-options section in settings modal -->
+<div class="settings-section">
+    <h3>Tab Cloaking</h3>
     <div class="cloaking-options">
         <div class="cloaking-option">
-            <span>Incognito Mode (about:blank)</span>
+            <span>Google Docs</span>
             <label class="toggle-switch">
-                <input type="checkbox" id="incognitoToggle">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
-        <div class="cloaking-option">
-            <span>Work Mode (Google Docs)</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="workModeToggle">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
-        <div class="cloaking-option">
-            <span>Study Mode (Wikipedia)</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="studyModeToggle">
+                <input type="checkbox" id="docsCloakToggle">
                 <span class="toggle-slider"></span>
             </label>
         </div>
         <div class="cloaking-option">
             <span>Google Classroom</span>
             <label class="toggle-switch">
-                <input type="checkbox" id="classroomToggle">
+                <input type="checkbox" id="classroomCloakToggle">
                 <span class="toggle-slider"></span>
             </label>
         </div>
         <div class="cloaking-option">
-            <span>Stealth Mode (Blank Tab)</span>
+            <span>Wikipedia</span>
             <label class="toggle-switch">
-                <input type="checkbox" id="stealthToggle">
+                <input type="checkbox" id="wikiCloakToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="cloaking-option">
+            <span>Gmail</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="gmailCloakToggle">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="cloaking-option">
+            <span>Google Sheets</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="sheetsCloakToggle">
                 <span class="toggle-slider"></span>
             </label>
         </div>
     </div>
 </div>
+
                 </div>
                
                 <button class="save-settings-btn" id="saveSettingsBtn">Save Settings</button>
@@ -4518,9 +4544,147 @@ function showMessage(text) {
   
   setTimeout(() => msg.remove(), 3000);
 }
+    
 
 // Call this when your page loads
 setupSimpleOfflineSupport();
+    // REPLACE the cloaking functionality in your script
+const cloakPresets = {
+    'docs': {
+        title: 'My Document - Google Docs',
+        favicon: 'https://docs.google.com/favicon.ico'
+    },
+    'classroom': {
+        title: 'Biology 101 - Google Classroom',
+        favicon: 'https://classroom.google.com/favicon.ico'
+    },
+    'wiki': {
+        title: 'Quantum Physics - Wikipedia',
+        favicon: 'https://en.wikipedia.org/static/favicon/wikipedia.ico'
+    },
+    'gmail': {
+        title: 'Inbox (127) - Gmail',
+        favicon: 'https://mail.google.com/favicon.ico'
+    },
+    'sheets': {
+        title: 'Financial Budget - Google Sheets',
+        favicon: 'https://docs.google.com/spreadsheets/favicon.ico'
+    }
+};
+
+let currentCloak = null;
+let originalTitle = document.title;
+let originalFavicon = document.querySelector("link[rel*='icon']")?.href || '/assets/logo/logo.png';
+
+function applyCloaking(mode) {
+    if (currentCloak === mode) {
+        // Disable cloaking if same mode clicked
+        disableCloaking();
+        return;
+    }
+    
+    const preset = cloakPresets[mode];
+    if (!preset) return;
+    
+    // Update tab title
+    document.title = preset.title;
+    
+    // Update favicon
+    updateFavicon(preset.favicon);
+    
+    // Update status indicator
+    updateCloakStatus(mode);
+    
+    currentCloak = mode;
+    saveCloakSetting(mode);
+}
+
+function disableCloaking() {
+    document.title = originalTitle;
+    updateFavicon(originalFavicon);
+    updateCloakStatus('inactive');
+    currentCloak = null;
+    saveCloakSetting(null);
+}
+
+function updateFavicon(url) {
+    let link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+    link.type = 'image/x-icon';
+    link.rel = 'shortcut icon';
+    link.href = url;
+    document.head.appendChild(link);
+}
+
+function updateCloakStatus(mode) {
+    const statusEl = document.getElementById('cloakingStatus');
+    const modeEl = document.getElementById('cloakMode');
+    
+    if (mode === 'inactive') {
+        statusEl.classList.remove('active');
+    } else {
+        modeEl.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+        statusEl.classList.add('active');
+    }
+}
+
+function saveCloakSetting(mode) {
+    localStorage.setItem('eclipse_cloak_mode', mode);
+}
+
+function loadCloakSetting() {
+    const savedMode = localStorage.getItem('eclipse_cloak_mode');
+    if (savedMode && savedMode !== 'null') {
+        applyCloaking(savedMode);
+    }
+}
+
+// Update settings load function
+function loadSettings() {
+    // ... existing theme code ...
+    
+    // Load cloaking settings
+    loadCloakSetting();
+    
+    // Set toggle states based on current cloak
+    const currentMode = localStorage.getItem('eclipse_cloak_mode');
+    document.getElementById('docsCloakToggle').checked = currentMode === 'docs';
+    document.getElementById('classroomCloakToggle').checked = currentMode === 'classroom';
+    document.getElementById('wikiCloakToggle').checked = currentMode === 'wiki';
+    document.getElementById('gmailCloakToggle').checked = currentMode === 'gmail';
+    document.getElementById('sheetsCloakToggle').checked = currentMode === 'sheets';
+}
+
+// Update settings save function
+function saveSettings() {
+    // ... existing theme code ...
+    
+    // Save cloaking settings are handled in applyCloaking/disableCloaking
+    closeSettingsModal();
+    playerStatus.textContent = 'Settings saved';
+}
+
+// Add event listeners for cloaking toggles
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('docsCloakToggle').addEventListener('change', function() {
+        if (this.checked) applyCloaking('docs');
+    });
+    
+    document.getElementById('classroomCloakToggle').addEventListener('change', function() {
+        if (this.checked) applyCloaking('classroom');
+    });
+    
+    document.getElementById('wikiCloakToggle').addEventListener('change', function() {
+        if (this.checked) applyCloaking('wiki');
+    });
+    
+    document.getElementById('gmailCloakToggle').addEventListener('change', function() {
+        if (this.checked) applyCloaking('gmail');
+    });
+    
+    document.getElementById('sheetsCloakToggle').addEventListener('change', function() {
+        if (this.checked) applyCloaking('sheets');
+    });
+});
 // END OF SCRIPT
 </script>
 </body>
