@@ -2418,6 +2418,30 @@ body.theme-dark {
 .cloaking-status.active {
     display: block;
 }
+        .cloaking-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cloak-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cloak-selector label {
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+.cloak-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-top: 1px solid #252525;
+}
     </style>
 </head>
 <body class="theme-dark">
@@ -2716,42 +2740,28 @@ body.theme-dark {
                     </div>
                 </div>
                
-             <!-- REPLACE the entire cloaking-options section in settings modal -->
+       <!-- REPLACE the entire cloaking section in settings modal -->
 <div class="settings-section">
     <h3>Tab Cloaking</h3>
-    <div class="cloaking-options">
-        <div class="cloaking-option">
-            <span>Google Docs</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="docsCloakToggle">
-                <span class="toggle-slider"></span>
-            </label>
+    <div class="cloaking-controls">
+        <div class="cloak-selector">
+            <label for="cloakModeSelect">Cloaking Preset:</label>
+            <select id="cloakModeSelect" class="provider-select">
+                <option value="inactive">-- Select Cloak --</option>
+                <option value="docs">Google Docs</option>
+                <option value="classroom">Google Classroom</option>
+                <option value="wiki">Wikipedia</option>
+                <option value="gmail">Gmail</option>
+                <option value="sheets">Google Sheets</option>
+                <option value="drive">Google Drive</option>
+                <option value="canvas">Canvas LMS</option>
+                <option value="notion">Notion</option>
+            </select>
         </div>
-        <div class="cloaking-option">
-            <span>Google Classroom</span>
+        <div class="cloak-toggle">
+            <span>Enable Cloaking</span>
             <label class="toggle-switch">
-                <input type="checkbox" id="classroomCloakToggle">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
-        <div class="cloaking-option">
-            <span>Wikipedia</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="wikiCloakToggle">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
-        <div class="cloaking-option">
-            <span>Gmail</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="gmailCloakToggle">
-                <span class="toggle-slider"></span>
-            </label>
-        </div>
-        <div class="cloaking-option">
-            <span>Google Sheets</span>
-            <label class="toggle-switch">
-                <input type="checkbox" id="sheetsCloakToggle">
+                <input type="checkbox" id="cloakMasterToggle">
                 <span class="toggle-slider"></span>
             </label>
         </div>
@@ -2800,6 +2810,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadMoviesData();
     setupEventListeners();
     loadSettings();
+    initializeCloaking(); // Add this line
     maybeShowUpdatePopup();
 });
 // Initialize DOM elements
@@ -4548,10 +4559,10 @@ function showMessage(text) {
 
 // Call this when your page loads
 setupSimpleOfflineSupport();
-    // REPLACE the cloaking functionality in your script
+   // REPLACE the cloaking functionality with this new structure
 const cloakPresets = {
     'docs': {
-        title: 'My Document - Google Docs',
+        title: 'Essay Draft - Google Docs',
         favicon: 'https://docs.google.com/favicon.ico'
     },
     'classroom': {
@@ -4569,42 +4580,86 @@ const cloakPresets = {
     'sheets': {
         title: 'Financial Budget - Google Sheets',
         favicon: 'https://docs.google.com/spreadsheets/favicon.ico'
+    },
+    'drive': {
+        title: 'My Drive - Google Drive',
+        favicon: 'https://drive.google.com/favicon.ico'
+    },
+    'canvas': {
+        title: 'Course Materials - Canvas',
+        favicon: 'https://instructure-uploads.s3.amazonaws.com/account_168550000000000001/attachments/535/favicon.ico'
+    },
+    'notion': {
+        title: 'Project Notes - Notion',
+        favicon: 'https://www.notion.so/images/favicon.ico'
     }
 };
 
-let currentCloak = null;
+let isCloakingActive = false;
+let currentCloakMode = 'inactive';
 let originalTitle = document.title;
 let originalFavicon = document.querySelector("link[rel*='icon']")?.href || '/assets/logo/logo.png';
 
-function applyCloaking(mode) {
-    if (currentCloak === mode) {
-        // Disable cloaking if same mode clicked
-        disableCloaking();
+function initializeCloaking() {
+    loadCloakSettings();
+    setupCloakingEventListeners();
+}
+
+function setupCloakingEventListeners() {
+    const cloakToggle = document.getElementById('cloakMasterToggle');
+    const cloakSelect = document.getElementById('cloakModeSelect');
+    
+    // Master toggle switch
+    cloakToggle.addEventListener('change', function() {
+        if (this.checked) {
+            enableCloaking();
+        } else {
+            disableCloaking();
+        }
+    });
+    
+    // Dropdown selection
+    cloakSelect.addEventListener('change', function() {
+        if (this.value !== 'inactive') {
+            currentCloakMode = this.value;
+            if (isCloakingActive) {
+                applyCloaking(); // Re-apply with new mode
+            }
+        }
+    });
+}
+
+function enableCloaking() {
+    if (currentCloakMode === 'inactive') {
+        alert('Please select a cloaking preset first.');
+        document.getElementById('cloakMasterToggle').checked = false;
         return;
     }
     
-    const preset = cloakPresets[mode];
-    if (!preset) return;
-    
-    // Update tab title
-    document.title = preset.title;
-    
-    // Update favicon
-    updateFavicon(preset.favicon);
-    
-    // Update status indicator
-    updateCloakStatus(mode);
-    
-    currentCloak = mode;
-    saveCloakSetting(mode);
+    isCloakingActive = true;
+    applyCloaking();
+    updateCloakStatus();
+    saveCloakSettings();
 }
 
 function disableCloaking() {
+    isCloakingActive = false;
+    restoreOriginalTab();
+    updateCloakStatus();
+    saveCloakSettings();
+}
+
+function applyCloaking() {
+    const preset = cloakPresets[currentCloakMode];
+    if (!preset) return;
+    
+    document.title = preset.title;
+    updateFavicon(preset.favicon);
+}
+
+function restoreOriginalTab() {
     document.title = originalTitle;
     updateFavicon(originalFavicon);
-    updateCloakStatus('inactive');
-    currentCloak = null;
-    saveCloakSetting(null);
 }
 
 function updateFavicon(url) {
@@ -4615,76 +4670,57 @@ function updateFavicon(url) {
     document.head.appendChild(link);
 }
 
-function updateCloakStatus(mode) {
+function updateCloakStatus() {
     const statusEl = document.getElementById('cloakingStatus');
     const modeEl = document.getElementById('cloakMode');
     
-    if (mode === 'inactive') {
+    if (!isCloakingActive) {
         statusEl.classList.remove('active');
+        modeEl.textContent = 'Inactive';
     } else {
-        modeEl.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+        modeEl.textContent = currentCloakMode.charAt(0).toUpperCase() + currentCloakMode.slice(1);
         statusEl.classList.add('active');
     }
 }
 
-function saveCloakSetting(mode) {
-    localStorage.setItem('eclipse_cloak_mode', mode);
+function saveCloakSettings() {
+    localStorage.setItem('eclipse_cloak_active', isCloakingActive);
+    localStorage.setItem('eclipse_cloak_mode', currentCloakMode);
 }
 
-function loadCloakSetting() {
-    const savedMode = localStorage.getItem('eclipse_cloak_mode');
-    if (savedMode && savedMode !== 'null') {
-        applyCloaking(savedMode);
+function loadCloakSettings() {
+    const savedActive = localStorage.getItem('eclipse_cloak_active') === 'true';
+    const savedMode = localStorage.getItem('eclipse_cloak_mode') || 'inactive';
+    
+    currentCloakMode = savedMode;
+    
+    // Update UI elements
+    document.getElementById('cloakModeSelect').value = currentCloakMode;
+    document.getElementById('cloakMasterToggle').checked = savedActive;
+    
+    if (savedActive && savedMode !== 'inactive') {
+        isCloakingActive = true;
+        applyCloaking();
+        updateCloakStatus();
     }
 }
 
-// Update settings load function
+// Update your existing loadSettings function
 function loadSettings() {
     // ... existing theme code ...
     
-    // Load cloaking settings
-    loadCloakSetting();
-    
-    // Set toggle states based on current cloak
-    const currentMode = localStorage.getItem('eclipse_cloak_mode');
-    document.getElementById('docsCloakToggle').checked = currentMode === 'docs';
-    document.getElementById('classroomCloakToggle').checked = currentMode === 'classroom';
-    document.getElementById('wikiCloakToggle').checked = currentMode === 'wiki';
-    document.getElementById('gmailCloakToggle').checked = currentMode === 'gmail';
-    document.getElementById('sheetsCloakToggle').checked = currentMode === 'sheets';
+    // Initialize cloaking
+    initializeCloaking();
 }
 
-// Update settings save function
+// Update your existing saveSettings function
 function saveSettings() {
     // ... existing theme code ...
     
-    // Save cloaking settings are handled in applyCloaking/disableCloaking
+    // Cloaking settings are auto-saved when changed
     closeSettingsModal();
     playerStatus.textContent = 'Settings saved';
 }
-
-// Add event listeners for cloaking toggles
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('docsCloakToggle').addEventListener('change', function() {
-        if (this.checked) applyCloaking('docs');
-    });
-    
-    document.getElementById('classroomCloakToggle').addEventListener('change', function() {
-        if (this.checked) applyCloaking('classroom');
-    });
-    
-    document.getElementById('wikiCloakToggle').addEventListener('change', function() {
-        if (this.checked) applyCloaking('wiki');
-    });
-    
-    document.getElementById('gmailCloakToggle').addEventListener('change', function() {
-        if (this.checked) applyCloaking('gmail');
-    });
-    
-    document.getElementById('sheetsCloakToggle').addEventListener('change', function() {
-        if (this.checked) applyCloaking('sheets');
-    });
-});
 // END OF SCRIPT
 </script>
 </body>
