@@ -4479,6 +4479,48 @@ if (!localStorage.getItem('eclipse_theme')) {
 // === EXPANDED: Final line count confirmation ===
 console.log('%cEclipse Player Expanded to 1,512+ lines', 'color: #00ff88; font-size: 14px; font-weight: bold;');
 
+    // SIMPLE OFFLINE SUPPORT - Add this to your existing code
+function setupSimpleOfflineSupport() {
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('Service Worker Registered'))
+      .catch(err => console.log('Service Worker Failed', err));
+  }
+
+  // Show offline/online status
+  function updateOnlineStatus() {
+    if (!navigator.onLine) {
+      showMessage('⚠️ You are offline - using cached content');
+    }
+  }
+
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus(); // Check on load
+}
+
+function showMessage(text) {
+  // Create a simple notification
+  const msg = document.createElement('div');
+  msg.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #ff6b6b;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    z-index: 10000;
+  `;
+  msg.textContent = text;
+  document.body.appendChild(msg);
+  
+  setTimeout(() => msg.remove(), 3000);
+}
+
+// Call this when your page loads
+setupSimpleOfflineSupport();
 // END OF SCRIPT
 </script>
 </body>
