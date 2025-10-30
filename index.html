@@ -4260,6 +4260,7 @@ function loadSettings() {
     studyModeToggle.checked = localStorage.getItem('eclipse_studymode') === 'true';
     classroomToggle.checked = localStorage.getItem('eclipse_classroom') === 'true';
     stealthToggle.checked = localStorage.getItem('eclipse_stealth') === 'true';
+      initializeCloaking();
 }
 function saveSettings() {
     // Save theme
@@ -4281,6 +4282,7 @@ function saveSettings() {
   
     // Update status
     playerStatus.textContent = 'Settings saved';
+     
 }
 function applyTheme(theme) {
     document.body.className = '';
@@ -4558,21 +4560,10 @@ function showMessage(text) {
     
 
 // Call this when your page loads
-setupSimpleOfflineSupport();
- function loadSettings() {
-    // ... existing theme code ...
-    
-    // Initialize cloaking
-    initializeCloaking();
-}
 
-function saveSettings() {
-    // ... existing theme code ...
-    
-    // Cloaking settings are auto-saved when changed
-    closeSettingsModal();
-    playerStatus.textContent = 'Settings saved';
-}
+
+
+
     // SIMPLE CLOAKING - Works immediately on toggle
 const cloakPresets = {
     'docs': {
