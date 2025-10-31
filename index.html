@@ -3938,7 +3938,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null, title = '')
                 showError('TMDB ID required for TV shows with this provider', false);
                 return;
             }
-            url = `https://vidsrc.wtf/api/4/tv/?id=${tmdbId}/${season}/${episode}`;
+            url = `https://vidsrc.wtf/api/4/tv/?id=${tmdbId}&s=${season}&e=${episode}`;
         }
     }
     else if (currentProvider.includes('Cobra')) {
