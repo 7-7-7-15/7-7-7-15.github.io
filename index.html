@@ -2442,6 +2442,56 @@ body.theme-dark {
     padding: 12px 0;
     border-top: 1px solid #252525;
 }
+        /* Ad Status Bubble Styles - Add this to your existing CSS */
+.ad-status-bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    margin-left: 8px;
+    text-transform: uppercase;
+}
+
+.ad-status-ads {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.ad-status-no-ads {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.ad-status-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+}
+
+.ad-status-ads .ad-status-dot {
+    background: #ef4444;
+}
+
+.ad-status-no-ads .ad-status-dot {
+    background: #22c55e;
+}
+
+/* Server option styling */
+.server-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.server-name {
+    flex: 1;
+}
     </style>
 </head>
 <body class="theme-dark">
@@ -2458,6 +2508,7 @@ body.theme-dark {
             </div>
             <!-- Provider Dropdown -->
             <!-- Provider Dropdown -->
+<!-- Provider Dropdown -->
 <div class="provider-container">
     <label for="providerSelect" class="provider-label"><i class="fas fa-server"></i> Server:</label>
     <div class="server-status-container">
@@ -2465,16 +2516,16 @@ body.theme-dark {
             <option value="Eclipse">Eclipse+</option>
             <option value="Alpha">Alpha</option>
             <option value="Phoenix">Phoenix</option>
-            <option value="Horizon">Horizon{ADS}</option>
-            <option value="Beta">Beta{ADS}</option>
-            <option value="Cobra">Cobra{ADS}</option>
-            <option value="Charlie">Charlie{ADS}</option>
-            <option value="Delta">Delta{ADS}</option>
-            <option value="Ranger">Ranger{ADS}</option>
-            <option value="Echo">Echo{ADS}</option>
-            <option value="Fury">Fury{ADS}</option>
-            <option value="Iron">Iron{ADS}</option>
-            <option value="Viper">Viper{ADS}</option>
+            <option value="Horizon">Horizon</option>
+            <option value="Beta">Beta</option>
+            <option value="Cobra">Cobra</option>
+            <option value="Charlie">Charlie</option>
+            <option value="Delta">Delta</option>
+            <option value="Ranger">Ranger</option>
+            <option value="Echo">Echo</option>
+            <option value="Fury">Fury</option>
+            <option value="Iron">Iron</option>
+            <option value="Viper">Viper</option>
         </select>
         <div id="serverStatusIndicator" class="status-indicator status-checking">
             <span class="status-dot"></span>
@@ -2486,8 +2537,6 @@ body.theme-dark {
             <button class="status-check-all" id="checkAllServers">Check All Servers</button>
         </div>
     </div>
-    <!-- ADD this near the top of body -->
-
     <button class="settings-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
 </div>
             <div class="cloaking-status" id="cloakingStatus">
@@ -2811,6 +2860,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     loadSettings();
     maybeShowUpdatePopup();
+
+     setTimeout(updateProviderDropdownWithAdStatus, 100);
 });
 // Initialize DOM elements
 function initializeDOMElements() {
@@ -2870,7 +2921,7 @@ function initializeProvider() {
     if (providerSelect) {
         providerSelect.value = currentProvider;
         providerInfo.textContent = currentProvider;
-      
+        updateProviderDropdownWithAdStatus();
         providerSelect.addEventListener('change', function() {
             currentProvider = providerSelect.value;
             providerInfo.textContent = currentProvider;
@@ -2885,6 +2936,7 @@ function syncPlayerProviderSelect() {
     if (!playerProviderSelect) return;
     playerProviderSelect.innerHTML = providerSelect.innerHTML;
     playerProviderSelect.value = currentProvider;
+     updateProviderDropdownWithAdStatus();
     playerProviderSelect.addEventListener('change', function() {
         currentProvider = this.value;
         providerSelect.value = currentProvider;
@@ -3536,6 +3588,140 @@ function toggleStatusPopup() {
     // ---- 3. Normal title search (fallback) ----
     autoScrollOnSearch = true;
     performSearch(); // your original title-search function
+}
+    // Server Ad Status Configuration - Add this with your other constants
+const SERVER_AD_STATUS = {
+    'Eclipse': false,    // No ads
+    'Alpha': false,      // No ads  
+    'Phoenix': false,    // No ads
+    'Horizon': true,     // Has ads
+    'Beta': true,        // Has ads
+    'Cobra': true,       // Has ads
+    'Charlie': true,     // Has ads
+    'Delta': true,       // Has ads
+    'Ranger': true,      // Has ads
+    'Echo': true,        // Has ads
+    'Fury': true,        // Has ads
+    'Iron': true,        // Has ads
+    'Viper': true        // Has ads
+};
+
+// Function to create ad status bubble - Add this function
+function createAdStatusBubble(serverName) {
+    const hasAds = SERVER_AD_STATUS[serverName];
+    const statusClass = hasAds ? 'ad-status-ads' : 'ad-status-no-ads';
+    const statusText = hasAds ? 'ADS' : 'NO ADS';
+    
+    return `
+        <span class="ad-status-bubble ${statusClass}">
+            <span class="ad-status-dot"></span>
+            ${statusText}
+        </span>
+    `;
+}
+
+// Function to update provider dropdown with ad status - Add this function
+// Function to update provider dropdown with ad status - REPLACE this function
+// Function to update provider dropdown with ad status - REPLACE this function
+function updateProviderDropdownWithAdStatus() {
+    const providerSelect = document.getElementById('providerSelect');
+    const playerProviderSelect = document.getElementById('playerProviderSelect');
+    
+    console.log('Updating dropdown with ad status...'); // Debug log
+    
+    if (providerSelect) {
+        // Store current selection
+        const currentSelection = providerSelect.value;
+        
+        // Update options with ad status
+        Array.from(providerSelect.options).forEach(option => {
+            const serverName = option.value;
+            console.log('Processing server:', serverName, SERVER_AD_STATUS[serverName]); // Debug log
+            
+            if (SERVER_AD_STATUS.hasOwnProperty(serverName)) {
+                const adStatusBubble = createAdStatusBubble(serverName);
+                // Get clean server name (remove any existing {ADS})
+                const cleanServerName = option.textContent.replace(/{ADS}/g, '').trim();
+                option.innerHTML = `
+                    <div class="server-option">
+                        <span class="server-name">${cleanServerName}</span>
+                        ${adStatusBubble}
+                    </div>
+                `;
+            }
+        });
+        
+        // Restore selection
+        providerSelect.value = currentSelection;
+    }
+    
+    // Also update player provider dropdown
+    if (playerProviderSelect) {
+        const currentPlayerSelection = playerProviderSelect.value;
+        
+        Array.from(playerProviderSelect.options).forEach(option => {
+            const serverName = option.value;
+            if (SERVER_AD_STATUS.hasOwnProperty(serverName)) {
+                const adStatusBubble = createAdStatusBubble(serverName);
+                // Get clean server name (remove any existing {ADS})
+                const cleanServerName = option.textContent.replace(/{ADS}/g, '').trim();
+                option.innerHTML = `
+                    <div class="server-option">
+                        <span class="server-name">${cleanServerName}</span>
+                        ${adStatusBubble}
+                    </div>
+                `;
+            }
+        });
+        
+        playerProviderSelect.value = currentPlayerSelection;
+    }
+    
+    console.log('Dropdown update complete'); // Debug log
+}
+    
+    // Also update player provider dropdown
+    if (playerProviderSelect) {
+        const currentPlayerSelection = playerProviderSelect.value;
+        
+        Array.from(playerProviderSelect.options).forEach(option => {
+            const serverName = option.value;
+            if (SERVER_AD_STATUS.hasOwnProperty(serverName)) {
+                const adStatusBubble = createAdStatusBubble(serverName);
+                // Remove {ADS} from the server name and add the bubble
+                const cleanServerName = option.text.replace(/{ADS}/g, '');
+                option.innerHTML = `
+                    <div class="server-option">
+                        <span class="server-name">${cleanServerName}</span>
+                        ${adStatusBubble}
+                    </div>
+                `;
+            }
+        });
+        
+        playerProviderSelect.value = currentPlayerSelection;
+    }
+}
+    
+    // Also update player provider dropdown
+    if (playerProviderSelect) {
+        const currentPlayerSelection = playerProviderSelect.value;
+        
+        Array.from(playerProviderSelect.options).forEach(option => {
+            const serverName = option.value;
+            if (SERVER_AD_STATUS.hasOwnProperty(serverName)) {
+                const adStatusBubble = createAdStatusBubble(serverName);
+                option.innerHTML = `
+                    <div class="server-option">
+                        <span class="server-name">${serverName}</span>
+                        ${adStatusBubble}
+                    </div>
+                `;
+            }
+        });
+        
+        playerProviderSelect.value = currentPlayerSelection;
+    }
 }
 function updateStatusPopup() {
     if (!serverStatusList) return;
