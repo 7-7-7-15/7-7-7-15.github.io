@@ -206,5 +206,30 @@
     "year": "2023",
     "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.flipline.com%2Fothergamefiles%2Fzombotron2%2Fimages%2Finfobanner.jpg&f=1&nofb=1&ipt=941bad2f74cfec4b4cf4552cbb3052ba4a418e9517b0e93f942ae6a6ce519c0c",
     "link": "https://oscarjeej4.github.io/seraph/games/zombotron2/"
+  },
+    {
+    "id": "27",
+    "title": "Spelunky",
+    "genre": "Adventure",
+    "year": "2023",
+    "image": "https://th.bing.com/th/id/R.df1da0f7a73d8a92a13ba5b81bb8a520?rik=Ns9YFemTT5OPlg&pid=ImgRaw&r=0",
+    "link": "https://yancharkin.github.io/SpelunkyClassicHDhtml5/"
+  },
+  {
+    "id": "28",
+    "title": "Retro Bowl",
+    "genre": "Adventure",
+    "year": "2023",
+    "image": "https://www.bing.com/th/id/OIP.73dFbFUHUVU9rpmvuoW9LAHaEK?w=294&h=211&c=8&rs=1&qlt=90&o=6&dpr=1.1&pid=3.1&rm=2",
+    "link": "https://alexander-datskov.github.io/retro-bowl/"
+  },
+  {
+    "id": "29",
+    "title": "Snow Rider 3d",
+    "genre": "Adventure",
+    "year": "2023",
+    "image": "",
+    "link": "https://tsnowrider.github.io/"
   }
 ]
+
