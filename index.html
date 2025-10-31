@@ -2463,8 +2463,9 @@ body.theme-dark {
     <div class="server-status-container">
         <select id="providerSelect" class="provider-select">
             <option value="Eclipse">Eclipse+</option>
+            <option value="Alpha">Alpha</option>
+            <option value="Alpha">Phoenix</option>
             <option value="Horizon">Horizon{ADS}</option>
-            <option value="Alpha">Alpha{Movies Only}</option>
             <option value="Beta">Beta{ADS}</option>
             <option value="Cobra">Cobra{ADS}</option>
             <option value="Charlie">Charlie{ADS}</option>
@@ -3396,6 +3397,7 @@ async function checkServerStatus(serverName) {
         'Beta': 'https://play.123embed.net/mv/tt0133093',
         'Charlie': 'https://godriveplayer.com/player.php?imdb=tt0133093',
         'Cobra': 'https://vidsrc.cc/v2/embed/movie/603',
+        'Phoenix': 'https://vidsrc.wtf/api/1/movie/?id=533535',
         'Alpha': 'https://vidsrc.wtf/api/1/movie/?id=533535',
         'Delta': 'https://111movies.com/movie/603',
         'Ranger': 'https://www.2embed.stream/embed/movie/603',
@@ -3539,7 +3541,7 @@ function updateStatusPopup() {
     if (!serverStatusList) return;
    
     const servers = [
-        'Eclipse', 'Horizon', 'Alpha', 'Beta', 'Cobra',
+        'Eclipse', 'Horizon', 'Phoenix', 'Alpha', 'Beta', 'Cobra',
         'Charlie', 'Delta', 'Ranger', 'Echo', 'Fury',
         'Iron', 'Viper'
     ];
@@ -3562,7 +3564,7 @@ function updateStatusPopup() {
 }
 async function checkAllServerStatus() {
     const servers = [
-        'Eclipse', 'Horizon', 'Alpha', 'Beta', 'Cobra',
+        'Eclipse', 'Horizon', 'Phoenix', 'Alpha', 'Beta', 'Cobra',
         'Charlie', 'Delta', 'Ranger', 'Echo', 'Fury',
         'Iron', 'Viper'
     ];
@@ -3584,6 +3586,7 @@ async function robustServerCheck(serverName) {
                 'Beta': 'https://play.123embed.net/mv/tt0133093',
                 'Charlie': 'https://godriveplayer.com/player.php?imdb=tt0133093',
                 'Cobra': 'https://vidsrc.cc/v2/embed/movie/603',
+                 'Phoenix': 'https://vidsrc.wtf/api/4/movie/?id=533535',
                 'Alpha': 'https://vidsrc.wtf/api/1/movie/?id=533535',
                 'Delta': 'https://111movies.com/movie/603',
                 'Ranger': 'https://www.2embed.stream/embed/movie/603',
@@ -3927,6 +3930,17 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null, title = '')
             url = `https://turbovid.eu/api/req/tv/${tmdbId}/${season}/${episode}`;
         }
     }
+         else if (currentProvider.includes('Phoenix')) {
+        if (type === 'movie') {
+            url = `https://vidsrc.wtf/api/4/movie/?id=${tmdbId}`;
+        } else {
+            if (!tmdbId) {
+                showError('TMDB ID required for TV shows with this provider', false);
+                return;
+            }
+            url = `https://vidsrc.wtf/api/4/tv/?id=${tmdbId}/${season}/${episode}`;
+        }
+    }
     else if (currentProvider.includes('Cobra')) {
         if (type === 'movie') {
             url = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
@@ -3946,7 +3960,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null, title = '')
                 showError('TMDB ID required for TV shows with this provider', false);
                 return;
             }
-            url = `https://vidsrc.wtf/api/1/movie/?id=${tmdbId}&s=${season}&e=${episode}`;
+            url = `https://vidsrc.wtf/api/1/tv/?id=${tmdbId}&s=${season}&e=${episode}`;
         }
     }
     else if (currentProvider.includes('Delta')) {
