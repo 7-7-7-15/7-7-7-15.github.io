@@ -3393,10 +3393,10 @@ async function checkServerStatus(serverName) {
     const testUrls = {
         'Eclipse': 'https://turbovid.eu/api/req/movie/603', // Matrix movie
         'Horizon': 'https://vidrock.net/movie/603',
-        'Alpha': 'https://play.123embed.net/mv/tt0133093',
-        'Beta': 'https://godriveplayer.com/player.php?imdb=tt0133093',
+        'Beta': 'https://play.123embed.net/mv/tt0133093',
+        'Charlie': 'https://godriveplayer.com/player.php?imdb=tt0133093',
         'Cobra': 'https://vidsrc.cc/v2/embed/movie/603',
-        'Charlie': 'https://player.embed-api.stream/?id=603',
+        'Alpha': 'https://vidsrc.wtf/api/1/movie/?id=533535',
         'Delta': 'https://111movies.com/movie/603',
         'Ranger': 'https://www.2embed.stream/embed/movie/603',
         'Echo': 'https://www.rivestream.app/detail?type=movie&id=603',
@@ -3581,10 +3581,10 @@ async function robustServerCheck(serverName) {
             const testUrls = {
                 'Eclipse': 'https://turbovid.eu/api/req/movie/603',
                 'Horizon': 'https://vidrock.net/movie/603',
-                'Alpha': 'https://play.123embed.net/mv/tt0133093',
-                'Beta': 'https://godriveplayer.com/player.php?imdb=tt0133093',
+                'Beta': 'https://play.123embed.net/mv/tt0133093',
+                'Charlie': 'https://godriveplayer.com/player.php?imdb=tt0133093',
                 'Cobra': 'https://vidsrc.cc/v2/embed/movie/603',
-                'Charlie': 'https://player.embed-api.stream/?id=603',
+                'Alpha': 'https://vidsrc.wtf/api/1/movie/?id=533535',
                 'Delta': 'https://111movies.com/movie/603',
                 'Ranger': 'https://www.2embed.stream/embed/movie/603',
                 'Echo': 'https://www.rivestream.app/detail?type=movie&id=603',
@@ -3938,15 +3938,15 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null, title = '')
             url = `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${season}/${episode}`;
         }
     }
-    else if (currentProvider.includes('Charlie')) {
+    else if (currentProvider.includes('Alpha')) {
         if (type === 'movie') {
-            url = `https://player.embed-api.stream/?id=${tmdbId}`;
+            url = `https://vidsrc.wtf/api/1/movie/?id=${tmdbId}`;
         } else {
             if (!tmdbId) {
                 showError('TMDB ID required for TV shows with this provider', false);
                 return;
             }
-            url = `https://player.embed-api.stream/?id=${tmdbId}&s=${season}&e=${episode}`;
+            url = `https://vidsrc.wtf/api/1/movie/?id=${tmdbId}&s=${season}&e=${episode}`;
         }
     }
     else if (currentProvider.includes('Delta')) {
@@ -4026,7 +4026,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null, title = '')
             url = `https://vidrock.net/tv/${tmdbId}/${season}/${episode}`;
         }
     }
-    else if (currentProvider.includes('Beta')) {
+    else if (currentProvider.includes('Charlie')) {
         if (!tmdbId) {
             showError('TMDB ID required for this provider', false);
             return;
@@ -4037,7 +4037,7 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null, title = '')
             url = `https://godriveplayer.com/player.php?type=series&tmdb=${tmdbId}&season=${season}&episode=${episode}`;
         }
     }
-    else if (currentProvider.includes('Alpha')) {
+    else if (currentProvider.includes('Beta')) {
         if (!tmdbId) {
             showError('TMDB ID required for this provider', false);
             return;
