@@ -2854,8 +2854,8 @@ let seasonEpisodeControls, seasonSelect, episodeSelect, applyEpisodeBtn; // Adde
 // --- Initialize the application ---
 document.addEventListener('DOMContentLoaded', function() {
     initializeDOMElements();
-    initializeProvider();
     loadMoviesData();
+    initializeProvider();
     syncPlayerProviderSelect();
     setupEventListeners();
     loadSettings();
@@ -2932,11 +2932,17 @@ function initializeProvider() {
 }
         // Sync player provider dropdown with main one
 // Sync player provider dropdown with main one
+// Sync player provider dropdown with main one
 function syncPlayerProviderSelect() {
     if (!playerProviderSelect) return;
+    
+    // First copy the HTML structure
     playerProviderSelect.innerHTML = providerSelect.innerHTML;
     playerProviderSelect.value = currentProvider;
-     updateProviderDropdownWithAdStatus();
+    
+    // Then update BOTH dropdowns with ad status
+    updateProviderDropdownWithAdStatus();
+    
     playerProviderSelect.addEventListener('change', function() {
         currentProvider = this.value;
         providerSelect.value = currentProvider;
@@ -2953,7 +2959,6 @@ function syncPlayerProviderSelect() {
             }
         } else {
             updatePlayerStatusIndicator('checking', 'Checking...');
-            // Check status of newly selected server
             checkServerStatus(currentProvider);
         }
        
