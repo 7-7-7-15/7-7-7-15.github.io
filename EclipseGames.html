@@ -1169,6 +1169,39 @@
                 height: 50vh;
             }
         }
+        /* Fullscreen button styles */
+.fullscreen-btn {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: all 0.2s ease;
+    margin-left: 10px;
+}
+
+.fullscreen-btn:hover {
+    color: #e0e0e0;
+    transform: scale(1.1);
+}
+
+/* Fullscreen mode styles */
+.player-modal.fullscreen {
+    padding: 0;
+}
+
+.player-modal.fullscreen .player-container {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    border-radius: 0;
+    border: none;
+}
+
+.player-modal.fullscreen .player-iframe {
+    height: 100vh;
+}
     </style>
 </head>
 <body class="theme-dark">
@@ -1253,15 +1286,21 @@
     </div>
 
     <!-- Player Modal -->
-    <div class="player-modal" id="playerModal">
-        <div class="player-container">
-            <div class="player-header">
-                <div class="player-title" id="playerTitle">Game Title</div>
+    <!-- Player Modal -->
+<div class="player-modal" id="playerModal">
+    <div class="player-container">
+        <div class="player-header">
+            <div class="player-title" id="playerTitle">Game Title</div>
+            <div>
+                <button class="fullscreen-btn" id="fullscreenBtn" title="Toggle Fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
                 <button class="close-player" id="closePlayer">&times;</button>
             </div>
-            <iframe class="player-iframe" id="playerFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" allowfullscreen></iframe>
         </div>
+        <iframe class="player-iframe" id="playerFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" allowfullscreen></iframe>
     </div>
+</div>
 
     <!-- Settings Modal -->
     <div class="settings-modal" id="settingsModal">
@@ -1391,6 +1430,9 @@
             studyModeToggle = document.getElementById('studyModeToggle');
             classroomToggle = document.getElementById('classroomToggle');
             stealthToggle = document.getElementById('stealthToggle');
+
+            //fullscreen button
+              fullscreenBtn = document.getElementById('fullscreenBtn');
         }
 
         // --- Bookmark logic ---
@@ -1451,16 +1493,7 @@
         // --- Sample games data ---
         function getSampleGames() {
             return [
-                { id: "1", title: "Minecraft", genre: "Sandbox", year: "2011", image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2xrz.jpg", link: "https://minecraft.net" },
-                { id: "2", title: "Fortnite", genre: "Battle Royale", year: "2017", image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co4x71.jpg", link: "https://fortnite.com" },
-                { id: "3", title: "The Witcher 3", genre: "RPG", year: "2015", image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2p2c.jpg", link: "https://thewitcher.com" },
-                { id: "4", title: "Grand Theft Auto V", genre: "Action", year: "2013", image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2p2a.jpg", link: "https://rockstargames.com" },
-                { id: "5", title: "Among Us", genre: "Social Deduction", year: "2018", image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2p2b.jpg", link: "https://innersloth.com" },
-                { id: "6", title: "Cyberpunk 2077", genre: "RPG", year: "2020", image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2p2d.jpg", link: "https://cdprojektred.com" },
-                { id: "7", title: "Call of Duty: Warzone", genre: "Battle Royale", year: "2020", image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2p2e.jpg", link: "https://callofduty.com" },
-                { id: "8", title: "Valorant", genre: "FPS", year: "2020", image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2p2f.jpg", link: "https://playvalorant.com" },
-                { id: "9", title: "League of Legends", genre: "MOBA", year: "2009", image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2p2g.jpg", link: "https://leagueoflegends.com" },
-                { id: "10", title: "Apex Legends", genre: "Battle Royale", year: "2019", image: "https://images.igdb.com/igdb/image/upload/t_cover_big/co2p2h.jpg", link: "https://ea.com" }
+             
             ];
         }
 
@@ -1478,6 +1511,10 @@
 
         // --- Set up event listeners ---
         function setupEventListeners() {
+              if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+    }
+    
             // Search functionality
             if (searchBtn) {
                 searchBtn.addEventListener('click', function() {
@@ -1913,6 +1950,53 @@ function playGame(gameUrl) {
                 platformStatus.textContent = `Last played: ${lastPlayedGame.title}`;
             }
         }
+        // Add new function for fullscreen toggle
+function toggleFullscreen() {
+    playerModal.classList.toggle('fullscreen');
+    
+    const icon = fullscreenBtn.querySelector('i');
+    if (playerModal.classList.contains('fullscreen')) {
+        icon.className = 'fas fa-compress';
+        fullscreenBtn.title = 'Exit Fullscreen';
+    } else {
+        icon.className = 'fas fa-expand';
+        fullscreenBtn.title = 'Enter Fullscreen';
+    }
+    
+    // Also toggle browser fullscreen if supported
+    if (!document.fullscreenElement) {
+        if (playerModal.requestFullscreen) {
+            playerModal.requestFullscreen();
+        } else if (playerModal.webkitRequestFullscreen) {
+            playerModal.webkitRequestFullscreen();
+        } else if (playerModal.msRequestFullscreen) {
+            playerModal.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+    }
+}
+
+// Add event listener for when fullscreen changes
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+function handleFullscreenChange() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        // Exited fullscreen
+        playerModal.classList.remove('fullscreen');
+        const icon = fullscreenBtn.querySelector('i');
+        icon.className = 'fas fa-expand';
+        fullscreenBtn.title = 'Enter Fullscreen';
+    }
+}
         
     </script>
 </body>
