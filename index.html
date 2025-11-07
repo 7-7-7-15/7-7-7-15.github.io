@@ -3284,7 +3284,7 @@ if (aboutBlankBtn) {
         if (win) {
             win.document.write(`
                 <!DOCTYPE html>
-                <html><head><title>${playerTitle.textContent}</title>
+                <html><head><title>.</title>
                 <style>body,html{margin:0;height:100%;overflow:hidden}
                 iframe{width:100%;height:100%;border:none}</style>
                 </head>
@@ -3318,7 +3318,7 @@ if (downloadChronosBtn) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title} - Chronos Player</title>
+    <title></title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body, html { height:100%; background:#000; overflow:hidden; }
@@ -3327,7 +3327,7 @@ if (downloadChronosBtn) {
     </style>
 </head>
 <body>
-    <div class="warning">NOT OFFLINE DOWNLOAD!</div>
+ 
     <iframe src="${iframeSrc}" allowfullscreen>     window.addEventListener("message", (event) => {
                       if (event.origin !== "https://www.vidsrc.wtf") return;
                       if (event.data?.type === "MEDIA_DATA") {
