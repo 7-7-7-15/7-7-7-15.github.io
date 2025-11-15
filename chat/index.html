@@ -3002,6 +3002,42 @@ window.addEventListener('load', () => {
         }, false);
     }
 });
+      
+
+(function(){
+  // Attempt to detect sandbox (works for common cases)
+  try {
+    // Will throw or be undefined in some sandboxed or cross-origin contexts
+    if (window.frameElement && window.frameElement.hasAttribute("sandbox")) {
+      throw new Error("Sandbox detected");
+    }
+  } catch (e) {
+    // Show block overlay
+    document.getElementById('blockOverlay').style.display = "flex";
+    return;  // Stop further script execution
+  }
+
+  // Password logic
+  const PASSWORD = "eclipseShadow";
+  const KEY = "eclipse_password";
+  const showBlocked = () => {
+    document.getElementById('blockOverlay').style.display = "flex";
+    throw new Error("Blocked by incorrect password");
+  };
+  if (localStorage.getItem(KEY) === PASSWORD) {
+    // Already authorized
+    return;
+  }
+  const input = prompt("Enter the Eclipse Password:");
+  if (input === PASSWORD) {
+    localStorage.setItem(KEY, PASSWORD);
+    // Allowed through
+    return;
+  } else {
+    // Block on wrong password
+    showBlocked();
+  }
+})();
                 </script>
 </body>
 </html>
