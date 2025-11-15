@@ -3067,36 +3067,51 @@ window.addEventListener('load', () => {
       
 
 (function(){
-  // Attempt to detect sandbox (works for common cases)
-  try {
-    // Will throw or be undefined in some sandboxed or cross-origin contexts
-    if (window.frameElement && window.frameElement.hasAttribute("sandbox")) {
-      throw new Error("Sandbox detected");
-    }
-  } catch (e) {
-    // Show block overlay
-    document.getElementById('blockOverlay').style.display = "flex";
-    return;  // Stop further script execution
-  }
-
-  // Password logic
   const PASSWORD = "eclipseShadow";
   const KEY = "eclipse_password";
-  const showBlocked = () => {
+
+  function createSnow() {
+    const container = document.getElementById('snowContainer');
+    const particleCount = 70;
+    for(let i=0; i<particleCount; i++) {
+      const particle = document.createElement('div');
+      particle.classList.add('snowParticle');
+      const size = Math.random() * 5 + 5;
+      particle.style.width = size + 'px';
+      particle.style.height = size + 'px';
+      particle.style.left = Math.random() * 100 + 'vw';
+      particle.style.top = '-10vh';
+      particle.style.animationDuration = (Math.random() * 7 + 8) + 's';
+      particle.style.animationDelay = (Math.random() * 15) + 's';
+      container.appendChild(particle);
+    }
+  }
+
+  function showBlocked() {
     document.getElementById('blockOverlay').style.display = "flex";
-    throw new Error("Blocked by incorrect password");
-  };
-  if (localStorage.getItem(KEY) === PASSWORD) {
-    // Already authorized
+    createSnow();
+  }
+
+  try {
+    if (window.frameElement && window.frameElement.hasAttribute("sandbox")) {
+      showBlocked();
+      return;
+    }
+  } catch(e) {
+    showBlocked();
     return;
   }
+
+  if (localStorage.getItem(KEY) === PASSWORD) {
+    // User already authenticated
+    return;
+  }
+
+  // Prompt user for password
   const input = prompt("Enter the Eclipse Password:");
   if (input === PASSWORD) {
     localStorage.setItem(KEY, PASSWORD);
-    // Allowed through
-    return;
   } else {
-    // Block on wrong password
     showBlocked();
   }
 })();
