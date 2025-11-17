@@ -3064,57 +3064,53 @@ window.addEventListener('load', () => {
         }, false);
     }
 });
-      
+      // ——— PASSWORD PROTECTION (clean & working) ———
+const CORRECT_PASSWORD = "eclipseShadow";   // Change this if you want a different password
+const STORAGE_KEY = "eclipse_access_granted";
 
-(function(){
-  const PASSWORD = "eclipseShadow";
-  const KEY = "eclipse_password";
-
-  function createSnow() {
-    const container = document.getElementById('snowContainer');
-    const particleCount = 70;
-    for(let i=0; i<particleCount; i++) {
-      const particle = document.createElement('div');
-      particle.classList.add('snowParticle');
-      const size = Math.random() * 5 + 5;
-      particle.style.width = size + 'px';
-      particle.style.height = size + 'px';
-      particle.style.left = Math.random() * 100 + 'vw';
-      particle.style.top = '-10vh';
-      particle.style.animationDuration = (Math.random() * 7 + 8) + 's';
-      particle.style.animationDelay = (Math.random() * 15) + 's';
-      container.appendChild(particle);
-    }
-  }
-
-  function showBlocked() {
+function showBlocked() {
     document.getElementById('blockOverlay').style.display = "flex";
-    createSnow();
-  }
+    // Optional: create the snow effect only when blocked
+    createSnowIfNeeded();
+}
 
-  try {
-    if (window.frameElement && window.frameElement.hasAttribute("sandbox")) {
-      showBlocked();
-      return;
+function hideBlocked() {
+    document.getElementById('blockOverlay').style.display = "none";
+}
+
+// Create falling snow only once (keeps the cool effect when blocked)
+function createSnowIfNeeded() {
+    if (document.querySelector('.snowParticle')) return;
+    const container = document.getElementById('snowContainer');
+    for (let i = 0; i < 80; i++) {
+        const p = document.createElement('div');
+        p.className = "snowParticle";
+        p.style.width = p.style.height = Math.random() * 6 + 4 + "px";
+        p.style.left = Math.random() * 100 + "vw";
+        p.style.animationDuration = Math.random() * 8 + 8 + "s";
+        p.style.animationDelay = Math.random() * 15 + "s";
+        container.appendChild(p);
     }
-  } catch(e) {
-    showBlocked();
-    return;
-  }
+}
 
-  if (localStorage.getItem(KEY) === PASSWORD) {
-    // User already authenticated
-    return;
-  }
+// Main password check
+if (localStorage.getItem(STORAGE_KEY) === "true") {
+    hideBlocked();   // already unlocked before
+} else {
+    // Ask for password
+    setTimeout(() => {  // tiny delay so the page finishes rendering first
+        const input = prompt("🔐 Enter the Eclipse password to continue:");
+        if (input === CORRECT_PASSWORD) {
+            localStorage.setItem(STORAGE_KEY, "true");
+            hideBlocked();
+            alert("✅ Correct! Welcome to Eclipse Chat 🚀");
+        } else {
+            showBlocked();
+            alert("❌ Wrong password – access denied");
+        }
+    }, 100);
+}
 
-  // Prompt user for password
-  const input = prompt("Enter the Eclipse Password:");
-  if (input === PASSWORD) {
-    localStorage.setItem(KEY, PASSWORD);
-  } else {
-    showBlocked();
-  }
-})();
                 </script>
 </body>
 </html>
