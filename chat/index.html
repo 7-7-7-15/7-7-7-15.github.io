@@ -1664,7 +1664,7 @@ body.theme-custom .eclipse-container {
     </div>
 
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <div id="blockOverlay"><div style="position:absolute;top:45%;left:0;width:100%;">Blocked</div></div>
+   
     <div id="snowContainer"></div>
 
     <script src="https://cdn.scaledrone.com/scaledrone.min.js"></script>
@@ -3155,118 +3155,7 @@ window.addEventListener('load', () => {
       // ——— PASSWORD PROTECTION (clean & working) ———
 // ——— ASK FOR PASSWORD EVERY TIME THE PAGE LOADS ———
 // ——— IP-BASED ACCESS CONTROL (self-hosted allow-list) ———
-<script>
-// ——— NEW & IMPROVED ACCESS CONTROL (Nov 17 2025) ———
-const ALLOWED_LIST_URL = "https://7-7-7-15.github.io/allowed-ips.json";
 
-function showBlocked() {
-    document.getElementById('blockOverlay').style.display = "flex";
-    createSnow();
-}
-function hideBlocked() {
-    document.getElementById('blockOverlay').style.display = "none";
-}
-
-// CIDR helper
-function ipInRange(ip, cidr) {
-    const [range, bits = 32] = cidr.split('/');
-    const mask = ~(2 ** (32 - bits) - 1) >>> 0;
-    const ipNum = ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
-    const rangeNum = range.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
-    return (ipNum & mask) === (rangeNum & mask);
-}
-
-async function checkAccess() {
-    let yourIP = "unknown";
-    let country = "unknown";
-    let allowedList = null;
-    let ipMatched = false;
-    let countryMatched = false;
-    let tokenMatched = false;
-    let failReason = "";
-
-    const urlParams = new URLSearchParams(location.search);
-    const urlToken = urlParams.get('access');
-
-    // 6-second timeout so it never hangs forever
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000);
-
-    try {
-        const [ipinfo, listResp] = await Promise.all([
-            fetch('https://ipinfo.io/json', { signal: controller.signal }).then(r => r.json()),
-            fetch(ALLOWED_LIST_URL + '?t=' + Date.now(), { signal: controller.signal }).then(r => r.json())
-        ]);
-
-        yourIP = ipinfo.ip || "unknown";
-        country = ipinfo.country || "unknown";
-        allowedList = listResp;
-
-        // Check IP
-        if (Array.isArray(allowedList.ips)) {
-            ipMatched = allowedList.ips.some(entry => 
-                entry.includes('/') ? ipInRange(yourIP, entry) : entry === yourIP
-            );
-        }
-
-        // Check country
-        if (Array.isArray(allowedList.countries)) {
-            countryMatched = allowedList.countries.includes(country);
-        }
-
-        // Check URL token
-        if (urlToken && Array.isArray(allowedList.tokens)) {
-            tokenMatched = allowedList.tokens.includes(urlToken);
-        }
-
-        if (ipMatched || countryMatched || tokenMatched) {
-            hideBlocked();
-            clearTimeout(timeoutId);
-            return;
-        }
-
-        failReason = `IP (${yourIP}) not in allow-list\n` +
-                     `Country (${country}) not allowed\n` +
-                     (urlToken ? `Token "${urlToken}" invalid or missing\n` : "No access token in URL\n");
-
-    } catch (err) {
-        failReason = "Network error while checking allow-list:\n" +
-                     (err.name === 'AbortError' ? "Request timed out (7 seconds)" : err.message) + "\n" +
-                     "ipinfo.io or GitHub may be slow/blocked.";
-    } finally {
-        clearTimeout(timeoutId);
-    }
-
-    // ——— DETAILED FAILURE ALERT ———
-    let debugMsg = `YOUR PUBLIC IP: ${yourIP}\n`;
-    debugMsg += `Country: ${country}\n\n`;
-    debugMsg += `Access denied.\n\n`;
-    debugMsg += failReason + "\n\n";
-    debugMsg += `Current allow-list contents:\n`;
-    debugMsg += `IPs / CIDRs:\n${JSON.stringify(allowedList?.ips || "not loaded", null, 2)}\n\n`;
-    debugMsg += `Countries: ${JSON.stringify(allowedList?.countries || "not loaded", null, 2)}\n\n`;
-    debugMsg += `Tokens: ${JSON.stringify(allowedList?.tokens || "not loaded", null, 2)}\n\n`;
-    debugMsg += `URL token used: ${urlToken || "none"}\n\n`;
-    debugMsg += `If your IP should be allowed → add it to https://7-7-7-15.github.io/allowed-ips.json`;
-
-    alert(debugMsg);
-
-    // ——— FALLBACK PASSWORD PROMPT ———
-    const pw = prompt("Your IP is not on the allow-list.\nEnter the Eclipse password to continue:");
-    if (pw === "Eclipse7") {
-        hideBlocked();
-        alert("Password correct — access granted!");
-    } else {
-        showBlocked();
-        if (pw !== null) {
-            alert("Wrong password. Access denied.");
-        }
-    }
-}
-
-// Run it
-checkAccess();
-</script>
 
                 </script>
 </body>
