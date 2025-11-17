@@ -3159,14 +3159,14 @@ window.addEventListener('load', () => {
 
                 </script>
 <script>
-// ==================== TIME-BASED TEMP CODE + SILENT BACKGROUND KICK FOR TEMP USERS ====================
-const ADMIN_PASSWORD = "77710";
-const VIP_PASSWORD   = "Eclipse";
-const SECRET_SALT    = "MySuperSecretEclipse2025"; // ← CHANGE THIS!
+// ==================== PASSWORD PROTECTION + ADMIN CODE REVEAL ====================
+const ADMIN_PASSWORD = "77715";      // ← your real admin password (never shown in UI)
+const VIP_PASSWORD   = "Eclipse";    // optional VIP permanent access
+const SECRET_SALT    = "67"; // ← change this!
 
 let currentAccessType = null; // "admin", "vip", "temp"
 
-// Generate current hourly code (same for everyone)
+// Generate current hourly code
 function getCurrentTempCode() {
     const now = new Date();
     const seed = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}-${now.getHours()}-${SECRET_SALT}`;
@@ -3180,71 +3180,89 @@ function getCurrentTempCode() {
 function showAccessModal() {
     if (document.getElementById('eclipseLock')) return;
 
-    const currentCode = getCurrentTempCode();
-
     const html = `
     <div id="eclipseLock" style="position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:999999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);font-family:Inter,sans-serif;">
-      <div style="background:#16213e;border:2px solid #6b5ce7;border-radius:16px;padding:40px 32px;width:90%;max-width:440px;box-shadow:0 20px 60px rgba(107,92,231,0.5);text-align:center;color:#cfcfcf;">
+      <div style="background:#16213e;border:2px solid #6b5ce7;border-radius:16px;padding:40px 32px;width:90%;max-width:460px;box-shadow:0 20px 60px rgba(107,92,231,0.5);text-align:center;color:#cfcfcf;">
         <h2 style="margin:0 0 16px;color:#8c7ae6;font-size:26px;">🔒 Eclipse Access</h2>
-        <p style="margin:12px 0 20px;color:#aaa;font-size:15px;line-height:1.5;">
-          <strong>Required every visit</strong><br>
-          Current hourly code:
+        <p style="margin:12px 0 8px;color:#aaa;font-size:15px;">
+          Enter admin password, VIP password, or the <strong>current hourly code</strong>
         </p>
-        <div style="background:#000;padding:16px;border-radius:10px;margin:20px 0;font-size:28px;letter-spacing:4px;font-weight:bold;color:#10b981;">
-          ${currentCode}
+
+        <!-- Normal hourly code display (always visible) -->
+        <div id="hourlyCodeDisplay" style="background:#000;padding:16px;border-radius:10px;margin:20px 0;font-size:28px;letter-spacing:4px;font-weight:bold;color:#10b981;">
+          ${getCurrentTempCode()}
         </div>
-        <input id="codeInput" type="text" placeholder="Enter password or code" autocomplete="off"
+
+        <!-- This section only appears after admin login -->
+        <div id="adminCodeSection" style="display:none;margin:20px 0;padding:20px;background:rgba(16,185,129,0.15);border-radius:12px;border:1px solid #10b981;">
+          <p style="margin:0 0 8px;color:#10b981;font-weight:600;">✅ Admin Access Active</p>
+          <p style="margin:8px 0 0;font-size:15px;color:#cfcfcf;">
+            Current generated code: <strong id="adminCurrentCode" style="color:#10b981;font-size:22px;letter-spacing:2px;">${getCurrentTempCode()}</strong>
+          </p>
+        </div>
+
+        <input id="codeInput" type="text" placeholder="password or code" autocomplete="off"
                style="width:100%;padding:16px;background:rgba(255,255,255,0.08);border:1px solid #444;border-radius:10px;color:white;font-size:17px;outline:none;margin-bottom:16px;">
+
         <button id="enterBtn" style="width:100%;padding:16px;background:#6b5ce7;border:none;border-radius:10px;color:white;font-weight:600;font-size:16px;cursor:pointer;">
           Enter
         </button>
-
-        <div id="adminPanel" style="display:none;margin-top:32px;padding:20px;background:rgba(16,185,129,0.15);border-radius:12px;border:1px solid #10b981;">
-          <p style="margin:0 0 16px;color:#10b981;font-weight:600;">Admin Access Granted</p>
-          <p style="font-size:14px;color:#aaa;">Hourly code updates automatically every hour</p>
-        </div>
       </div>
     </div>`;
 
     document.body.insertAdjacentHTML('beforeend', html);
 
-    const input   = document.getElementById('codeInput');
-    const enter   = document.getElementById('enterBtn');
-    const admin   = document.getElementById('adminPanel');
-    const modal   = document.getElementById('eclipseLock');
+    const input     = document.getElementById('codeInput');
+    const enter     = document.getElementById('enterBtn');
+    const adminSec  = document.getElementById('adminCodeSection');
+    const adminCode = document.getElementById('adminCurrentCode');
+    const hourlyDisplay = document.getElementById('hourlyCodeDisplay');
+    const modal     = document.getElementById('eclipseLock');
 
     input.focus();
+
+    // Update the normal hourly code every minute
+    const updateCodes = () => {
+        const newCode = getCurrentTempCode();
+        hourlyDisplay.textContent = newCode;
+        if (currentAccessType === "admin") {
+            adminCode.textContent = newCode;
+        }
+    };
+    setInterval(updateCodes, 60000);
 
     const check = () => {
         const val = input.value.trim();
 
         if (val === ADMIN_PASSWORD) {
             currentAccessType = "admin";
-            admin.style.display = "block";
-            input.placeholder = "Admin active";
+            adminSec.style.display = "block";
+            input.placeholder = "Admin active – page unlocked";
             input.value = "";
+            input.disabled = true;
+            enter.textContent = "Unlocked";
+            enter.disabled = true;
             return;
         }
-
         if (val === VIP_PASSWORD) {
             currentAccessType = "vip";
             modal.remove();
             return;
         }
-
         if (val === getCurrentTempCode()) {
             currentAccessType = "temp";
             modal.remove();
-            startSilentTempChecker(); // ← only temp users get checked
+            startSilentTempChecker();
             return;
         }
 
+        // Wrong
         input.style.borderColor = "#ef4444";
         input.value = "";
-        input.placeholder = "Wrong – try again";
+        input.placeholder = "Incorrect – try again";
         setTimeout(() => {
             input.style.borderColor = "#444";
-            input.placeholder = "Enter password or code";
+            input.placeholder = "password or code";
         }, 2000);
     };
 
@@ -3252,27 +3270,18 @@ function showAccessModal() {
     input.onkeyup = e => { if (e.key === "Enter") check(); };
 }
 
-// Silent background check ONLY for temp users
+// Silent kick only for temp users
 function startSilentTempChecker() {
     if (currentAccessType !== "temp") return;
-
     setInterval(() => {
-        if (document.getElementById('codeInput')) return; // already at lock screen
-        const expected = getCurrentTempCode();
-        const urlCode = new URLSearchParams(location.search).get('code');
-        if (urlCode !== expected) {
-            location.reload(); // silent kick
+        if (document.getElementById('eclipseLock')) return;
+        if ((new URLSearchParams(location.search).get('code') || "") !== getCurrentTempCode()) {
+            location.reload();
         }
-    }, 30000); // every 30 seconds
+    }, 30000);
 }
 
-// Update displayed code every minute (for people still on lock screen)
-setInterval(() => {
-    const display = document.querySelector('#eclipseLock div[style*="font-size:28px"]');
-    if (display) display.textContent = getCurrentTempCode();
-}, 60000);
-
-// Always show lock screen
+// Always show the lock screen on load
 showAccessModal();
 </script>
 </body>
