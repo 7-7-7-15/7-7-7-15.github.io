@@ -3156,7 +3156,18 @@ window.addEventListener('load', () => {
 // ——— ASK FOR PASSWORD EVERY TIME THE PAGE LOADS ———
 // ——— IP-BASED ACCESS CONTROL (self-hosted allow-list) ———
 
-
+(function() {
+    const password = prompt("Enter password to access this page:");
+    
+    if (password === "Eclipse") {
+        // Correct password - do nothing, let them stay on the page
+        alert("Access granted! Welcome.");
+    } else {
+        // Wrong password - redirect to about:blank
+        alert("Incorrect password. Access denied.");
+        window.location.href = "about:blank";
+    }
+})();
                 </script>
 </body>
 </html>
