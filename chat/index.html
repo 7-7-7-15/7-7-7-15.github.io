@@ -3154,7 +3154,7 @@ window.addEventListener('load', () => {
 });
       // ——— PASSWORD PROTECTION (clean & working) ———
 // ——— ASK FOR PASSWORD EVERY TIME THE PAGE LOADS ———
-const PASSWORD = "eclipseShadow";   // change this if you want a different password
+const PASSWORD = "Eclipse7";   // change this if you want a different password
 
 function showBlocked() {
     document.getElementById('blockOverlay').style.display = "flex";
@@ -3165,19 +3165,7 @@ function hideBlocked() {
     document.getElementById('blockOverlay').style.display = "none";
 }
 
-function createSnow() {
-    if (document.querySelector('.snowParticle')) return;
-    const c = document.getElementById('snowContainer');
-    for (let i = 0; i < 80; i++) {
-        const p = document.createElement('div');
-        p.className = "snowParticle";
-        p.style.width = p.style.height = (Math.random() * 5 + 4) + "px";
-        p.style.left = Math.random() * 100 + "vw";
-        p.style.animationDuration = (Math.random() * 8 + 8) + "s";
-        p.style.animationDelay = Math.random() * 10 + "s";
-        c.appendChild(p);
-    }
-}
+
 
 // Ask every single time
 setTimeout(() => {
