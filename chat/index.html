@@ -3065,51 +3065,42 @@ window.addEventListener('load', () => {
     }
 });
       // ——— PASSWORD PROTECTION (clean & working) ———
-const CORRECT_PASSWORD = "Eclipse2025";   // Change this if you want a different password
-const STORAGE_KEY = "eclipse_access_granted";
+// ——— ASK FOR PASSWORD EVERY TIME THE PAGE LOADS ———
+const PASSWORD = "eclipseShadow";   // change this if you want a different password
 
 function showBlocked() {
     document.getElementById('blockOverlay').style.display = "flex";
-    // Optional: create the snow effect only when blocked
-    createSnowIfNeeded();
+    createSnow();
 }
 
 function hideBlocked() {
     document.getElementById('blockOverlay').style.display = "none";
 }
 
-// Create falling snow only once (keeps the cool effect when blocked)
-function createSnowIfNeeded() {
+function createSnow() {
     if (document.querySelector('.snowParticle')) return;
-    const container = document.getElementById('snowContainer');
+    const c = document.getElementById('snowContainer');
     for (let i = 0; i < 80; i++) {
         const p = document.createElement('div');
         p.className = "snowParticle";
-        p.style.width = p.style.height = Math.random() * 6 + 4 + "px";
+        p.style.width = p.style.height = (Math.random() * 5 + 4) + "px";
         p.style.left = Math.random() * 100 + "vw";
-        p.style.animationDuration = Math.random() * 8 + 8 + "s";
-        p.style.animationDelay = Math.random() * 15 + "s";
-        container.appendChild(p);
+        p.style.animationDuration = (Math.random() * 8 + 8) + "s";
+        p.style.animationDelay = Math.random() * 10 + "s";
+        c.appendChild(p);
     }
 }
 
-// Main password check
-if (localStorage.getItem(STORAGE_KEY) === "true") {
-    hideBlocked();   // already unlocked before
-} else {
-    // Ask for password
-    setTimeout(() => {  // tiny delay so the page finishes rendering first
-        const input = prompt("🔐 Enter the Eclipse password to continue:");
-        if (input === CORRECT_PASSWORD) {
-            localStorage.setItem(STORAGE_KEY, "true");
-            hideBlocked();
-            alert("✅ Correct! Welcome to Eclipse Chat 🚀");
-        } else {
-            showBlocked();
-            alert("❌ Wrong password – access denied");
-        }
-    }, 100);
-}
+// Ask every single time
+setTimeout(() => {
+    const input = prompt("Enter the Eclipse password:");
+    if (input === PASSWORD) {
+        hideBlocked();
+    } else {
+        showBlocked();
+        if (input !== null) alert("Wrong password");
+    }
+}, 100);
 
                 </script>
 </body>
