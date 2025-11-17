@@ -3158,11 +3158,12 @@ window.addEventListener('load', () => {
 
 
                 </script>
-    <script>
-// ==================== PASSWORD PROTECTION – FIXED & WORKING ====================
-const MAIN_PASSWORD = "Eclipse";               // ← CHANGE THIS
-const TEMP_CODE_LIFETIME = 60 * 60 * 1000;      // 1 hour
-const STORAGE_KEY = "eclipse_temp_access";
+<script>
+// ==================== PASSWORD PROTECTION – 3 LEVELS (ADMIN + VIP + TEMP) ====================
+const ADMIN_PASSWORD = "77710";           // ← Only you – shows code generator
+const VIP_PASSWORD   = "Eclipse";         // ← Anyone with this gets instant access
+const TEMP_CODE_LIFETIME = 60 * 60 * 1000; // 1 hour
+const STORAGE_KEY = "eclipse_temp_code";
 
 function generateTempCode() {
     return Math.floor(1000000000 + Math.random() * 9000000000).toString();
@@ -3183,31 +3184,31 @@ function clearTempCode() {
     localStorage.removeItem(STORAGE_KEY);
 }
 
-// Show the lock screen
+// Show lock screen
 function showAccessModal() {
     if (document.getElementById('eclipseLock')) return;
 
     const html = `
     <div id="eclipseLock" style="position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:999999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);font-family:Inter,sans-serif;">
-      <div style="background:#16213e;border:2px solid #6b5ce7;border-radius:16px;padding:40px 32px;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(107,92,231,0.5);text-align:center;color:#cfcfcf;">
-        <h2 style="margin:0 0 16px;color:#8c7ae6;font-size:26px;">🔒 Eclipse</h2>
-        <p style="margin:12px 0 28px;color:#aaa;font-size:15px;">
-          Enter password or temporary 10-digit code
+      <div style="background:#16213e;border:2px solid #6b5ce7;border-radius:16px;padding:40px 32px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(107,92,231,0.5);text-align:center;color:#cfcfcf;">
+        <h2 style="margin:0 0 16px;color:#8c7ae6;font-size:26px;">🔒 Eclipse Access</h2>
+        <p style="margin:12px 0 28px;color:#aaa;font-size:15px;line-height:1.5;">
+          Enter VIP password, admin password, or a temporary 10-digit code
         </p>
-        <input id="codeInput" type="text" placeholder="Password or code" autocomplete="off"
-               style="width:100%;padding:16px;background:rgba(255,255,255,0.08);border:1px solid #444;border-radius:10px;color:white;font-size:17px;outline:none;">
-        <button id="enterBtn" style="margin-top:16px;width:100%;padding:16px;background:#6b5ce7;border:none;border-radius:10px;color:white;font-weight:600;font-size:16px;cursor:pointer;">
-          Enter
+        <input id="codeInput" type="text" placeholder="Password or 10-digit code" autocomplete="off"
+               style="width:100%;padding:16px;background:rgba(255,255,255,0.08);border:1px solid #444;border-radius:10px;color:white;font-size:17px;outline:none;margin-bottom:16px;">
+        <button id="enterBtn" style="width:100%;padding:16px;background:#6b5ce7;border:none;border-radius:10px;color:white;font-weight:600;font-size:16px;cursor:pointer;">
+          Enter Eclipse
         </button>
 
-        <!-- Admin panel – appears only for you -->
-        <div id="adminPanel" style="display:none;margin-top:32px;padding-top:20px;border-top:1px solid #333;">
-          <p style="color:#10b981;font-weight:600;margin-bottom:12px;">Admin: Generate new code</p>
-          <button id="genBtn" style="width:100%;padding:14px;background:#10b981;border:none;border-radius:8px;color:white;font-weight:600;cursor:pointer;">
+        <!-- Admin panel – only appears for admin password -->
+        <div id="adminPanel" style="display:none;margin-top:32px;padding:20px;background:rgba(16,185,129,0.15);border-radius:12px;border:1px solid #10b981;">
+          <p style="margin:0 0 16px;color:#10b981;font-weight:600;font-size:15px;">Admin Tools</p>
+          <button id="genBtn" style="width:100%;padding:14px;background:#10b981;border:none;border-radius:8px;color:white;font-weight:600;cursor:pointer;margin-bottom:12px;">
             Generate New 10-Digit Code (1 hour)
           </button>
-          <div id="newCode" style="margin-top:16px;padding:16px;background:#000;border-radius:8px;font-size:24px;letter-spacing:3px;font-weight:bold;color:#10b981;word-break:break-all;">
-            —
+          <div id="newCode" style="padding:16px;background:#000;border-radius:8px;font-size:26px;letter-spacing:4px;font-weight:bold;color:#10b981;word-break:break-all;">
+            Click button above
           </div>
         </div>
       </div>
@@ -3215,60 +3216,60 @@ function showAccessModal() {
 
     document.body.insertAdjacentHTML('beforeend', html);
 
-    const input   = document.getElementById('codeInput');
-    const enter   = document.getElementById('enterBtn');
-    const admin   = document.getElementById('adminPanel');
-    const genBtn  = document.getElementById('genBtn');
-    const newCode = document.getElementById('newCode');
-    const modal   = document.getElementById('eclipseLock');
+    const input    = document.getElementById('codeInput');
+    const enter    = document.getElementById('enterBtn');
+    const admin    = document.getElementById('adminPanel');
+    const genBtn   = document.getElementById('genBtn');
+    const newCode  = document.getElementById('newCode');
+    const modal    = document.getElementById('eclipseLock');
 
     input.focus();
 
-    const tryAccess = () => {
+    const check = () => {
         const val = input.value.trim();
 
-        // MAIN PASSWORD
-        if (val === MAIN_PASSWORD) {
-            admin.style.display = 'block';           // show admin panel
-            input.placeholder = 'Temp codes work too';
+        // ADMIN PASSWORD
+        if (val === ADMIN_PASSWORD) {
+            admin.style.display = 'block';
+            input.placeholder = 'You are admin – temp codes also work';
             input.value = '';
             return;
         }
 
-        // TEMP CODE
-        if (isValidTempCode(val)) {
-            saveTempCode(val);                       // refresh expiry
+        // VIP PASSWORD OR VALID TEMP CODE
+        if (val === VIP_PASSWORD || isValidTempCode(val)) {
+            if (isValidTempCode(val)) saveTempCode(val); // refresh expiry
             modal.remove();
-            sessionStorage.setItem('eclipse_access', 'granted');
+            sessionStorage.setItem('eclipse_access_granted', 'true');
             return;
         }
 
         // WRONG
         input.style.borderColor = '#ef4444';
         input.value = '';
-        input.placeholder = 'Wrong – try again';
-        setTimeout(() => input.style.borderColor = '#444', 2000);
+        input.placeholder = 'Incorrect – try again';
+        setTimeout(() => { input.style.borderColor = '#444'; input.placeholder = 'Password or 10-digit code'; }, 2000);
     };
 
-    enter.onclick = tryAccess;
-    input.onkeyup = e => { if (e.key === 'Enter') tryAccess(); };
+    enter.onclick = check;
+    input.onkeyup = e => { if (e.key === 'Enter') check(); };
 
     genBtn.onclick = () => {
         const code = generateTempCode();
         saveTempCode(code);
         newCode.textContent = code;
-        alert('New code (valid 1 hour):\n\n' + code);
+        alert('New temporary code (valid 1 hour):\n\n' + code + '\n\nSend it to whoever you want!');
     };
 }
 
-// Clean expired codes
+// Clean expired temp code
 if (localStorage.getItem(STORAGE_KEY)) {
     const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (Date.now() - data.created > TEMP_CODE_LIFETIME) clearTempCode();
 }
 
-// Show lock screen only if not already granted this tab
-if (sessionStorage.getItem('eclipse_access') !== 'granted') {
+// Show lock screen unless already granted in this tab
+if (sessionStorage.getItem('eclipse_access_granted') !== 'true') {
     showAccessModal();
 }
 </script>
