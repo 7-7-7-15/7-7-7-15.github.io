@@ -3154,29 +3154,59 @@ window.addEventListener('load', () => {
 });
       // ——— PASSWORD PROTECTION (clean & working) ———
 // ——— ASK FOR PASSWORD EVERY TIME THE PAGE LOADS ———
-const PASSWORD = "Eclipse7";   // change this if you want a different password
-
+// ——— IP-BASED ACCESS CONTROL (self-hosted allow-list) ———
+const ALLOWED_LIST_URL = "https://7-7-7-15.github.io/allowed-ips.json";
 function showBlocked() {
     document.getElementById('blockOverlay').style.display = "flex";
     createSnow();
 }
-
 function hideBlocked() {
     document.getElementById('blockOverlay').style.display = "none";
 }
 
+function ipInRange(ip, cidr) {
+    const [range, bits = 32] = cidr.split('/');
+    const mask = ~(2 ** (32 - bits) - 1) >>> 0;
+    const ipNum = ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
+    const rangeNum = range.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
+    return (ipNum & mask) === (rangeNum & mask);
+}
 
+async function checkAccess() {
+    try {
+        const urlParams = new URLSearchParams(location.search);
+        const token = urlParams.get('access');
 
-// Ask every single time
-setTimeout(() => {
-    const input = prompt("Enter the Eclipse password:");
-    if (input === PASSWORD) {
-        hideBlocked();
-    } else {
-        showBlocked();
-        if (input !== null) alert("Wrong password");
+        const ipinfo = await fetch('https://ipinfo.io/json').then(r => r.json());
+        const ip = ipinfo.ip;
+        const country = ipinfo.country;
+
+        const listResp = await fetch(ALLOWED_LIST_URL + '?t=' + Date.now());
+        const allowed = await listResp.json();
+
+        const ipAllowed = allowed.ips?.some(entry => 
+            entry.includes('/') ? ipInRange(ip, entry) : entry === ip
+        );
+        const countryAllowed = allowed.countries?.includes(country);
+        const tokenAllowed = token && allowed.tokens?.includes(token);
+
+        if (ipAllowed || countryAllowed || tokenAllowed) {
+            hideBlocked();
+        } else {
+            showBlocked();
+        }
+    } catch (e) {
+        const input = prompt("Enter the Eclipse password:");
+        if (input === "Eclipse7") {
+            hideBlocked();
+        } else {
+            showBlocked();
+            if (input !== null) alert("Wrong password");
+        }
     }
-}, 100);
+}
+
+checkAccess();
 
                 </script>
 </body>
