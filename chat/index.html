@@ -3159,36 +3159,24 @@ window.addEventListener('load', () => {
 
                 </script>
 <script>
-// ==================== TIME-BASED TEMP CODE (SAME FOR EVERYONE, NO STORAGE) ====================
-const ADMIN_PASSWORD = "77710";      // You – shows generator (optional now)
-const VIP_PASSWORD   = "Eclipse";    // Permanent VIP access
-const SECRET_SALT    = "MySuperSecretEclipse2025"; // ← CHANGE THIS TO ANYTHING YOU WANT (your private key)
+// ==================== TIME-BASED TEMP CODE + SILENT BACKGROUND KICK FOR TEMP USERS ====================
+const ADMIN_PASSWORD = "77710";
+const VIP_PASSWORD   = "Eclipse";
+const SECRET_SALT    = "MySuperSecretEclipse2025"; // ← CHANGE THIS!
 
-let currentAccessType = null; // "admin", "vip", or "temp"
+let currentAccessType = null; // "admin", "vip", "temp"
 
-// Generate the current hourly 10-digit code (same for everyone right now)
+// Generate current hourly code (same for everyone)
 function getCurrentTempCode() {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1; // 1-12
-    const day = now.getDate();
-    const hour = now.getHours();
-
-    // Combine date/hour with your secret salt
-    const seed = `${year}-${month}-${day}-${hour}-${SECRET_SALT}`;
-    
-    // Simple but strong hash → always same for same hour
+    const seed = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}-${now.getHours()}-${SECRET_SALT}`;
     let hash = 0;
     for (let i = 0; i < seed.length; i++) {
         hash = (hash * 31 + seed.charCodeAt(i)) & 0xFFFFFFFF;
     }
-    
-    // Turn into positive number and make exactly 10 digits
-    const code = String(Math.abs(hash) + 1000000000).slice(-10);
-    return code;
+    return String(Math.abs(hash) + 1000000000).slice(-10);
 }
 
-// Optional: Show current code in admin panel
 function showAccessModal() {
     if (document.getElementById('eclipseLock')) return;
 
@@ -3199,24 +3187,21 @@ function showAccessModal() {
       <div style="background:#16213e;border:2px solid #6b5ce7;border-radius:16px;padding:40px 32px;width:90%;max-width:440px;box-shadow:0 20px 60px rgba(107,92,231,0.5);text-align:center;color:#cfcfcf;">
         <h2 style="margin:0 0 16px;color:#8c7ae6;font-size:26px;">🔒 Eclipse Access</h2>
         <p style="margin:12px 0 20px;color:#aaa;font-size:15px;line-height:1.5;">
-          Enter VIP password, admin password, or<br><strong>current hourly code:</strong>
+          <strong>Required every visit</strong><br>
+          Current hourly code:
         </p>
         <div style="background:#000;padding:16px;border-radius:10px;margin:20px 0;font-size:28px;letter-spacing:4px;font-weight:bold;color:#10b981;">
           ${currentCode}
         </div>
-        <p style="margin:12px 0 28px;color:#666;font-size:13px;">
-          Changes every hour • Same for everyone
-        </p>
         <input id="codeInput" type="text" placeholder="Enter password or code" autocomplete="off"
                style="width:100%;padding:16px;background:rgba(255,255,255,0.08);border:1px solid #444;border-radius:10px;color:white;font-size:17px;outline:none;margin-bottom:16px;">
         <button id="enterBtn" style="width:100%;padding:16px;background:#6b5ce7;border:none;border-radius:10px;color:white;font-weight:600;font-size:16px;cursor:pointer;">
           Enter
         </button>
 
-        <!-- Admin panel -->
         <div id="adminPanel" style="display:none;margin-top:32px;padding:20px;background:rgba(16,185,129,0.15);border-radius:12px;border:1px solid #10b981;">
           <p style="margin:0 0 16px;color:#10b981;font-weight:600;">Admin Access Granted</p>
-          <p style="font-size:14px;color:#aaa;">Current hourly code shown above<br>Changes automatically every hour</p>
+          <p style="font-size:14px;color:#aaa;">Hourly code updates automatically every hour</p>
         </div>
       </div>
     </div>`;
@@ -3250,12 +3235,13 @@ function showAccessModal() {
         if (val === getCurrentTempCode()) {
             currentAccessType = "temp";
             modal.remove();
+            startSilentTempChecker(); // ← only temp users get checked
             return;
         }
 
         input.style.borderColor = "#ef4444";
         input.value = "";
-        input.placeholder = "Wrong code – try again";
+        input.placeholder = "Wrong – try again";
         setTimeout(() => {
             input.style.borderColor = "#444";
             input.placeholder = "Enter password or code";
@@ -3266,15 +3252,28 @@ function showAccessModal() {
     input.onkeyup = e => { if (e.key === "Enter") check(); };
 }
 
+// Silent background check ONLY for temp users
+function startSilentTempChecker() {
+    if (currentAccessType !== "temp") return;
+
+    setInterval(() => {
+        if (document.getElementById('codeInput')) return; // already at lock screen
+        const expected = getCurrentTempCode();
+        const urlCode = new URLSearchParams(location.search).get('code');
+        if (urlCode !== expected) {
+            location.reload(); // silent kick
+        }
+    }, 30000); // every 30 seconds
+}
+
+// Update displayed code every minute (for people still on lock screen)
+setInterval(() => {
+    const display = document.querySelector('#eclipseLock div[style*="font-size:28px"]');
+    if (display) display.textContent = getCurrentTempCode();
+}, 60000);
+
 // Always show lock screen
 showAccessModal();
-
-// Optional: Auto-refresh code display every minute (so people see new code at top of hour)
-setInterval(() => {
-    if (document.getElementById('eclipseLock')) {
-        document.querySelector('#eclipseLock div[style*="font-size:28px"]')?.textContent = getCurrentTempCode();
-    }
-}, 60000);
 </script>
 </body>
 </html>
