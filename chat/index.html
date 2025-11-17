@@ -3156,22 +3156,21 @@ window.addEventListener('load', () => {
 // ——— ASK FOR PASSWORD EVERY TIME THE PAGE LOADS ———
 // ——— IP-BASED ACCESS CONTROL (self-hosted allow-list) ———
 
-<script>
-// ==================== PASSWORD PROTECTION – ADMIN-ONLY TEMP CODES ====================
 
-const MAIN_PASSWORD = "Eclipse";          // ← CHANGE THIS TO YOUR PERMANENT PASSWORD
-const TEMP_CODE_LIFETIME = 60 * 60 * 1000;     // 1 hour
+                </script>
+    <script>
+// ==================== PASSWORD PROTECTION – FIXED & WORKING ====================
+const MAIN_PASSWORD = "Eclipse";               // ← CHANGE THIS
+const TEMP_CODE_LIFETIME = 60 * 60 * 1000;      // 1 hour
 const STORAGE_KEY = "eclipse_temp_access";
 
 function generateTempCode() {
     return Math.floor(1000000000 + Math.random() * 9000000000).toString();
 }
-
 function saveTempCode(code) {
     const data = { code, created: Date.now() };
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
 }
-
 function isValidTempCode(code) {
     try {
         const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
@@ -3180,12 +3179,11 @@ function isValidTempCode(code) {
         return true;
     } catch(e) { return false; }
 }
-
 function clearTempCode() {
     localStorage.removeItem(STORAGE_KEY);
 }
 
-// Show access modal
+// Show the lock screen
 function showAccessModal() {
     if (document.getElementById('eclipseLock')) return;
 
@@ -3202,7 +3200,7 @@ function showAccessModal() {
           Enter
         </button>
 
-        <!-- Hidden admin tool – only appears after correct main password -->
+        <!-- Admin panel – appears only for you -->
         <div id="adminPanel" style="display:none;margin-top:32px;padding-top:20px;border-top:1px solid #333;">
           <p style="color:#10b981;font-weight:600;margin-bottom:12px;">Admin: Generate new code</p>
           <button id="genBtn" style="width:100%;padding:14px;background:#10b981;border:none;border-radius:8px;color:white;font-weight:600;cursor:pointer;">
@@ -3226,45 +3224,53 @@ function showAccessModal() {
 
     input.focus();
 
-    enter.onclick = () => check(input.value.trim());
-    input.onkeyup = (e) => { if (e.key === 'Enter') check(input.value.trim()); };
+    const tryAccess = () => {
+        const val = input.value.trim();
 
-    function check(value) {
-        if (value === MAIN_PASSWORD || isValidTempCode(value)) {
-            if (isValidTempCode(value)) saveTempCode(value); // refresh expiry
+        // MAIN PASSWORD
+        if (val === MAIN_PASSWORD) {
+            admin.style.display = 'block';           // show admin panel
+            input.placeholder = 'Temp codes work too';
+            input.value = '';
+            return;
+        }
+
+        // TEMP CODE
+        if (isValidTempCode(val)) {
+            saveTempCode(val);                       // refresh expiry
             modal.remove();
             sessionStorage.setItem('eclipse_access', 'granted');
-        } else if (value === MAIN_PASSWORD) {
-            // Correct main password → show admin tools
-            admin.style.display = 'block';
-            input.placeholder = 'Temporary codes work too';
-        } else {
-            input.style.borderColor = '#ef4444';
-            input.value = '';
-            input.placeholder = 'Wrong – try again';
-            setTimeout(() => { input.style.borderColor = '#444'; }, 2000);
+            return;
         }
-    }
+
+        // WRONG
+        input.style.borderColor = '#ef4444';
+        input.value = '';
+        input.placeholder = 'Wrong – try again';
+        setTimeout(() => input.style.borderColor = '#444', 2000);
+    };
+
+    enter.onclick = tryAccess;
+    input.onkeyup = e => { if (e.key === 'Enter') tryAccess(); };
 
     genBtn.onclick = () => {
         const code = generateTempCode();
         saveTempCode(code);
         newCode.textContent = code;
-        alert('New temporary code (valid 1 hour):\n\n' + code + '\n\nSend it to whoever you want!');
+        alert('New code (valid 1 hour):\n\n' + code);
     };
 }
 
-// Auto-clean expired code on load
+// Clean expired codes
 if (localStorage.getItem(STORAGE_KEY)) {
     const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (Date.now() - data.created > TEMP_CODE_LIFETIME) clearTempCode();
 }
 
-// Show lock if not already granted this session
+// Show lock screen only if not already granted this tab
 if (sessionStorage.getItem('eclipse_access') !== 'granted') {
     showAccessModal();
 }
 </script>
-                </script>
 </body>
 </html>
