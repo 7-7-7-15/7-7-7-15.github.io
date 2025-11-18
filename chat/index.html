@@ -1,3 +1,4 @@
+<!--
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1459,21 +1460,6 @@ body.theme-custom .eclipse-container {
       opacity: 0;
     }
   }
-        .message-attachment {
-    margin: 12px 0;
-    padding: 8px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 8px;
-    border: 1px solid var(--eclipse-border);
-}
-
-.message-attachment img {
-    transition: transform 0.2s;
-}
-
-.message-attachment img:hover {
-    transform: scale(1.02);
-}
     </style>
 </head>
     <div id="debugStatus" style="position:fixed;top:10px;right:10px;z-index:9999;padding:10px;background:rgba(0,0,0,0.8);color:white;border-radius:5px;font-size:12px;">
@@ -1484,12 +1470,12 @@ body.theme-custom .eclipse-container {
 
 <body class="theme-dark">
     <!-- Room Modal -->
-    <div class="room-input-modal" id="roomInputModal">
+   <!-- <div class="room-input-modal" id="roomInputModal">
         <div class="room-input-container">
             <h3 id="roomInputTitle">Create Room</h3>
             <input type="text" id="roomInputField" class="room-input-field" placeholder="Room name">
             <!-- Inside .room-input-container -->
-<div style="margin-bottom: 12px;">
+<!--<div style="margin-bottom: 12px;">
   <label>
     <input type="checkbox" id="roomPrivacyToggle" checked>
     Private Room
@@ -1582,10 +1568,6 @@ body.theme-custom .eclipse-container {
                     />
                 </div>
                 <div class="input-actions">
-                    <label class="action-btn" title="Attach file">
-        <input type="file" id="fileInput" multiple style="display:none;" accept="image/*,.pdf,.txt,.doc,.docx,.zip,.rar">
-        <i class="fas fa-plus"></i>
-    </label>
                     <button class="action-btn" id="micButton" title="Voice input">
                         <i id="micIcon" class="fas fa-microphone-slash"></i>
                     </button>
@@ -1598,7 +1580,7 @@ body.theme-custom .eclipse-container {
     </div>
 
     <!-- Join Modal -->
-    <div class="join-modal" id="joinModal">
+ <!--   <div class="join-modal" id="joinModal">
         <div class="join-terminal">
             <div class="join-header">$ eclipse --connect</div>
             <div class="join-description">
@@ -1621,7 +1603,7 @@ body.theme-custom .eclipse-container {
     </div>
 
     <!-- Theme Modal -->
-    <div class="theme-modal" id="themeModal">
+ <!--<!--   <div class="theme-modal" id="themeModal">
         <div class="theme-container">
             <div class="theme-header">
                 <div class="theme-title">Select Theme</div>
@@ -1651,7 +1633,7 @@ body.theme-custom .eclipse-container {
     </div>
 
     <!-- Reaction Menu -->
-    <div id="reactionMenu" class="reaction-menu" style="display:none">
+<!--    <div id="reactionMenu" class="reaction-menu" style="display:none">
         <button class="menu-btn" data-reaction="❤️">❤️</button>
         <button class="menu-btn" data-reaction="👍">👍</button>
         <button class="menu-btn" data-reaction="🔥">🔥</button>
@@ -2974,75 +2956,6 @@ micBtn.addEventListener('click', () => {
         startRecognition();
     }
 });
-        // ===== FILE ATTACHMENT SYSTEM =====
-const fileInput = document.getElementById('fileInput');
-
-fileInput.addEventListener('change', async () => {
-    if (!fileInput.files || fileInput.files.length === 0) return;
-
-    for (let file of fileInput.files) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const base64 = e.target.result;
-            const isImage = file.type.startsWith('image/');
-            const fileSize = (file.size / 1024).toFixed(1);
-
-            let attachmentHTML = '';
-            if (isImage) {
-                attachmentHTML = `
-                    <div class="message-attachment">
-                        <img src="${base64}" alt="${escapeHtml(file.name)}" style="max-width:100%; max-height:400px; border-radius:8px; margin:8px 0; box-shadow:0 4px 12px rgba(0,0,0,0.3); cursor:pointer;" onclick="window.open(this.src)">
-                        <div style="font-size:12px; color:var(--eclipse-text-dim); margin-top:4px;">
-                            <i class="fas fa-image"></i> ${escapeHtml(file.name)} (${fileSize} KB)
-                        </div>
-                    </div>`;
-            } else {
-                attachmentHTML = `
-                    <div class="message-attachment">
-                        <a href="${base64}" download="${file.name}" style="color:var(--eclipse-primary); text-decoration:underline; display:inline-flex; align-items:center; gap:8px; padding:8px; background:rgba(107,92,231,0.1); border-radius:8px; margin:8px 0;">
-                            <i class="fas fa-file"></i>
-                            <div>
-                                <div>${escapeHtml(file.name)}</div>
-                                <div style="font-size:11px; color:var(--eclipse-text-dim);">${fileSize} KB • Click to download</div>
-                            </div>
-                        </a>
-                    </div>`;
-            }
-
-            // Create temporary message with attachment
-            const tempId = uid();
-            const timestamp = new Date().toISOString();
-            const payload = {
-                id: tempId,
-                text: attachmentHTML,
-                name: userName,
-                timestamp,
-                type: 'attachment'
-            };
-
-            if (currentReplyTo) {
-                payload.replyTo = currentReplyTo;
-                payload.replyToName = currentReplyToName;
-            }
-
-            // Send via Scaledrone (base64)
-            if (drone && room) {
-                drone.publish({
-                    room: `observable-${roomCode}`,
-                    message: { ...payload, fileName: file.name, fileSize: file.size, fileType: file.type }
-                });
-            }
-
-            // Add locally
-            addMessageToDOM(payload, true);
-            if (currentReplyTo) clearReplyState();
-        };
-
-        reader.readAsDataURL(file);
-    }
-
-    fileInput.value = ''; // Clear input
-});
 
 // ===== THEME SYSTEM (ABBREVIATED) =====
 function applyTheme(theme) {
@@ -3152,15 +3065,39 @@ window.addEventListener('load', () => {
         }, false);
     }
 });
-      // ——— PASSWORD PROTECTION (clean & working) ———
-// ——— ASK FOR PASSWORD EVERY TIME THE PAGE LOADS ———
-// ——— IP-BASED ACCESS CONTROL (self-hosted allow-list) ———
-
+      
 
                 </script>
+</body>
+</html>
+-->
 
-// Always show the lock screen on load
-showAccessModal();
-</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fullscreen iframe</title>
+<style>
+  /* Remove margin and padding from html and body */
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+  /* Make iframe take full viewport size with no border or margin */
+  iframe {
+    display: block;
+    border: none;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+</style>
+</head>
+<body>
+  <iframe src="https://transfrly.com/room?path=room.join" title="fullscreen iframe"></iframe>
 </body>
 </html>
