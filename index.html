@@ -3430,7 +3430,7 @@ async function checkServerStatus(serverName) {
         'Ember': 'https://vidsrc.wtf/api/3/movie/?id=533535',
         'Delta': 'https://111movies.com/movie/603',
         'Ranger': 'https://www.2embed.stream/embed/movie/603',
-        'Echo': 'https://www.rivestream.app/detail?type=movie&id=603',
+        'Echo': '',
         'Fury': 'https://tmovie.tv/movie/603',
         'Iron': 'https://player.vidify.top/embed/movie/603',
         'Viper': 'https://watch.coen.ovh/watch/movie/603'
@@ -3620,7 +3620,7 @@ async function robustServerCheck(serverName) {
                  'Ember': 'https://vidsrc.wtf/api/3/movie/?id=533535',
                 'Delta': 'https://111movies.com/movie/603',
                 'Ranger': 'https://www.2embed.stream/embed/movie/603',
-                'Echo': 'https://www.rivestream.app/detail?type=movie&id=603',
+                'Echo': '',
                 'Fury': 'https://tmovie.tv/movie/603',
                 'Iron': 'https://player.vidify.top/embed/movie/603',
                 'Viper': 'https://watch.coen.ovh/watch/movie/603'
@@ -4028,13 +4028,13 @@ function playMovie(id, type, season = 1, episode = 1, tmdbId = null, title = '')
     }
     else if (currentProvider.includes('Echo')) {
         if (type === 'movie') {
-            url = `https://www.rivestream.app/detail?type=movie&id=${tmdbId}`;
+            url = ``;
         } else {
             if (!tmdbId) {
                 showError('TMDB ID required for TV shows with this provider', false);
                 return;
             }
-            url = `https://www.rivestream.app/watch?type=tv&id=${tmdbId}&season=${season}&episode=${episode}`;
+            url = ``;
         }
     }
     else if (currentProvider.includes('Fury')) {
